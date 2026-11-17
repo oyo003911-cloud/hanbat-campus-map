@@ -1,0 +1,4 @@
+# 개인정보 보호를 위한 PDF 및 임시 파일 제외
+*.pdf
+.DS_Store
+Thumbs.db
