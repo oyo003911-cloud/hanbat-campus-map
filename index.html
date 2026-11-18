@@ -88,18 +88,17 @@
     .test-toolbar {
       background: #1a1e21;
       color: #fff;
-      padding: 6px 10px;
+      padding: 6px 10px 8px;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-      font-size: 11px;
-      position: sticky;
-      top: 0;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 10.5px;
       z-index: 1200;
     }
     .date-badge { font-weight: 800; color: #ffd166; white-space: nowrap; }
-    .test-toolbar .btn-group { display: flex; gap: 4px; flex: none; }
+    .test-toolbar .btn-group { display: flex; gap: 4px; width: 100%; }
+    .test-toolbar .btn-group .test-btn { flex: 1; padding: 6px 2px; }
+    .test-toolbar > div:first-child { white-space: nowrap; }
     .test-btn {
       background: #495057;
       color: #fff;
@@ -141,7 +140,7 @@
       background: #fff;
       border-bottom: 1px solid var(--border);
       position: sticky;
-      top: 32px;
+      top: 0;
       z-index: 900;
     }
     .nav-tab {
@@ -584,7 +583,7 @@
   <header class="topbar">
     <div class="brand">
       <strong>🧭 난 내갈길을 간다</strong>
-      <span id="brand-sub">한밭대 유성덕명캠퍼스 · 인도 보행로 안내</span>
+      <span id="brand-sub">한밭대 캠퍼스 인도 길안내</span>
     </div>
     <button class="btn-install" id="btn-install">📲 홈 화면 추가</button>
   </header>
