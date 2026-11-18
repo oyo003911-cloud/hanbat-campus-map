@@ -1903,7 +1903,7 @@
     $('disp-start').textContent = nav.startLabel;
     $('disp-dest').textContent = nav.destLabel + (nav.room ? ' ' + nav.room : '');
     $('disp-dist').textContent = nav.meters + 'm';
-    $('disp-remain').textContent = remain === null ? '-' : remain + '분';
+    $('disp-remain').textContent = remain === null ? '오늘 수업 없음' : remain + '분';
     $('disp-est').textContent = nav.estMin;
 
     var warn = $('alert-late-warning'), safe = $('alert-safe');
