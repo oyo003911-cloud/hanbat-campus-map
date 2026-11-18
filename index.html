@@ -196,14 +196,16 @@
     }
     .next-class.risk { border-color: var(--danger); background: #fff5f6; }
     .next-class.calm { border-color: #86efac; background: #f2fdf5; }
-    .next-class .nc-top { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
-    .next-class .nc-label { font-size: 10px; font-weight: 800; letter-spacing: 0.4px; color: var(--muted); }
-    .next-class .nc-time { font-size: 22px; font-weight: 900; color: var(--primary); }
+    .next-class .nc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .next-class .nc-headline { flex: 1; min-width: 0; }
+    .next-class .nc-label { display: block; font-size: 9.5px; font-weight: 800; letter-spacing: 0.4px; color: var(--muted); }
+    .next-class .nc-name { font-size: 14px; font-weight: 900; line-height: 1.35; margin-top: 1px; }
+    .next-class .nc-travel-box { flex: none; text-align: right; }
+    .next-class .nc-travel-label { display: block; font-size: 9.5px; font-weight: 800; color: var(--muted); letter-spacing: 0.2px; }
+    .next-class .nc-time { display: block; font-size: 26px; font-weight: 900; color: var(--primary); line-height: 1.15; letter-spacing: -0.5px; }
     .next-class.risk .nc-time { color: var(--danger); }
-    .next-class .nc-name { font-size: 13px; font-weight: 800; }
     .next-class .nc-room { font-size: 11px; color: #0369a1; font-weight: 700; }
-    .next-class .nc-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
-    .next-class .nc-row b { color: var(--text); }
+    .next-class .nc-meta { font-size: 10.5px; color: #475569; font-weight: 700; line-height: 1.45; }
     .next-class .nc-from { margin-top: 5px; font-size: 9.5px; font-weight: 700; color: #64748b; line-height: 1.4; }
     .risk-text { color: var(--danger); font-weight: 800; font-size: 11px; line-height: 1.4; }
 
@@ -770,16 +772,20 @@
         <span class="ob-change">변경 ➔</span>
       </button>
 
-      <!-- 다음 수업까지 -->
+      <!-- 다음 수업 -->
       <div class="next-class" id="next-class-card">
         <div class="nc-top">
-          <span class="nc-label">다음 수업까지</span>
-          <span class="nc-time" id="nc-time">-</span>
+          <div class="nc-headline">
+            <span class="nc-label" id="nc-label">다음 수업</span>
+            <div class="nc-name" id="nc-name">-</div>
+          </div>
+          <div class="nc-travel-box" id="nc-travel-box">
+            <span class="nc-travel-label" id="nc-travel-label">예상 소요</span>
+            <span class="nc-time" id="nc-time">-</span>
+          </div>
         </div>
-        <div class="nc-name" id="nc-name">-</div>
         <div class="nc-room" id="nc-room"></div>
-        <div class="nc-row"><span id="nc-travel-label">목적지까지 예상 소요</span><b id="nc-travel">-</b></div>
-        <div class="nc-row"><span>남는 시간</span><b id="nc-buffer">-</b></div>
+        <div class="nc-meta" id="nc-meta" style="display:none;">-</div>
         <div class="nc-from" id="nc-from" style="display:none;"></div>
         <div class="risk-text" id="nc-risk" style="display:none;"></div>
       </div>
@@ -1892,6 +1898,14 @@
     return Math.max(1, Math.ceil(meters / speed) + ENTER_PENALTY);
   }
 
+  /* 545 → '9시간 5분'처럼 남은·여유 시간을 읽기 쉽게 */
+  function humanMin(m) {
+    var v = Math.round(Math.abs(Number(m) || 0));
+    if (v < 60) return v + '분';
+    var h = Math.floor(v / 60), mi = v % 60;
+    return h + '시간' + (mi ? ' ' + mi + '분' : '');
+  }
+
   /* 이동을 마쳤을 때 실제 거리·시간으로 내 평균 걸음속도를 부드럽게 맞춘다 */
   function updateWalkSpeed(meters, realMin) {
     var m = Number(meters) || 0;
@@ -2002,18 +2016,17 @@
     card.className = 'next-class';
     $('nc-risk').style.display = 'none';
 
-    var rows = card.querySelectorAll('.nc-row');
-
     if (!nc) {
-      $('nc-time').textContent = '없음';
+      $('nc-label').textContent = '다음 수업';
       $('nc-name').textContent = state.day + '요일 남은 수업 없음';
       $('nc-room').textContent = '';
-      for (var r0 = 0; r0 < rows.length; r0++) rows[r0].style.display = 'none';
+      $('nc-travel-box').style.display = 'none';
+      $('nc-meta').style.display = 'none';
       $('nc-from').style.display = 'none';
-      $('nc-travel-label').textContent = '목적지까지 예상 소요';
       return;
     }
-    for (var r1 = 0; r1 < rows.length; r1++) rows[r1].style.display = 'flex';
+    $('nc-travel-box').style.display = '';
+    $('nc-meta').style.display = 'block';
 
     var start = hhmmToMin(nc.time);
     var remain = start - nowMin();
@@ -2022,7 +2035,7 @@
 
     /* 실제 보행로 경로로 계산한다.
        GPS가 없을 때 도착 건물(b.node)을 출발지로 쓰면 거리가 0이 되어 늘 2분이 나오므로,
-       홈에서 고른 출발지 건물, 그것도 'GPS'면 생활관(D7)에서 출발한 것으로 계산한다. */
+       홈에서 고른 출발지 건물, 그것도 'GPS'면 저장된 기본 출발지에서 출발한 것으로 계산한다. */
     var fromLabel = '';
     if (b) {
       var fromNode, extra = 0, gpsOn = !!state.gps.pos;
@@ -2040,21 +2053,23 @@
       if (res) travel = travelMinutes(res.dist + distM(b.entrance, WALK_NODES[b.node]) + extra);
     }
 
-    $('nc-time').textContent = remain > 0 ? remain + '분' : '지금';
-    $('nc-name').textContent = nc.time + ' ' + nc.title;
+    /* 오른쪽 큰 숫자는 남은 시간이 아니라 '예상 소요'다. 남은 시간은 아래 한 줄로만 작게 적는다 */
+    $('nc-name').textContent = nc.title;
     $('nc-room').textContent = nc.code + ' ' + (b ? b.name : '') + ' · ' + nc.room;
-    $('nc-travel').textContent = travel + '분';
-    $('nc-buffer').textContent = (remain - travel) + '분';
+    $('nc-travel-label').textContent = '예상 소요';
+    $('nc-time').textContent = travel + '분';
+
+    var buffer = remain - travel;
+    $('nc-meta').textContent = '수업 시작 ' + nc.time + ' · ' +
+      (buffer >= 0 ? '여유 ' + humanMin(buffer) : humanMin(-buffer) + ' 부족');
 
     /* 어디서 출발한 것으로 계산했는지 작게 보여 준다 */
-    $('nc-travel-label').textContent = (fromLabel ? fromLabel + '에서 ' : '') + '예상 소요';
     var fromNote = $('nc-from');
+    fromNote.style.display = 'block';
     if (state.gps.pos) {
-      fromNote.style.display = 'block';
       fromNote.textContent = '📍 내 현재 위치(GPS)에서 출발한 예상 시간입니다.';
     } else {
-      fromNote.style.display = 'block';
-      fromNote.textContent = '📍 GPS가 꺼져 있어 ' + fromLabel + ' 기준입니다. [2 지도]의 📍 GPS를 누르면 내 위치 기준으로 계산합니다.';
+      fromNote.innerHTML = '📍 GPS가 꺼져 있어 <b>' + esc(fromLabel) + '</b> 기준<br>[2 지도] 📍 GPS를 누르면 내 위치 기준';
     }
 
     if (remain > 0 && travel > remain) {
