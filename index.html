@@ -1254,7 +1254,7 @@
   var WEEKDAYS = ['월', '화', '수', '목', '금'];
   var SPEED = 70;          // 분당 보행 거리(m). 캠퍼스 평균 도보 속도
   var ENTER_PENALTY = 1;   // 건물 입구에서 계단·엘리베이터로 올라가는 시간(분)
-  var SCHEMA = '3';
+  var SCHEMA = '4';
 
   var KEY = {
     schema: 'hanbat_map_schema',
@@ -1514,7 +1514,7 @@
       state.timetable = JSON.parse(JSON.stringify(DEFAULT_TIMETABLE));
       if (tt && schema === SCHEMA) {
         var parsed = JSON.parse(tt);
-        if (parsed && typeof parsed === 'object') state.timetable = parsed;
+        if (parsed && typeof parsed === 'object') state.timetable = normalizeTimetable(parsed);
       }
       if (rec) {
         var r = JSON.parse(rec);
@@ -1545,7 +1545,33 @@
     }
     state.day = dayOf(state.today);
     if (WEEKDAYS.indexOf(state.day) < 0) state.day = '월';
-    localStorage.setItem(KEY.schema, SCHEMA);
+    /* 처음 쓰거나 이전 버전 데이터였으면 지금의 시간표로 저장을 맞춰 둔다 */
+    if (schema !== SCHEMA) {
+      try {
+        localStorage.setItem(KEY.timetable, JSON.stringify(state.timetable));
+        localStorage.setItem(KEY.records, JSON.stringify(state.records));
+      } catch (e2) {}
+      localStorage.setItem(KEY.schema, SCHEMA);
+    }
+  }
+
+  /* 예전 버전 시간표(bCode 등)를 지금 형식으로 맞춘다 */
+  function normalizeTimetable(tt) {
+    var out = {};
+    WEEKDAYS.forEach(function (d) {
+      var list = (tt && tt[d]) || [];
+      out[d] = list.map(function (c) {
+        var code = c.code || c.bCode || '';
+        return {
+          id: c.id || (Date.now() + Math.floor(Math.random() * 1000)),
+          time: c.time || '09:00',
+          title: c.title || '수업',
+          code: code,
+          room: c.room || ''
+        };
+      }).filter(function (c) { return c.code && BLD[c.code]; });
+    });
+    return out;
   }
 
   function saveState() {
