@@ -1516,9 +1516,23 @@
         var parsed = JSON.parse(tt);
         if (parsed && typeof parsed === 'object') state.timetable = parsed;
       }
-      if (rec) { var r = JSON.parse(rec); if (r instanceof Array) state.records = r; }
+      if (rec) {
+        var r = JSON.parse(rec);
+        if (r instanceof Array) {
+          state.records = r.filter(function (x) { return x && x.date; }).map(function (x) {
+            /* 예전 버전 기록의 "2026-11-17 (화)" 형식을 "2026-11-17"로 맞춘다 */
+            if (typeof x.date === 'string' && x.date.indexOf(' ') > 0) x.date = x.date.split(' ')[0];
+            if (!x.day && typeof x.date === 'string' && x.date.length === 10) x.day = dayOf(x.date);
+            return x;
+          });
+        }
+      }
       if (vis) { var v = JSON.parse(vis); if (v && typeof v === 'object') state.visits = v; }
-      if (nav) { var nv = JSON.parse(nav); if (nv && nv.destCode) state.nav = nv; }
+      if (nav) {
+        var nv = JSON.parse(nav);
+        /* 지도용 좌표가 있는 새 형식만 이어서 쓴다 */
+        if (nv && nv.destCode && nv.coords && nv.coords.length) state.nav = nv;
+      }
       if (mode === 'osm' || mode === 'sat' || mode === 'svg') state.mapMode = mode;
       if (st) state.startSel = st;
     } catch (e) {
@@ -1995,7 +2009,7 @@
     if (!state.map || !hasLeaflet()) return;
     if (state.map._routeLayer) { state.map.removeLayer(state.map._routeLayer); state.map._routeLayer = null; }
     if (state.map._userMarker) { state.map.removeLayer(state.map._userMarker); state.map._userMarker = null; }
-    if (!state.nav) return;
+    if (!state.nav || !state.nav.coords || !state.nav.coords.length) return;
     var coords = state.nav.coords.map(function (c) { return [c[0], c[1]]; });
     state.map._routeLayer = L.polyline(coords, { color: '#e11d48', weight: 5, opacity: 0.9 }).addTo(state.map);
     var p0 = coords[0];
@@ -2982,9 +2996,11 @@
         r.room = state.nav.room;
         r.startedAt = state.nav.startedAt;
         state.nav = r;
-        renderRoutePanel();
-        drawRoute();
+      } else {
+        state.nav = null;
       }
+      renderRoutePanel();
+      drawRoute();
     }
     /* 1분마다 남은 시간 갱신 */
     setInterval(function () {
