@@ -535,6 +535,12 @@
     .iso-wrap { position: relative; border: 1.5px solid var(--border); border-radius: 10px; background: linear-gradient(180deg, #f8fbff, #eef3f9); overflow: hidden; touch-action: none; }
     .iso-wrap svg { display: block; width: 100%; height: 260px; }
     .iso-hint { position: absolute; bottom: 4px; left: 6px; right: 6px; font-size: 9px; color: #64748b; text-align: center; pointer-events: none; line-height: 1.4; }
+    .ev-guide {
+      margin-top: 8px; padding: 7px 9px; border-radius: 9px;
+      background: #fffbeb; border: 1.5px solid #f59e0b;
+      font-size: 12px; font-weight: 800; color: #0b2545; line-height: 1.5;
+    }
+    .ev-guide span { font-size: 10.5px; }
     .iso-tools { display: flex; gap: 4px; margin-top: 6px; }
     .iso-tools button {
       flex: 1;
@@ -787,6 +793,19 @@
       </div>
 
       <div class="card">
+        <div class="card-title">
+          <span>🏃 내 평균 걸음속도</span>
+          <span class="sub">이 기기에 저장됨</span>
+        </div>
+        <div class="stat-row">
+          <div><div class="num" id="stat-speed">70m/분</div><div class="lbl">내 걸음속도</div></div>
+          <div><div class="num" id="stat-speed-level">보통</div><div class="lbl">걸음 빠르기</div></div>
+          <div><div class="num" id="stat-speed-samples">0회</div><div class="lbl">반영된 이동</div></div>
+        </div>
+        <p class="hint" id="speed-hint" style="margin-top:6px;">기본 70m/분으로 계산 중입니다. [도착 완료]를 누르면 실제 걸은 거리와 시간으로 내 속도에 맞춰집니다.</p>
+      </div>
+
+      <div class="card">
         <div class="card-title"><span>⭐ 자주 가는 건물</span><span class="sub">3회 이상</span></div>
         <div class="bldg-list" id="fav-list"></div>
       </div>
@@ -840,6 +859,7 @@
         <button id="btn-iso-reset">↺ 정면 보기</button>
       </div>
       <p class="hint" id="iso-room-info" style="margin-top:6px;">도면 안의 호실을 누르면 설명이 나옵니다.</p>
+      <div class="ev-guide" id="iso-ev-guide">🛗 E/V에서 나온 뒤 어느 쪽으로 가면 되는지 여기에 표시됩니다.</div>
     </div>
 
     <button class="btn-main" id="bd-nav2">🚀 이 건물로 길안내</button>
@@ -1252,7 +1272,11 @@
   });
 
   var WEEKDAYS = ['월', '화', '수', '목', '금'];
-  var SPEED = 70;          // 분당 보행 거리(m). 캠퍼스 평균 도보 속도
+  var SPEED = 70;          // 분당 보행 거리(m). 캠퍼스 평균 도보 속도이자 개인 속도의 기본값
+  var SPEED_OK_MIN = 35;   // 실제 이동에서 믿을 수 있는 속도 범위(분당 m)
+  var SPEED_OK_MAX = 130;
+  var SPEED_CLAMP_MIN = 40; // 범위를 벗어난 값(도착 버튼을 늦게 누른 경우 등)은 이 안으로 보정
+  var SPEED_CLAMP_MAX = 115;
   var ENTER_PENALTY = 1;   // 건물 입구에서 계단·엘리베이터로 올라가는 시간(분)
   var SCHEMA = '4';
 
@@ -1264,7 +1288,8 @@
     visits: 'hanbat_map_visit_counts',
     nav: 'hanbat_map_current_nav',
     mode: 'hanbat_map_map_mode',
-    start: 'hanbat_map_start_sel'
+    start: 'hanbat_map_start_sel',
+    speed: 'hanbat_map_speed'   // 기기별 내 평균 걸음속도(m/분)
   };
 
   var DEFAULT_TIMETABLE = {
@@ -1295,6 +1320,9 @@
     nav: null,
     mapMode: 'osm',
     startSel: 'GPS',
+    walkSpeed: SPEED,     // 이 기기에 저장된 내 평균 걸음속도(m/분)
+    lastSpeed: null,      // 방금 도착 기록에서 잰 속도(m/분)
+    lastSpeedClamped: false, // 극단값이라 보정해서 반영했는지
     gps: { watchId: null, pos: null, ready: false },
     bldg: null,
     floor: 1,
@@ -1510,6 +1538,7 @@
       var nav = localStorage.getItem(KEY.nav);
       var mode = localStorage.getItem(KEY.mode);
       var st = localStorage.getItem(KEY.start);
+      var spd = localStorage.getItem(KEY.speed);
 
       state.timetable = JSON.parse(JSON.stringify(DEFAULT_TIMETABLE));
       if (tt && schema === SCHEMA) {
@@ -1535,8 +1564,14 @@
       }
       if (mode === 'osm' || mode === 'sat' || mode === 'svg') state.mapMode = mode;
       if (st) state.startSel = st;
+      state.walkSpeed = SPEED;
+      if (spd !== null && spd !== '') {
+        var spv = parseFloat(spd);
+        if (isFinite(spv) && spv > 0) state.walkSpeed = clampNum(spv, 30, 150);
+      }
     } catch (e) {
       state.timetable = JSON.parse(JSON.stringify(DEFAULT_TIMETABLE));
+      state.walkSpeed = SPEED;
     }
 
     /* 저장된 날짜가 오늘보다 이전이면 오늘로 (앱을 매일 쓰는 경우) */
@@ -1582,6 +1617,7 @@
       localStorage.setItem(KEY.visits, JSON.stringify(state.visits));
       localStorage.setItem(KEY.mode, state.mapMode);
       localStorage.setItem(KEY.start, state.startSel);
+      localStorage.setItem(KEY.speed, String(Math.round(state.walkSpeed * 10) / 10));
       if (state.nav) localStorage.setItem(KEY.nav, JSON.stringify(state.nav));
       else localStorage.removeItem(KEY.nav);
     } catch (e) { /* 저장 공간 부족 등은 조용히 무시 */ }
@@ -1598,6 +1634,9 @@
     state.records = [];
     state.visits = {};
     state.nav = null;
+    state.walkSpeed = SPEED;
+    state.lastSpeed = null;
+    state.lastSpeedClamped = false;
     state.floor = 1;
     state.bldg = null;
     state.gps.pos = null;
@@ -1631,8 +1670,41 @@
     return null;
   }
 
+  function clampNum(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+  /* 내 걸음속도 빠르기 표시 */
+  function speedLevel(v) {
+    if (v < 60) return '느림';
+    if (v < 85) return '보통';
+    return '빠름';
+  }
+
+  /* 예상 소요시간은 고정 속도가 아니라 이 기기에 저장된 내 평균 걸음속도로 계산한다 */
   function travelMinutes(meters) {
-    return Math.max(1, Math.ceil(meters / SPEED) + ENTER_PENALTY);
+    var speed = (state.walkSpeed > 0 ? state.walkSpeed : SPEED);
+    return Math.max(1, Math.ceil(meters / speed) + ENTER_PENALTY);
+  }
+
+  /* 이동을 마쳤을 때 실제 거리·시간으로 내 평균 걸음속도를 부드럽게 맞춘다 */
+  function updateWalkSpeed(meters, realMin) {
+    var m = Number(meters) || 0;
+    var mins = Number(realMin) || 0;
+    if (m < 40 || mins <= 0) return null;   // 너무 짧은 이동은 속도 추정에서 뺀다
+
+    var measured = m / mins;
+    var inRange = measured >= SPEED_OK_MIN && measured <= SPEED_OK_MAX;
+    var target = inRange ? measured : clampNum(measured, SPEED_CLAMP_MIN, SPEED_CLAMP_MAX);
+
+    /* 지금까지 반영된 이동 수. 많을수록 새 기록의 무게를 줄여 평균이 천천히 움직인다 */
+    var n = state.records.filter(function (r) { return r && r.speedSample; }).length;
+    var alpha = inRange ? Math.min(0.6, Math.max(0.15, 1 / (n + 1))) : 0.15;
+
+    var prev = state.walkSpeed > 0 ? state.walkSpeed : SPEED;
+    var next = clampNum(prev + (target - prev) * alpha, SPEED_CLAMP_MIN, SPEED_OK_MAX);
+    state.walkSpeed = Math.round(next * 10) / 10;
+    state.lastSpeed = Math.round(measured);
+    state.lastSpeedClamped = !inRange;
+    return { measured: measured, inRange: inRange, prev: prev, next: state.walkSpeed };
   }
 
   function renderNextClass() {
@@ -1690,6 +1762,7 @@
     fillDestSelect();
     renderBuildingList();
     renderRecords();
+    renderSpeedCard();
     renderRoutePanel();
   }
 
@@ -1810,6 +1883,7 @@
         '<div><div class="h-dest">' + esc(r.dest) + '</div>' +
         '<div class="h-meta">' + esc(r.date) + ' (' + esc(r.day) + ') · ' + esc(r.start) +
         (r.room ? ' · ' + esc(r.room) : '') +
+        (r.meters ? ' · ' + r.meters + 'm' : '') +
         (r.changedFrom ? '<br>변경 전: ' + esc(r.changedFrom) : '') +
         (r.feedback ? '<br>평가: ' + esc(r.feedback) : '') + '</div></div>' +
         '<div class="h-right"><div class="h-time">' + (r.realMin || r.estTime) + '분</div>' +
@@ -1818,6 +1892,23 @@
       '</li>';
     });
     list.innerHTML = out;
+  }
+
+  /* 위 오늘 요약 옆에 내 평균 걸음속도를 함께 보여 준다 */
+  function renderSpeedCard() {
+    var v = state.walkSpeed > 0 ? state.walkSpeed : SPEED;
+    var n = state.records.filter(function (r) { return r && r.speed !== null && r.speed !== undefined; }).length;
+    $('stat-speed').textContent = Math.round(v) + 'm/분';
+    $('stat-speed-level').textContent = speedLevel(v);
+    $('stat-speed-samples').textContent = n + '회';
+    var hint = $('speed-hint');
+    if (state.lastSpeedClamped) {
+      hint.textContent = '방금 이동은 걸린 시간이 너무 짧거나 길어서 조금만 반영했습니다. 예상 소요시간과 지각 위험은 지금 ' + Math.round(v) + 'm/분 기준입니다.';
+    } else if (!n) {
+      hint.textContent = '기본 ' + SPEED + 'm/분으로 계산 중입니다. [도착 완료]를 누르면 실제 걸은 거리와 시간으로 내 속도에 맞춰집니다.';
+    } else {
+      hint.textContent = '이동 ' + n + '회 기록으로 맞춘 내 속도입니다. 홈의 다음 수업·지각 위험·길 안내 예상 시간에 자동으로 반영됩니다.';
+    }
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -2252,6 +2343,10 @@
     else if (realMin > nav.estMin + 1) status = '지연';
     else status = '정시 도착';
 
+    /* 실제 이동 거리·시간을 함께 남기고, 그 값으로 내 평균 걸음속도를 다시 맞춘다 */
+    var meters = Math.round(Number(nav.meters) || 0);
+    var sp = updateWalkSpeed(meters, realMin);
+
     var b = BLD[nav.destCode];
     state.visits[nav.destCode] = (state.visits[nav.destCode] || 0) + 1;
     state.records.unshift({
@@ -2264,6 +2359,10 @@
       room: nav.room || '',
       estTime: nav.estMin,
       realMin: realMin,
+      meters: meters,
+      speed: sp ? Math.round(sp.measured) : null,
+      speedSample: !!(sp && sp.inRange),
+      speedClamped: !!(sp && !sp.inRange),
       status: status,
       changedFrom: nav.changedFrom || '',
       feedback: ''
@@ -2271,8 +2370,16 @@
     state.records = state.records.slice(0, 200);
     saveState();
     renderRecords();
+    renderSpeedCard();
+    renderNextClass();
     $('feedback-box').style.display = 'block';
-    toast('도착 기록을 저장했습니다 (' + status + ' · 실제 ' + realMin + '분)');
+
+    var msg = '도착 기록을 저장했습니다 (' + status + ' · 실제 ' + realMin + '분)';
+    if (sp) {
+      msg += ' · 내 속도 ' + Math.round(state.walkSpeed) + 'm/분';
+      if (!sp.inRange) msg += '(시간이 비정상이라 조금만 반영)';
+    }
+    toast(msg);
   }
 
   function submitFeedback(good) {
@@ -2462,6 +2569,7 @@
     if (b.levels <= 0) {
       svg.innerHTML = '<text x="180" y="112" text-anchor="middle" font-size="11" fill="#64748b">출입구 · 보행로 연결 지점입니다.</text>' +
         '<text x="180" y="132" text-anchor="middle" font-size="10" fill="#94a3b8">건물 내부 도면은 없습니다.</text>';
+      if ($('iso-ev-guide')) $('iso-ev-guide').textContent = '건물 내부 도면이 없는 출입구입니다. 엘리베이터는 안내 건물(경상학관·인문사회관 등)의 층별 도면에서 확인할 수 있습니다.';
       return;
     }
 
@@ -2531,12 +2639,28 @@
       s.push(poly([a1, a2p, b2, b1], 'rgba(241,245,249,0.88)', '#94a3b8', 0.8));
     }
 
-    /* 계단 · 엘리베이터 */
-    var st = [[86, 36], [96, 36], [96, 54], [86, 54]].map(function (p) { return isoPoint(p[0], p[1], 0, rot); });
-    s.push(poly(st, '#fee2e2', '#fca5a5', 0.5));
-    var stc = isoPoint(91, 45, 0, rot);
-    s.push('<text x="' + stc[0].toFixed(1) + '" y="' + stc[1].toFixed(1) + '" font-size="4.6" fill="#991b1b" text-anchor="middle">E/V</text>');
-    s.push('<text x="' + stc[0].toFixed(1) + '" y="' + (stc[1] + 5).toFixed(1) + '" font-size="4.6" fill="#991b1b" text-anchor="middle">계단</text>');
+    /* 계단 · 엘리베이터(E/V) — E/V는 한눈에 보이도록 진한 파랑으로 강조 */
+    var stPts = [[86, 46], [96, 46], [96, 54], [86, 54]].map(function (p) { return isoPoint(p[0], p[1], 0, rot); });
+    s.push(poly(stPts, '#fee2e2', '#fca5a5', 0.5));
+    var evPts = [[86, 36], [96, 36], [96, 44.4], [86, 44.4]].map(function (p) { return isoPoint(p[0], p[1], 0, rot); });
+    s.push(poly(evPts, '#2563eb', '#1d4ed8', 1.3, 'data-ev="1"'));
+    var evc = isoPoint(91, 40.2, 0, rot);
+    s.push('<text x="' + evc[0].toFixed(1) + '" y="' + (evc[1] + 1.9).toFixed(1) + '" font-size="5.6" font-weight="900" fill="#ffffff" text-anchor="middle" pointer-events="none">E/V</text>');
+    var stc = isoPoint(91, 50, 0, rot);
+    s.push('<text x="' + stc[0].toFixed(1) + '" y="' + (stc[1] + 2).toFixed(1) + '" font-size="4.4" fill="#991b1b" text-anchor="middle" pointer-events="none">계단</text>');
+
+    /* 내 수업 호실(★)이 있는 층이면 E/V 배지에 방향까지 같이 적는다 */
+    var myRoom = null;
+    for (var mri = 0; mri < rooms.length; mri++) {
+      if (mine[String(rooms[mri].no)]) { myRoom = rooms[mri]; break; }
+    }
+    var evSide = '';
+    var evText = '🛗 E/V';
+    if (myRoom) {
+      evSide = ((myRoom.x + myRoom.w / 2) < 91) ? '왼쪽' : '오른쪽';
+      evText = '🛗 E/V · ' + evSide + ' ' + myRoom.no + '★';
+    }
+    s.push(badgePill(evBadgePos(evc, evText), evText));
 
     /* 방향 표지판 (복도 양 끝 · 중앙) */
     var corridorAngle = signAngle(rot);
@@ -2544,9 +2668,24 @@
       .map(function (r) { return r.no; }).slice(0, 4).join('·');
     var rightRooms = rooms.filter(function (r) { return r.x > 62; })
       .map(function (r) { return r.no; }).slice(-4).join('·');
-    s.push(signboard(isoPoint(6, 30, 6, rot), corridorAngle + 180, '◀ ' + (leftRooms || '-'), '#0b2545'));
-    s.push(signboard(isoPoint(94, 30, 6, rot), corridorAngle, (rightRooms || '-') + ' ▶', '#0b2545'));
+    if (leftRooms) s.push(signboard(isoPoint(6, 30, 6, rot), corridorAngle + 180, '◀ ' + leftRooms, '#0b2545'));
+    if (rightRooms) s.push(signboard(isoPoint(84, 30, 6, rot), corridorAngle, rightRooms + ' ▶', '#0b2545'));
     s.push(signboard(isoPoint(48, 30, 8, rot), corridorAngle - 90, floorLabel(floor) + ' · ' + b.code, '#b45309'));
+
+    /* E/V 기준 내 호실(★) 방향 주행선: E/V → 복도 → 호실 */
+    if (myRoom) {
+      var tx = myRoom.x + myRoom.w / 2;
+      var isBottom = (myRoom.y + myRoom.h / 2) > 35;
+      var tyEnd = isBottom ? (myRoom.y + myRoom.h / 2) : (myRoom.y + 2.5);
+      var lp = [[91, 35], [91, 30], [tx, 30], [tx, tyEnd]].map(function (p) { return isoPoint(p[0], p[1], 0.4, rot); });
+      var dLine = lp.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join('');
+      s.push('<path d="' + dLine + '" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="3 2" stroke-linecap="round" stroke-linejoin="round"/>');
+      var pEnd = lp[lp.length - 1], pPrev = lp[lp.length - 2];
+      var ang = Math.atan2(pEnd[1] - pPrev[1], pEnd[0] - pPrev[0]);
+      var ah1 = [pEnd[0] - 4.6 * Math.cos(ang - 0.45), pEnd[1] - 4.6 * Math.sin(ang - 0.45)];
+      var ah2 = [pEnd[0] - 4.6 * Math.cos(ang + 0.45), pEnd[1] - 4.6 * Math.sin(ang + 0.45)];
+      s.push('<path d="M' + pEnd[0].toFixed(1) + ' ' + pEnd[1].toFixed(1) + 'L' + ah1[0].toFixed(1) + ' ' + ah1[1].toFixed(1) + 'L' + ah2[0].toFixed(1) + ' ' + ah2[1].toFixed(1) + 'Z" fill="#f59e0b"/>');
+    }
 
     /* 출입구 표시 */
     var doorP = isoPoint(50, 60, 0, rot);
@@ -2561,6 +2700,7 @@
     s.push('<text x="324" y="12" font-size="7" font-weight="800" fill="#334155" text-anchor="middle">N</text>');
 
     svg.innerHTML = s.join('');
+    updateEvGuide(rooms, mine, floor);
 
     /* 호실 클릭 */
     Array.prototype.forEach.call(svg.querySelectorAll('path[data-no]'), function (el) {
@@ -2568,9 +2708,35 @@
       el.addEventListener('click', function () {
         var no = el.getAttribute('data-no');
         var nm = el.getAttribute('data-name');
-        $('iso-room-info').textContent = no + '호 ' + nm + ' · ' + floor + '층 (복도에서 표지판 방향으로 이동)';
+        var rr = null;
+        for (var k = 0; k < rooms.length; k++) {
+          if (String(rooms[k].no) === String(no)) { rr = rooms[k]; break; }
+        }
+        var side = rr ? ((rr.x + rr.w / 2 < 91) ? '왼쪽' : '오른쪽') : '';
+        $('iso-room-info').textContent = no + '호 ' + nm + ' · ' + floor + '층' +
+          (side ? ' · E/V에서 나와 ' + side : ' · 복도에서 표지판 방향으로 이동');
       });
     });
+  }
+
+  /* 도면 아래에 E/V에서 나온 뒤 어느 쪽으로 가야 하는지 크게 적어 준다 */
+  function updateEvGuide(rooms, mine, floor) {
+    var el = $('iso-ev-guide');
+    if (!el) return;
+    var my = null;
+    for (var i = 0; i < rooms.length; i++) {
+      if (mine[String(rooms[i].no)]) { my = rooms[i]; break; }
+    }
+    if (!my) {
+      el.innerHTML = '🛗 <b>E/V</b>는 오른쪽 아래 파란 칸입니다. E/V에서 나온 뒤 복도 좌우 표지판을 보고 내 호실 쪽으로 가세요.';
+      return;
+    }
+    var side = (my.x + my.w / 2 < 91) ? '왼쪽' : '오른쪽';
+    var sameSide = (my.y + my.h / 2) > 35;
+    el.innerHTML = '🛗 <b>E/V</b>에서 나와서 <b style="color:#b45309;">' + side + '</b> · ' + esc(my.no) + '★ (' + floorLabel(floor) + ')<br>' +
+      '<span style="font-weight:600;color:#475569;">E/V에서 나와 복도로 나간 뒤 ' + side + '으로 걸어 ' +
+      (sameSide ? 'E/V와 같은 쪽에 있는 ' : '복도 건너편에 있는 ') + esc(my.no) + '호로 들어가세요.</span><br>' +
+      '<span style="font-weight:600;color:#64748b;">도면의 주황 점선이 가는 길입니다. 도면을 돌려도 왼쪽·오른쪽은 엘리베이터에서 나란히 선 기준이라 그대로이고, 🧭 나침반을 켜면 화면 위쪽이 걷는 방향이 되어 실제와 같아집니다.</span>';
   }
 
   function signAngle(rot) {
@@ -2582,14 +2748,33 @@
     return Math.atan2(p1[1] - p0[1], p1[0] - p0[0]) * 180 / Math.PI + 90;
   }
 
-  function signboard(p, angleDeg, text, color) {
+  function signboard(p, angleDeg, text, color, textColor, borderColor) {
     var a = angleDeg;
     var aa = ((a % 360) + 360) % 360;
     if (aa > 90 && aa < 270) a = a + 180;
     var w = Math.max(20, text.length * 4.1 + 7), h = 10.5;
     var g = '<g transform="translate(' + p[0].toFixed(1) + ',' + p[1].toFixed(1) + ') rotate(' + a.toFixed(1) + ')">';
-    g += '<rect x="' + (-w / 2).toFixed(1) + '" y="' + (-h / 2).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h + '" rx="2.6" fill="' + color + '" opacity="0.95"/>';
-    g += '<text x="0" y="2.2" font-size="6" font-weight="800" fill="#ffffff" text-anchor="middle">' + esc(text) + '</text>';
+    g += '<rect x="' + (-w / 2).toFixed(1) + '" y="' + (-h / 2).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h + '" rx="2.6" fill="' + color + '"' + (borderColor ? ' stroke="' + borderColor + '" stroke-width="0.8"' : '') + ' opacity="0.95"/>';
+    g += '<text x="0" y="2.2" font-size="6" font-weight="800" fill="' + (textColor || '#ffffff') + '" text-anchor="middle">' + esc(text) + '</text>';
+    g += '</g>';
+    return g;
+  }
+
+  /* 도면 위에 떠 있는 배지 (E/V 표시용) */
+  function badgeWidth(text) { return Math.max(26, text.length * 5.2 + 9); }
+  /* E/V 캄 바로 옆 빈 자리에 배지를 둔다 (화면 기준, 도면 밖으로 넘치지 않게) */
+  function evBadgePos(evc, text) {
+    var w = badgeWidth(text);
+    return [
+      clampNum(evc[0] + w / 2 + 6, w / 2 + 4, 356 - w / 2),
+      clampNum(evc[1] - 16, 16, 244)
+    ];
+  }
+  function badgePill(p, text) {
+    var w = badgeWidth(text), h = 11;
+    var g = '<g transform="translate(' + p[0].toFixed(1) + ',' + p[1].toFixed(1) + ')" pointer-events="none">';
+    g += '<rect x="' + (-w / 2).toFixed(1) + '" y="' + (-h / 2).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h + '" rx="5.5" fill="#facc15" stroke="#b45309" stroke-width="0.9"/>';
+    g += '<text x="0" y="2.3" font-size="6.2" font-weight="900" fill="#0b2545" text-anchor="middle">' + esc(text) + '</text>';
     g += '</g>';
     return g;
   }
@@ -3125,6 +3310,7 @@
       date: state.today,
       day: state.day,
       classes: dayClasses(state.day).length,
+      walkSpeed: Math.round(state.walkSpeed * 10) / 10,
       nav: state.nav ? { dest: state.nav.destCode, m: state.nav.meters, min: state.nav.estMin } : null,
       records: state.records.length
     };
