@@ -2477,7 +2477,7 @@
     var cor = [[4, 25], [92, 25], [92, 35], [4, 35]].map(function (p) { return isoPoint(p[0], p[1], 0, rot); });
     s.push(poly(cor, '#e2e8f0', '#cbd5e1', 0.4));
     var cMid = isoPoint(48, 30, 0, rot);
-    s.push('<text x="' + cMid[0].toFixed(1) + '" y="' + (cMid[1] + 2).toFixed(1) + '" font-size="6" font-weight="700" fill="#94a3b8" text-anchor="middle">복도</text>');
+    s.push('<text x="' + cMid[0].toFixed(1) + '" y="' + (cMid[1] + 2).toFixed(1) + '" font-size="6" font-weight="700" fill="#94a3b8" text-anchor="middle" transform="rotate(' + signAngle(rot).toFixed(1) + ' ' + cMid[0].toFixed(1) + ' ' + cMid[1].toFixed(1) + ')">복도</text>');
 
     var COLORS = {
       class: ['#dbeafe', '#93c5fd', '#1e3a8a'],
@@ -2487,6 +2487,10 @@
     };
 
     var mine = myRoomsOf(b.code);
+    var cAngle = signAngle(rot);
+    var cAng = cAngle;
+    var cNorm = ((cAng % 360) + 360) % 360;
+    if (cNorm > 90 && cNorm < 270) cAng = cAng + 180;
     rooms.sort(function (p, q) { return (p.x + p.y) - (q.x + q.y); });
     rooms.forEach(function (r) {
       var c = COLORS[r.t] || COLORS['class'];
@@ -2501,11 +2505,12 @@
       var cen = isoPoint(rp, rq, 0, rot);
       var eW = Math.abs(isoPoint(r.x + r.w, r.y, 0, rot)[0] - isoPoint(r.x, r.y, 0, rot)[0]);
       var named = r.name && r.name !== '강의실';
-      var yBase = named && eW > 26 ? cen[1] - 1 : cen[1] + 2;
-      s.push('<text x="' + cen[0].toFixed(1) + '" y="' + yBase.toFixed(1) + '" font-size="6.4" font-weight="800" fill="' + c[2] + '" text-anchor="middle" pointer-events="none">' + esc(r.no) + (isMine ? '★' : '') + '</text>');
-      if (named && eW > 26) {
+      var ro = ' rotate(' + cAng.toFixed(1) + ' ' + cen[0].toFixed(1) + ' ' + cen[1].toFixed(1) + ')';
+      var yBase = named && eW > 30 ? cen[1] - 1 : cen[1] + 2.2;
+      s.push('<text x="' + cen[0].toFixed(1) + '" y="' + yBase.toFixed(1) + '" font-size="6.8" font-weight="800" fill="' + c[2] + '" text-anchor="middle" pointer-events="none" transform="' + ro.trim() + '">' + esc(r.no) + (isMine ? '★' : '') + '</text>');
+      if (named && eW > 30) {
         var nm = r.name.length > 8 ? r.name.slice(0, 8) + '…' : r.name;
-        s.push('<text x="' + cen[0].toFixed(1) + '" y="' + (cen[1] + 6.4).toFixed(1) + '" font-size="5.2" font-weight="700" fill="' + c[2] + '" text-anchor="middle" pointer-events="none">' + esc(nm) + '</text>');
+        s.push('<text x="' + cen[0].toFixed(1) + '" y="' + (cen[1] + 6.6).toFixed(1) + '" font-size="5.4" font-weight="700" fill="' + c[2] + '" text-anchor="middle" pointer-events="none" transform="' + ro.trim() + '">' + esc(nm) + '</text>');
       }
     });
 
@@ -2548,7 +2553,6 @@
     s.push('</g>');
     s.push('<text x="324" y="12" font-size="7" font-weight="800" fill="#334155" text-anchor="middle">N</text>');
 
-    s.push('<text x="8" y="252" font-size="8" font-weight="700" fill="#64748b">' + esc(b.code + ' ' + b.name + ' · ' + floorLabel(floor)) + '</text>');
     svg.innerHTML = s.join('');
 
     /* 호실 클릭 */
