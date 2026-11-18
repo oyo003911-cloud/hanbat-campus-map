@@ -1643,7 +1643,7 @@
     $('nc-risk').style.display = 'none';
 
     if (!nc) {
-      $('nc-time').textContent = '--:--';
+      $('nc-time').textContent = '없음';
       $('nc-name').textContent = state.day + '요일 남은 수업 없음';
       $('nc-room').textContent = '';
       $('nc-travel').textContent = '-';
@@ -2505,12 +2505,11 @@
       var cen = isoPoint(rp, rq, 0, rot);
       var eW = Math.abs(isoPoint(r.x + r.w, r.y, 0, rot)[0] - isoPoint(r.x, r.y, 0, rot)[0]);
       var named = r.name && r.name !== '강의실';
-      var ro = ' rotate(' + cAng.toFixed(1) + ' ' + cen[0].toFixed(1) + ' ' + cen[1].toFixed(1) + ')';
       var yBase = named && eW > 30 ? cen[1] - 1 : cen[1] + 2.2;
-      s.push('<text x="' + cen[0].toFixed(1) + '" y="' + yBase.toFixed(1) + '" font-size="6.8" font-weight="800" fill="' + c[2] + '" text-anchor="middle" pointer-events="none" transform="' + ro.trim() + '">' + esc(r.no) + (isMine ? '★' : '') + '</text>');
+      s.push('<text x="' + cen[0].toFixed(1) + '" y="' + yBase.toFixed(1) + '" font-size="6.8" font-weight="800" fill="' + c[2] + '" text-anchor="middle" pointer-events="none">' + esc(r.no) + (isMine ? '★' : '') + '</text>');
       if (named && eW > 30) {
         var nm = r.name.length > 8 ? r.name.slice(0, 8) + '…' : r.name;
-        s.push('<text x="' + cen[0].toFixed(1) + '" y="' + (cen[1] + 6.6).toFixed(1) + '" font-size="5.4" font-weight="700" fill="' + c[2] + '" text-anchor="middle" pointer-events="none" transform="' + ro.trim() + '">' + esc(nm) + '</text>');
+        s.push('<text x="' + cen[0].toFixed(1) + '" y="' + (cen[1] + 6.6).toFixed(1) + '" font-size="5.4" font-weight="700" fill="' + c[2] + '" text-anchor="middle" pointer-events="none">' + esc(nm) + '</text>');
       }
     });
 
