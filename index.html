@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>난 내갈길을 간다 - 국립한밭대학교 캠퍼스 길찾기</title>
+  <title>난 내갈길을 간다</title>
+  <meta name="apple-mobile-web-app-title" content="난 내갈길을 간다">
   <meta name="description" content="국립한밭대학교 유성덕명캠퍼스 보행로 기반 시간표 연동 길찾기. 데이터가 없어도 오프라인 지도로 작동합니다.">
   <meta name="theme-color" content="#003876">
-  <link id="manifest-link" rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22%EB%82%9C%20%EB%82%B4%EA%B0%88%EA%B8%B8%EC%9D%84%20%EA%B0%84%EB%8B%A4%22%2C%22short_name%22%3A%22%EB%82%B4%EA%B0%88%EA%B8%B8%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23003876%22%2C%22theme_color%22%3A%22%23003876%22%7D">
+  <link id="manifest-link" rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22%EB%82%9C%20%EB%82%B4%EA%B0%88%EA%B8%B8%EC%9D%84%20%EA%B0%84%EB%8B%A4%22%2C%22short_name%22%3A%22%EB%82%9C%20%EB%82%B4%EA%B0%88%EA%B8%B8%EC%9D%84%20%EA%B0%84%EB%8B%A4%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23003876%22%2C%22theme_color%22%3A%22%23003876%22%7D">
   <link id="apple-icon" rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='36' fill='%23003876'/%3E%3Ctext x='90' y='122' font-size='92' text-anchor='middle'%3E%F0%9F%A7%AD%3C/text%3E%3C/svg%3E">
 
   <!-- Leaflet 오픈 지도 라이브러리 (온라인일 때만 사용, 없으면 내장 SVG 지도로 자동 전환) -->
@@ -205,6 +206,53 @@
     .next-class .nc-row b { color: var(--text); }
     .next-class .nc-from { margin-top: 5px; font-size: 9.5px; font-weight: 700; color: #64748b; line-height: 1.4; }
     .risk-text { color: var(--danger); font-weight: 800; font-size: 11px; line-height: 1.4; }
+
+    /* ── 기본 출발지 버튼 · 선택 시트 ── */
+    .origin-btn {
+      display: flex; align-items: center; gap: 9px; width: 100%;
+      background: #fff; border: 1.5px solid #bfdbfe; border-radius: var(--radius);
+      padding: 9px 11px; cursor: pointer; text-align: left; box-shadow: var(--shadow);
+    }
+    .origin-btn:active { background: #eef6ff; }
+    .origin-btn .ob-ico { font-size: 19px; line-height: 1; flex: none; }
+    .origin-btn .ob-body { flex: 1; min-width: 0; }
+    .origin-btn .ob-label { display: block; font-size: 9px; font-weight: 800; color: var(--muted); letter-spacing: 0.3px; }
+    .origin-btn .ob-name {
+      display: block; font-size: 13px; font-weight: 900; color: var(--primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.35;
+    }
+    .origin-btn .ob-change {
+      flex: none; font-size: 10.5px; font-weight: 800; color: #0369a1;
+      background: #e0f2fe; border-radius: 999px; padding: 5px 9px;
+    }
+    .ob-sec-title {
+      font-size: 11.5px; font-weight: 900; color: #334155;
+      margin: 4px 0 -3px; padding-left: 2px;
+    }
+    .ob-opt {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      background: #f8fafc; border: 1.5px solid var(--border); border-radius: 11px;
+      padding: 10px 11px; cursor: pointer; text-align: left;
+    }
+    .ob-opt:active { background: #eef1f4; }
+    .ob-opt.on { background: #eef6ff; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12); }
+    .ob-opt .oo-ico { font-size: 19px; line-height: 1; flex: none; }
+    .ob-opt .oo-body { flex: 1; min-width: 0; }
+    .ob-opt .oo-name { display: block; font-size: 12.5px; font-weight: 800; color: var(--text); line-height: 1.35; }
+    .ob-opt .oo-sub { display: block; font-size: 9.5px; color: var(--muted); margin-top: 1px; line-height: 1.35; }
+    .ob-opt .oo-check {
+      flex: none; display: none; font-size: 9.5px; font-weight: 900; color: #fff;
+      background: #2563eb; border-radius: 999px; padding: 3px 7px;
+    }
+    .ob-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .ob-grid .ob-opt { position: relative; padding: 9px 9px; gap: 7px; }
+    .ob-grid .oo-ico { font-size: 15px; }
+    .ob-grid .oo-name { font-size: 11.5px; }
+    .ob-grid .oo-sub { font-size: 8.5px; }
+    .ob-grid .oo-check {
+      position: absolute; top: 5px; right: 5px;
+      padding: 2px 6px; font-size: 8px; letter-spacing: -0.2px;
+    }
 
     /* ── 수업 핫키 ── */
     .class-list { display: flex; flex-direction: column; gap: 8px; }
@@ -712,6 +760,16 @@
     <!-- ═══════════ 1. 홈 ═══════════ -->
     <section id="tab-home" class="tab-content active">
 
+      <!-- 기본 출발지 -->
+      <button class="origin-btn" id="btn-default-origin" title="기본 출발지를 바꿉니다">
+        <span class="ob-ico" id="default-origin-ico">🏠</span>
+        <span class="ob-body">
+          <span class="ob-label">기본 출발지 · GPS가 꺼져 있을 때</span>
+          <span class="ob-name" id="default-origin-name">D7 미래동</span>
+        </span>
+        <span class="ob-change">변경 ➔</span>
+      </button>
+
       <!-- 다음 수업까지 -->
       <div class="next-class" id="next-class-card">
         <div class="nc-top">
@@ -755,6 +813,7 @@
             <option value="NGATE">북문</option>
             <option value="SGATE">남문</option>
           </select>
+          <p class="hint" id="start-hint" style="margin-top:5px;">GPS가 꺼져 있으면 기본 출발지 <b>D7 미래동</b>에서 출발한 것으로 계산합니다.</p>
         </div>
         <div class="field">
           <label for="select-dest">도착 건물</label>
@@ -818,7 +877,7 @@
             <button class="test-btn" style="background:#059669;" id="btn-sim">🚶 걷기 시뮬</button>
           </div>
         </div>
-        <p class="hint" style="margin-top:6px;text-align:center;">빨간 실선이 실제 보행로입니다. GPS가 안 잡히면 출발지 건물 기준으로 계산합니다.</p>
+        <p class="hint" id="map-gps-hint" style="margin-top:6px;text-align:center;">빨간 실선이 실제 보행로입니다. GPS가 안 잡히면 기본 출발지(D7 미래동) 기준으로 계산합니다.</p>
       </div>
 
       <div class="card">
@@ -912,6 +971,27 @@
     </section>
 
   </main>
+</div>
+
+<!-- ═══════════ 모달: 기본 출발지 선택 ═══════════ -->
+<div class="modal" id="origin-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>📍 기본 출발지 선택</h3>
+      <button class="modal-close" id="om-close">✕</button>
+    </div>
+    <p class="hint" style="margin-top:-2px;">GPS가 꺼져 있거나 위치를 아직 받지 못할 때 어디서 출발한 것으로 계산할지 정합니다. 고르면 홈의 다음 수업과 지도 예상 소요가 바로 바뀝니다.</p>
+
+    <div class="ob-sec-title">🚌 통학생</div>
+    <div id="ob-gate-list" style="display:flex;flex-direction:column;gap:7px;"></div>
+
+    <div class="ob-sec-title">🏠 기숙사 (생활관)</div>
+    <p class="hint" style="margin:-2px 0 0;">사는 동을 고르세요. 생활관 8개 동을 모두 보여 줍니다.</p>
+    <div class="ob-grid" id="ob-dorm-list"></div>
+
+    <p class="hint" id="om-current" style="text-align:center;margin-top:2px;">지금은 <b>D7 미래동</b>에서 출발하는 것으로 계산합니다.</p>
+    <button class="btn-sub" id="om-done">닫기</button>
+  </div>
 </div>
 
 <!-- ═══════════ 모달: 건물 상세 ═══════════ -->
@@ -1010,7 +1090,7 @@
     </div>
 
     <div class="im-steps" id="im-steps"></div>
-    <p class="im-foot">추가한 뒤에는 홈 화면의 <b>내갈길</b> 아이콘으로 열면 됩니다. 인터넷이 끊겨도 오프라인 지도가 뜨니다.</p>
+    <p class="im-foot">추가한 뒤에는 홈 화면의 <b>난 내갈길을 간다</b> 아이콘으로 열면 됩니다. 인터넷이 끊겨도 오프라인 지도가 뜨니다.</p>
     <button class="btn-sub" id="im-ok">확인</button>
   </div>
 </div>
@@ -1400,7 +1480,8 @@
     nav: 'hanbat_map_current_nav',
     mode: 'hanbat_map_map_mode',
     start: 'hanbat_map_start_sel',
-    speed: 'hanbat_map_speed'   // 기기별 내 평균 걸음속도(m/분)
+    speed: 'hanbat_map_speed',  // 기기별 내 평균 걸음속도(m/분)
+    defaultOrigin: 'hanbat_map_default_origin'   // 기기별 기본 출발지(정류장·생활관)
   };
 
   var DEFAULT_TIMETABLE = {
@@ -1431,6 +1512,7 @@
     nav: null,
     mapMode: 'osm',
     startSel: 'GPS',
+    defaultOrigin: 'D7',  // GPS가 없을 때 쓸 기본 출발지(기본 D7 미래동)
     walkSpeed: SPEED,     // 이 기기에 저장된 내 평균 걸음속도(m/분)
     lastSpeed: null,      // 방금 도착 기록에서 잰 속도(m/분)
     lastSpeedClamped: false, // 극단값이라 보정해서 반영했는지
@@ -1651,6 +1733,7 @@
       var mode = localStorage.getItem(KEY.mode);
       var st = localStorage.getItem(KEY.start);
       var spd = localStorage.getItem(KEY.speed);
+      var dorg = localStorage.getItem(KEY.defaultOrigin);
 
       state.timetable = JSON.parse(JSON.stringify(DEFAULT_TIMETABLE));
       if (tt && schema === SCHEMA) {
@@ -1676,6 +1759,8 @@
       }
       if (mode === 'osm' || mode === 'sat' || mode === 'svg') state.mapMode = mode;
       if (st) state.startSel = st;
+      /* 저장된 기본 출발지는 등록된 건물·출입구 코드만 인정하고, 없으면 D7 미래동 */
+      state.defaultOrigin = (dorg && BLD[dorg]) ? dorg : 'D7';
       state.walkSpeed = SPEED;
       if (spd !== null && spd !== '') {
         var spv = parseFloat(spd);
@@ -1728,6 +1813,7 @@
       localStorage.setItem(KEY.visits, JSON.stringify(state.visits));
       localStorage.setItem(KEY.mode, state.mapMode);
       localStorage.setItem(KEY.start, state.startSel);
+      localStorage.setItem(KEY.defaultOrigin, state.defaultOrigin || 'D7');
       localStorage.setItem(KEY.speed, String(Math.round(state.walkSpeed * 10) / 10));
       if (state.nav) localStorage.setItem(KEY.nav, JSON.stringify(state.nav));
       else localStorage.removeItem(KEY.nav);
@@ -1741,6 +1827,7 @@
     state.today = fmtDate(new Date());
     state.day = dayOf(state.today);
     state.startSel = 'GPS';
+    state.defaultOrigin = 'D7';
     state.mapMode = 'osm';
     state.offView = { z: 1, x: 0, y: 0 };
     state.isoRot = 0;
@@ -1827,10 +1914,86 @@
     return { measured: measured, inRange: inRange, prev: prev, next: state.walkSpeed };
   }
 
-  /* GPS가 없을 때 쓸 출발지: 홈에서 고른 건물, 그것도 'GPS'면 학생생활관(D7 미래동) */
+  /* GPS가 없을 때 쓸 출발지: 홈 '내가 직접 찾기'에서 고른 건물, 그것도 'GPS'면 저장된 기본 출발지 */
   function fallbackStartCode() {
     if (state.startSel && state.startSel !== 'GPS' && BLD[state.startSel]) return state.startSel;
+    if (state.defaultOrigin && BLD[state.defaultOrigin]) return state.defaultOrigin;
     return 'D7';
+  }
+
+  /* 기본 출발지 이름: 버스정류장은 사람이 읽기 쉬운 이름으로, 생활관은 'D7 미래동' 형식 */
+  function originName(code) {
+    if (code === 'GATE') return '한밭대 버스정류장(정문)';
+    if (code === 'NGATE') return '북문';
+    if (code === 'SGATE') return '남문';
+    if (BLD[code]) return code + ' ' + BLD[code].name;
+    return code || 'D7 미래동';
+  }
+
+  /* 지도 GPS 줄에 쓰는 짧은 이름 */
+  function originTiny(code) {
+    if (code === 'GATE') return '정문 정류장';
+    if (code === 'NGATE') return '북문';
+    if (code === 'SGATE') return '남문';
+    if (BLD[code]) return code + ' ' + BLD[code].name;
+    return 'D7 미래동';
+  }
+
+  function defaultOriginCode() {
+    var c = state.defaultOrigin;
+    return (c && BLD[c]) ? c : 'D7';
+  }
+
+  /* 기본 출발지를 고르면 이 기기에 저장하고, 다음 수업 카드·지도 요약을 즉시 다시 계산한다 */
+  function setDefaultOrigin(code) {
+    if (!BLD[code]) return false;
+    var old = defaultOriginCode();
+    state.defaultOrigin = code;
+    saveState();
+    renderDefaultOrigin();
+    renderNextClass();
+    /* GPS가 꺼진 상태에서 GPS 출발로 안내 중이었다면 새 기본 출발지로 경로를 다시 계산한다 */
+    if (state.nav && !state.gps.pos && state.startSel === 'GPS') {
+      var r = computeRoute('GPS', state.nav.destCode);
+      if (r) {
+        r.room = state.nav.room;
+        r.startedAt = state.nav.startedAt;
+        r.changed = state.nav.changed;
+        r.changedFrom = state.nav.changedFrom;
+        state.nav = r;
+        drawRoute();
+      }
+    }
+    renderRoutePanel();
+    if (old !== code) toast('기본 출발지: ' + originName(code));
+    return true;
+  }
+
+  /* 홈 상단 기본 출발지 버튼과 선택 창의 현재 표시를 맞춘다 */
+  function renderDefaultOrigin() {
+    var code = defaultOriginCode();
+    var name = originName(code);
+    if ($('default-origin-ico')) $('default-origin-ico').textContent = (code === 'GATE') ? '🚌' : '🏠';
+    if ($('default-origin-name')) $('default-origin-name').textContent = name;
+    if ($('start-hint')) {
+      $('start-hint').innerHTML = 'GPS가 꺼져 있으면 기본 출발지 <b>' + esc(name) + '</b>에서 출발한 것으로 계산합니다.';
+    }
+    if ($('map-gps-hint')) {
+      $('map-gps-hint').textContent = '빨간 실선이 실제 보행로입니다. GPS가 안 잡히면 기본 출발지(' + name + ') 기준으로 계산합니다.';
+    }
+    /* GPS가 꺼져 있을 때만 지도 탭 GPS 줄에 기준 출발지를 함께 적는다 */
+    if (state.gps.watchId === null && !state.gps.pos && $('gps-text')) {
+      $('gps-text').textContent = 'GPS 꺼짐 · ' + originTiny(code) + ' 기준';
+    }
+    /* 선택 창의 카드 강조 */
+    var opts = document.querySelectorAll('#origin-modal .ob-opt');
+    for (var i = 0; i < opts.length; i++) {
+      var on = opts[i].getAttribute('data-code') === code;
+      opts[i].className = 'ob-opt' + (on ? ' on' : '');
+      var chk = opts[i].querySelector('.oo-check');
+      if (chk) chk.style.display = on ? 'inline-block' : 'none';
+    }
+    if ($('om-current')) $('om-current').innerHTML = '지금은 <b>' + esc(name) + '</b>에서 출발하는 것으로 계산합니다.';
   }
 
   function renderNextClass() {
@@ -1871,7 +2034,7 @@
       } else {
         var fb = fallbackStartCode();
         fromNode = BLD[fb].node;
-        fromLabel = fb + ' ' + BLD[fb].name;
+        fromLabel = originName(fb);
       }
       var res = findPath(fromNode, b.node);
       if (res) travel = travelMinutes(res.dist + distM(b.entrance, WALK_NODES[b.node]) + extra);
@@ -1910,6 +2073,7 @@
     renderDate();
     renderWeekdayBar();
     renderSchedule();
+    renderDefaultOrigin();
     renderNextClass();
     fillDestSelect();
     renderBuildingList();
@@ -2083,7 +2247,7 @@
       var fb = fallbackStartCode();
       fromNode = BLD[fb].node;
       startConnector = distM(BLD[fb].entrance, WALK_NODES[fromNode]);
-      startLabel = fb + ' ' + BLD[fb].name + ' (GPS 꺼짐)';
+      startLabel = originName(fb) + ' (GPS 꺼짐)';
       startCode = fb;
     } else if (BLD[startCode]) {
       fromNode = BLD[startCode].node;
@@ -2151,6 +2315,13 @@
     }
   }
 
+  /* 지도 탭에 보여 줄 지금의 출발 기준(GPS → 선택한 건물 → 저장된 기본 출발지) */
+  function currentStartLabel() {
+    if (state.gps.pos) return '내 현재 위치 (GPS)';
+    if (state.startSel !== 'GPS' && BLD[state.startSel]) return originName(state.startSel) + ' (GPS 꺼짐)';
+    return originName(defaultOriginCode()) + ' (기본 출발지)';
+  }
+
   function renderRoutePanel() {
     var nav = state.nav;
     syncIndoorButton(nav);
@@ -2158,7 +2329,7 @@
     var remain = nc ? hhmmToMin(nc.time) - nowMin() : null;
 
     if (!nav) {
-      $('disp-start').textContent = '-';
+      $('disp-start').textContent = currentStartLabel();
       $('disp-dest').textContent = '목적지를 선택하세요';
       $('disp-dist').textContent = '-';
       $('disp-remain').textContent = remain === null ? '오늘 수업 없음' : remain + '분';
@@ -2588,7 +2759,7 @@
       }
     }, function (err) {
       $('gps-dot').className = 'gps-dot';
-      $('gps-text').textContent = 'GPS 수신 불가 · 출발지 건물 기준';
+      $('gps-text').textContent = 'GPS 수신 불가 · ' + originTiny(defaultOriginCode()) + ' 기준';
       renderNextClass();
       toast('위치 권한을 허용하면 현재 자리에서 경로가 다시 계산됩니다');
     }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 12000 });
@@ -2601,7 +2772,7 @@
     state.gps.watchId = null;
     state.gps.ready = false;
     $('gps-dot').className = 'gps-dot';
-    $('gps-text').textContent = 'GPS 꺼짐';
+    $('gps-text').textContent = 'GPS 꺼짐 · ' + originTiny(defaultOriginCode()) + ' 기준';
   }
 
   function simulateWalk() {
@@ -3235,8 +3406,8 @@
     g.textBaseline = 'middle';
     g.fillText('🧭', size / 2, size * 0.42);
     g.fillStyle = '#ffffff';
-    g.font = 'bold ' + Math.round(size * 0.13) + 'px sans-serif';
-    g.fillText('내갈길', size / 2, size * 0.8);
+    g.font = 'bold ' + Math.round(size * 0.085) + 'px sans-serif';
+    g.fillText('난 내갈길을 간다', size / 2, size * 0.8);
     return c.toDataURL('image/png');
   }
 
@@ -3246,8 +3417,8 @@
       var icon192 = makeIcon(192);
       $('apple-icon').href = icon192;
       var manifest = {
-        name: '난 내갈길을 간다 - 한밭대 캠퍼스 길찾기',
-        short_name: '내갈길',
+        name: '난 내갈길을 간다',
+        short_name: '난 내갈길을 간다',
         description: '국립한밭대학교 보행로 기반 시간표 연동 길찾기',
         start_url: '.',
         scope: '.',
@@ -3273,7 +3444,7 @@
       steps: [
         { t: '크롬 메뉴 열기', d: '주소창 오른쪽 위의 <b>⋮</b> 를 누릅니다.', path: ['⋮'] },
         { t: '홈 화면에 추가 선택', d: '메뉴에서 <b>홈 화면에 추가</b>를 누릅니다. (PC 크롬은 <b>앱 설치</b>)', path: ['⋮', '홈 화면에 추가'] },
-        { t: '추가 누르기', d: '이름이 <b>내갈길</b>인지 확인하고 <b>추가</b>를 누릅니다.', path: ['내갈길', '추가'] }
+        { t: '추가 누르기', d: '이름이 <b>난 내갈길을 간다</b>인지 확인하고 <b>추가</b>를 누릅니다.', path: ['난 내갈길을 간다', '추가'] }
       ]
     },
     samsung: {
@@ -3289,7 +3460,7 @@
       steps: [
         { t: '공유 버튼 누르기', d: '사파리 화면 아래(또는 위)의 <b>공유</b> 버튼 <b>□↑</b> 을 누릅니다.', path: ['공유 □↑'] },
         { t: '홈 화면에 추가 선택', d: '목록을 조금 내려 <b>홈 화면에 추가</b>를 누릅니다.', path: ['공유 □↑', '홈 화면에 추가'] },
-        { t: '추가 누르기', d: '이름이 <b>내갈길</b>인지 확인하고 <b>추가</b>를 누릅니다.', path: ['내갈길', '추가'] }
+        { t: '추가 누르기', d: '이름이 <b>난 내갈길을 간다</b>인지 확인하고 <b>추가</b>를 누릅니다.', path: ['난 내갈길을 간다', '추가'] }
       ]
     }
   };
@@ -3376,6 +3547,43 @@
     });
   }
 
+  /* 기본 출발지 선택 창의 카드(통학생 정류장 · 생활관 8개 동)를 BLD 데이터로 만든다 */
+  function dormSubTitle(b) {
+    var group = b.desc.indexOf('제1BTL') >= 0 ? '제1생활관'
+      : (b.desc.indexOf('제2BTL') >= 0 ? '제2생활관' : '생활관');
+    var who = b.desc.indexOf('여학생') >= 0 ? '여학생 동'
+      : (b.desc.indexOf('남학생') >= 0 ? '남학생 동' : '');
+    return group + (who ? ' · ' + who : '');
+  }
+
+  function originOptionHtml(code, ico, name, sub) {
+    return '<button class="ob-opt" type="button" data-code="' + esc(code) + '">' +
+      '<span class="oo-ico">' + ico + '</span>' +
+      '<span class="oo-body">' +
+        '<span class="oo-name">' + esc(name) + '</span>' +
+        '<span class="oo-sub">' + esc(sub) + '</span>' +
+      '</span>' +
+      '<span class="oo-check">선택됨</span>' +
+    '</button>';
+  }
+
+  function buildOriginOptions() {
+    var gateBox = $('ob-gate-list');
+    if (gateBox && BLD.GATE) {
+      gateBox.innerHTML = originOptionHtml('GATE', '🚌', '한밭대 버스정류장 (정문)',
+        '정문 앞 시내버스 정류장 · 통학생이 내리는 곳');
+    }
+    var box = $('ob-dorm-list');
+    if (box) {
+      var html = '';
+      BUILDINGS.forEach(function (b) {
+        if (b.cat !== 'D') return;
+        html += originOptionHtml(b.code, '🏠', b.code + ' ' + b.name, dormSubTitle(b));
+      });
+      box.innerHTML = html;
+    }
+  }
+
   function bindEvents() {
     /* 탭 */
     Array.prototype.forEach.call(document.querySelectorAll('.nav-tab'), function (t) {
@@ -3393,6 +3601,20 @@
     /* 요일 */
     Array.prototype.forEach.call(document.querySelectorAll('.weekday-btn'), function (btn) {
       btn.addEventListener('click', function () { jumpToWeekday(btn.getAttribute('data-day')); });
+    });
+
+    /* 기본 출발지 선택 시트 */
+    $('btn-default-origin').addEventListener('click', function () {
+      renderDefaultOrigin();
+      modalOpen('origin-modal');
+    });
+    $('om-close').addEventListener('click', function () { modalClose('origin-modal'); });
+    $('om-done').addEventListener('click', function () { modalClose('origin-modal'); });
+    $('origin-modal').addEventListener('click', function (e) {
+      if (e.target === this) { modalClose('origin-modal'); return; }
+      var el = e.target.closest ? e.target.closest('[data-code]') : null;
+      if (!el) return;
+      if (setDefaultOrigin(el.getAttribute('data-code'))) modalClose('origin-modal');
     });
 
     /* 출발지 */
@@ -3608,7 +3830,7 @@
     });
 
     /* 모달 배경 닫기 */
-    ['building-modal', 'timetable-modal', 'install-modal'].forEach(function (id) {
+    ['building-modal', 'timetable-modal', 'install-modal', 'origin-modal'].forEach(function (id) {
       $(id).addEventListener('click', function (e) {
         if (e.target === this) this.className = 'modal';
       });
@@ -3667,6 +3889,7 @@
   function init() {
     loadState();
     setupPwa();
+    buildOriginOptions();
     bindEvents();
     setupIsoDrag();
     setupOfflineMap();
@@ -3706,6 +3929,8 @@
       day: state.day,
       classes: dayClasses(state.day).length,
       walkSpeed: Math.round(state.walkSpeed * 10) / 10,
+      defaultOrigin: state.defaultOrigin,
+      startFallback: fallbackStartCode(),
       offZoom: state.offView.z,
       isoBuildings: Object.keys(ISO_CODES),
       indoorBtn: $('btn-dest-indoor') ? $('btn-dest-indoor').style.display : '-',
