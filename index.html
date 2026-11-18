@@ -2880,7 +2880,17 @@
       if (!state.nav) { toast('먼저 길안내를 시작해 주세요'); return; }
       pickBuilding('강의실 변경', function (code) {
         var prev = state.nav.destLabel;
-        var room = state.nav.room;
+        var room = state.nav.room || '';
+        /* 새 건물에 없는 호실이면 호실 표기를 지운다 */
+        if (room) {
+          var digits = String(room).replace(/호$/, '');
+          var found = false;
+          var table = (BLD[code] && BLD[code].rooms) || {};
+          Object.keys(table).forEach(function (f) {
+            (table[f] || []).forEach(function (r) { if (String(r.no) === digits) found = true; });
+          });
+          if (!found) room = '';
+        }
         startNav(code, room);
         state.nav.changed = true;
         state.nav.changedFrom = prev;
