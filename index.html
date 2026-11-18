@@ -1892,7 +1892,7 @@
       $('disp-start').textContent = '-';
       $('disp-dest').textContent = '목적지를 선택하세요';
       $('disp-dist').textContent = '-';
-      $('disp-remain').textContent = remain === null ? '-' : remain + '분';
+      $('disp-remain').textContent = remain === null ? '오늘 수업 없음' : remain + '분';
       $('disp-est').textContent = '-';
       $('route-badge').textContent = '길안내 준비';
       $('alert-late-warning').className = 'alert';
@@ -1987,13 +1987,23 @@
     }
     applyMapMode();
     drawRoute();
+    if (state.map) {
+      setTimeout(function () { state.map.invalidateSize(); drawLeafletRoute(); }, 120);
+    }
   }
 
   function setMapMode(mode) {
     state.mapMode = mode;
     saveState();
+    if (mode !== 'svg' && hasLeaflet() && !state.map) initMap();
     applyMapMode();
     drawRoute();
+    if (mode !== 'svg' && state.map) {
+      setTimeout(function () {
+        state.map.invalidateSize();
+        drawLeafletRoute();
+      }, 280);
+    }
   }
 
   function applyMapMode() {
@@ -2119,12 +2129,12 @@
 
     /* 이름표 */
     var KEYBLD = { S4: 1, S3: 1, N11: 1, S1: 1, S2: 1, D7: 1, N1: 1, N12: 1, S7: 1, S8: 1, S10: 1 };
-    s.push('<g font-size="7" font-weight="700" fill="#1f2937" text-anchor="middle">');
+    s.push('<g font-size="8.6" font-weight="800" fill="#1f2937" text-anchor="middle">');
     BUILDINGS.forEach(function (b) {
       if (b.cat === 'G') return;
       if (!KEYBLD[b.code]) return;
       var c = P(b.lat, b.lng);
-      s.push('<text x="' + c[0] + '" y="' + (Number(c[1]) + 2) + '" stroke="#ffffff" stroke-width="2.4" paint-order="stroke" fill="#111827">' + esc(b.code) + '</text>');
+      s.push('<text x="' + c[0] + '" y="' + (Number(c[1]) + 3) + '" stroke="#ffffff" stroke-width="3" paint-order="stroke" fill="#111827">' + esc(b.code) + '</text>');
     });
     s.push('</g>');
 
@@ -2144,8 +2154,8 @@
         var q = P(p[0], p[1]);
         d2 += (i === 0 ? 'M' : 'L') + q[0] + ' ' + q[1];
       });
-      s.push('<path d="' + d2 + '" fill="none" stroke="#ffffff" stroke-width="5.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>');
-      s.push('<path d="' + d2 + '" fill="none" stroke="#e11d48" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="7 4"/>');
+      s.push('<path d="' + d2 + '" fill="none" stroke="#ffffff" stroke-width="6.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>');
+      s.push('<path d="' + d2 + '" fill="none" stroke="#e11d48" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="8 4.5"/>');
 
       var dst = state.nav.coords[state.nav.coords.length - 1];
       var dp = P(dst[0], dst[1]);
@@ -2617,12 +2627,15 @@
     }
     if (id === 'tab-map') {
       if (state.mapMode !== 'svg' && hasLeaflet() && !state.map) initMap();
-      else if (state.map) setTimeout(function () {
-        state.map.invalidateSize();
-        drawLeafletRoute();
-      }, 150);
       applyMapMode();
       drawRoute();
+      if (state.map) {
+        setTimeout(function () {
+          state.map.invalidateSize();
+          drawLeafletRoute();
+          state.map.invalidateSize();
+        }, 260);
+      }
     }
   }
 
@@ -3025,7 +3038,7 @@
     state.startSel = 'GPS';
     $('select-start').value = state.startSel;
     renderAll();
-    initMap();
+    applyMapMode();
     if (state.nav) {
       var r = computeRoute(state.startSel, state.nav.destCode);
       if (r) {
