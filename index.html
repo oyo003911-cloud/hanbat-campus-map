@@ -992,7 +992,7 @@
     <div id="ob-gate-list" style="display:flex;flex-direction:column;gap:7px;"></div>
 
     <div class="ob-sec-title">🏠 기숙사 (생활관)</div>
-    <p class="hint" style="margin:-2px 0 0;">사는 동을 고르세요. 생활관 8개 동을 모두 보여 줍니다.</p>
+    <p class="hint" style="margin:-2px 0 0;">사는 동을 고르세요. 한밭관·제1BTL·제2BTL 기숙사 6개 동을 보여 줍니다.</p>
     <div class="ob-grid" id="ob-dorm-list"></div>
 
     <p class="hint" id="om-current" style="text-align:center;margin-top:2px;">지금은 <b>D7 미래동</b>에서 출발하는 것으로 계산합니다.</p>
@@ -1445,8 +1445,8 @@
     {code:'D1',name:'독수리동',en:'Eagle Hall',cat:'D',lat:36.345801,lng:127.304849,levels:5,desc:'학생생활관(기숙사)입니다. 제2BTL관으로, 1층에 공용조리실과 카페가 있습니다.',floors:[['1층','공용조리실·카페·세탁실'],['2~5층','생활관 호실']],rooms:{}},
     {code:'D2',name:'소나무동',en:'Pine Tree Hall',cat:'D',lat:36.345969,lng:127.304284,levels:5,desc:'학생생활관(기숙사)입니다. 제1BTL관으로 남학생 동이며, 1층에 식당·편의점·체력단련실이 있습니다.',floors:[['1층','식당·편의점·체력단련실'],['2~5층','생활관 호실']],rooms:{}},
     {code:'D3',name:'목련화동',en:'Magnolia Hall',cat:'D',lat:36.346156,lng:127.30478,levels:5,desc:'학생생활관(기숙사)입니다. 제1BTL관 여학생 동입니다.',floors:[['1층','공용라운지·세탁실'],['2~5층','생활관 호실']],rooms:{}},
-    {code:'D4',name:'안화동',en:'Harmony Hall',cat:'D',lat:36.345696,lng:127.305574,levels:5,desc:'학생생활관(기숙사)입니다. 제1BTL관으로 공용조리실과 탁구실이 있습니다.',floors:[['1층','공용조리실·탁구실'],['2~5층','생활관 호실']],rooms:{}},
-    {code:'D5',name:'성실동',en:'Sincerity Hall',cat:'D',lat:36.345312,lng:127.305255,levels:5,desc:'학생생활관(기숙사)입니다. 제1BTL관 여학생 동입니다.',floors:[['1층','코워킹스페이스·세탁실'],['2~5층','생활관 호실']],rooms:{}},
+    {code:'D4',name:'안화동',en:'Harmony Hall',cat:'D',lat:36.345696,lng:127.305574,levels:5,desc:'학생생활관(기숙사)입니다. 한밭관으로 공용조리실과 탁구실이 있습니다.',floors:[['1층','공용조리실·탁구실'],['2~5층','생활관 호실']],rooms:{}},
+    {code:'D5',name:'성실동',en:'Sincerity Hall',cat:'D',lat:36.345312,lng:127.305255,levels:5,desc:'학생생활관(기숙사)입니다. 한밭관 여학생 동입니다.',floors:[['1층','코워킹스페이스·세탁실'],['2~5층','생활관 호실']],rooms:{}},
     {code:'D6',name:'창조동',en:'Creativity Hall',cat:'D',lat:36.345081,lng:127.305518,levels:5,desc:'학생생활관(기숙사)입니다. 제1BTL관입니다.',floors:[['1층','공용라운지'],['2~5층','생활관 호실']],rooms:{}},
     {code:'D7',name:'미래동',en:'Future Hall',cat:'D',lat:36.34631,lng:127.303532,levels:5,desc:'학생생활관(기숙사)입니다. 제2BTL관 여학생 동으로, 1층에 카페·편의시설과 관생커뮤니티실, 독서실이 있습니다. 캠퍼스 남쪽 끝이라 수업 건물까지 도보 10분 이상 잡으세요.',floors:[['1층','카페·관생커뮤니티실·독서실·세탁실'],['2층','생활관 호실·휴게실'],['3~5층','생활관 호실']],rooms:{'1':[{no:'101',name:'관생커뮤니티실',t:'etc'},{no:'102',name:'카페',t:'etc'},{no:'103',name:'독서실',t:'etc'}]}},
     {code:'D8',name:'인재동',en:'Talent Hall',cat:'D',lat:36.346547,lng:127.304081,levels:5,desc:'학생생활관(기숙사)입니다. 제2BTL관 남학생 동입니다.',floors:[['1층','공용조리실·휴게실'],['2~5층','생활관 호실']],rooms:{}},
@@ -3562,14 +3562,16 @@
     });
   }
 
-  /* 기본 출발지 선택 창의 카드(통학생 정류장 · 생활관 8개 동)를 BLD 데이터로 만든다 */
-  function dormSubTitle(b) {
-    var group = b.desc.indexOf('제1BTL') >= 0 ? '제1생활관'
-      : (b.desc.indexOf('제2BTL') >= 0 ? '제2생활관' : '생활관');
-    var who = b.desc.indexOf('여학생') >= 0 ? '여학생 동'
-      : (b.desc.indexOf('남학생') >= 0 ? '남학생 동' : '');
-    return group + (who ? ' · ' + who : '');
-  }
+  /* 기본 출발지로 고를 수 있는 기숙사 6개 동과 관 구분
+     한밭관 D4 안화동·D5 성실동 / 제1BTL D2 소나무동·D3 목련화동 / 제2BTL D7 미래동(여)·D8 인재동(남) */
+  var DORM_ORIGINS = [
+    { code: 'D4', sub: '한밭관' },
+    { code: 'D5', sub: '한밭관' },
+    { code: 'D2', sub: '제1BTL' },
+    { code: 'D3', sub: '제1BTL' },
+    { code: 'D7', sub: '제2BTL · 여학생 동' },
+    { code: 'D8', sub: '제2BTL · 남학생 동' }
+  ];
 
   function originOptionHtml(code, ico, name, sub) {
     return '<button class="ob-opt" type="button" data-code="' + esc(code) + '">' +
@@ -3591,9 +3593,10 @@
     var box = $('ob-dorm-list');
     if (box) {
       var html = '';
-      BUILDINGS.forEach(function (b) {
-        if (b.cat !== 'D') return;
-        html += originOptionHtml(b.code, '🏠', b.code + ' ' + b.name, dormSubTitle(b));
+      DORM_ORIGINS.forEach(function (d) {
+        var b = BLD[d.code];
+        if (!b) return;
+        html += originOptionHtml(b.code, '🏠', b.code + ' ' + b.name, d.sub);
       });
       box.innerHTML = html;
     }
