@@ -112,6 +112,9 @@
       line-height: 1.2;
     }
     .test-btn:active { background: #6c757d; transform: scale(0.96); }
+    .test-toolbar .btn-group .test-btn { font-size: 9.5px; padding: 8px 1px; min-height: 30px; }
+    .test-btn.btn-today { background: #ffd166; color: #3b2f00; }
+    .test-btn.btn-today:active { background: #f0b429; }
 
     /* ── 요일 선택 ── */
     .weekday-selector {
@@ -200,6 +203,7 @@
     .next-class .nc-room { font-size: 11px; color: #0369a1; font-weight: 700; }
     .next-class .nc-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
     .next-class .nc-row b { color: var(--text); }
+    .next-class .nc-from { margin-top: 5px; font-size: 9.5px; font-weight: 700; color: #64748b; line-height: 1.4; }
     .risk-text { color: var(--danger); font-weight: 800; font-size: 11px; line-height: 1.4; }
 
     /* ── 수업 핫키 ── */
@@ -300,6 +304,15 @@
     }
     .btn-sub:active { background: #e2e8ee; }
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .btn-indoor {
+      width: 100%; min-height: 46px;
+      background: #e0f2fe; color: #075985;
+      border: 1.5px solid #7dd3fc; border-radius: var(--radius);
+      font-size: 13.5px; font-weight: 900; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      box-shadow: 0 3px 8px rgba(2, 132, 199, 0.16);
+    }
+    .btn-indoor:active { transform: scale(0.985); background: #bae6fd; }
 
     /* ── 지도 ── */
     .map-card { padding: 10px; }
@@ -307,6 +320,29 @@
     #leaflet-map { width: 100%; height: 300px; display: none; }
     #offline-map { width: 100%; height: 300px; display: block; background: #eef3f7; }
     #offline-map svg { width: 100%; height: 100%; display: block; }
+    #offline-map { touch-action: none; -webkit-user-select: none; user-select: none; }
+    #offline-map svg { touch-action: none; cursor: grab; }
+    #offline-map.dragging svg { cursor: grabbing; }
+    #offline-map path[data-obldg], #offline-map rect[data-obldg], #offline-map circle[data-obldg] { cursor: pointer; }
+    .map-ctrl { position: absolute; right: 7px; bottom: 7px; display: none; flex-direction: column; gap: 4px; z-index: 600; }
+    .map-ctrl.on { display: flex; }
+    .map-ctrl button {
+      width: 33px; height: 33px; padding: 0;
+      border-radius: 9px; border: 1.5px solid #b6c2cf;
+      background: rgba(255, 255, 255, 0.96); color: #0f172a;
+      font-size: 15px; font-weight: 900; line-height: 1; cursor: pointer;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
+    }
+    .map-ctrl button.fit { font-size: 9.5px; font-weight: 800; letter-spacing: -0.4px; }
+    .map-ctrl button:active { transform: scale(0.94); background: #e8f0fe; }
+    .offline-tip {
+      position: absolute; left: 7px; bottom: 7px; z-index: 600;
+      display: none; max-width: 62%;
+      background: rgba(255, 255, 255, 0.93); border: 1px solid #cbd5e1; border-radius: 7px;
+      padding: 3px 6px; font-size: 8.5px; font-weight: 700; color: #334155;
+      line-height: 1.35; pointer-events: none;
+    }
+    .offline-tip.on { display: block; }
     .map-badge {
       position: absolute;
       top: 6px;
@@ -554,6 +590,55 @@
       cursor: pointer;
     }
     .iso-tools button.on { background: #0b2545; color: #fff; border-color: #0b2545; }
+    .bd-note {
+      background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px;
+      padding: 10px; font-size: 11.5px; color: #475569; line-height: 1.6;
+    }
+    .bd-note b { color: #0369a1; }
+
+    /* ── 홈 화면 추가 모달 ── */
+    .im-install-now {
+      width: 100%; min-height: 48px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, #0284c7, #0a5bb0); color: #fff;
+      font-size: 14px; font-weight: 900; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      box-shadow: 0 5px 14px rgba(2, 132, 199, 0.32);
+    }
+    .im-install-now:active { transform: scale(0.985); }
+    .im-lead { font-size: 11.5px; color: #475569; line-height: 1.55; }
+    .im-lead b { color: #0f172a; }
+    .im-tabs { display: flex; gap: 4px; background: #f1f5f9; border-radius: 11px; padding: 4px; }
+    .im-tab {
+      flex: 1; min-width: 0; height: 34px; padding: 0 2px;
+      border: none; border-radius: 8px; background: transparent;
+      color: #64748b; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap;
+    }
+    .im-tab.on { background: #fff; color: #003876; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.14); }
+    .im-steps { display: flex; flex-direction: column; gap: 7px; }
+    .im-step {
+      display: flex; gap: 9px; align-items: flex-start;
+      background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 11px; padding: 10px 11px;
+    }
+    .im-num {
+      flex: none; width: 22px; height: 22px; border-radius: 50%;
+      background: #003876; color: #fff; font-size: 11.5px; font-weight: 900;
+      display: flex; align-items: center; justify-content: center; margin-top: 1px;
+    }
+    .im-step-t { font-size: 12px; font-weight: 800; color: #0f172a; line-height: 1.4; }
+    .im-step-d { font-size: 11px; color: #475569; line-height: 1.5; margin-top: 2px; }
+    .im-path { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px; }
+    .im-chip {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: #e8f0fe; border: 1px solid #bfdbfe; color: #0b3d91;
+      font-size: 10.5px; font-weight: 800; border-radius: 7px; padding: 3px 7px; line-height: 1.25;
+    }
+    .im-chip.hit { background: #fff7e6; border-color: #fcd34d; color: #92400e; }
+    .im-arrow { color: #94a3b8; font-size: 10px; font-weight: 900; }
+    .im-foot { font-size: 10px; color: #94a3b8; line-height: 1.5; text-align: center; }
+    .im-note {
+      background: #ecfdf5; border: 1.5px solid #a7f3d0; color: #065f46;
+      font-size: 11px; font-weight: 700; border-radius: 9px; padding: 8px 10px; line-height: 1.5;
+    }
 
     /* ── 토스트 ── */
     #toast {
@@ -599,6 +684,7 @@
     <div>오늘 <span class="date-badge" id="current-app-date">-</span></div>
     <div class="btn-group">
       <button class="test-btn" id="btn-prev-day" title="앱 안의 날짜를 하루 되돌립니다">◀ 전날로 이동</button>
+      <button class="test-btn btn-today" id="btn-today" title="기록·시간표는 그대로 두고 실제 오늘 날짜로 돌아갑니다">오늘</button>
       <button class="test-btn" id="btn-next-day" title="앱 안의 날짜를 하루 넘깁니다">다음 날로 이동 ▶</button>
       <button class="test-btn" id="btn-reset-all" title="저장된 데이터를 모두 지우고 처음 화면으로">↻ 처음부터 다시</button>
     </div>
@@ -634,8 +720,9 @@
         </div>
         <div class="nc-name" id="nc-name">-</div>
         <div class="nc-room" id="nc-room"></div>
-        <div class="nc-row"><span>목적지까지 예상 소요</span><b id="nc-travel">-</b></div>
+        <div class="nc-row"><span id="nc-travel-label">목적지까지 예상 소요</span><b id="nc-travel">-</b></div>
         <div class="nc-row"><span>남는 시간</span><b id="nc-buffer">-</b></div>
+        <div class="nc-from" id="nc-from" style="display:none;"></div>
         <div class="risk-text" id="nc-risk" style="display:none;"></div>
       </div>
 
@@ -707,6 +794,12 @@
           <div class="map-badge" id="map-badge">내장 지도</div>
           <div id="leaflet-map"></div>
           <div id="offline-map"></div>
+          <div class="map-ctrl" id="offline-ctrl">
+            <button id="btn-zoom-in" aria-label="오프라인 지도 확대" title="확대">＋</button>
+            <button id="btn-zoom-out" aria-label="오프라인 지도 축소" title="축소">−</button>
+            <button id="btn-zoom-fit" class="fit" aria-label="오프라인 지도 전체 보기" title="전체 보기">전체</button>
+          </div>
+          <div class="offline-tip" id="offline-tip">✥ 끌어서 이동 · ＋/− 확대<br>건물을 누르면 내부 안내가 열립니다</div>
         </div>
 
         <div class="map-mode-btns">
@@ -737,6 +830,8 @@
           <div class="srow"><span>예상 소요</span><span class="sval"><span class="big-min" id="disp-est">-</span>분</span></div>
         </div>
       </div>
+
+      <button class="btn-indoor" id="btn-dest-indoor" style="display:none;">🏢 도착 건물 내부지도 보기</button>
 
       <button class="btn-sub" id="btn-change-room">🔄 강의실 변경 (경로 다시 계산)</button>
       <button class="btn-main green" id="btn-arrive">✅ 도착 완료</button>
@@ -773,7 +868,7 @@
           <button class="chip" data-cat="D">D동(생활관)</button>
           <button class="chip" data-cat="G">출입구·주변</button>
         </div>
-        <p class="hint" style="margin-bottom:8px;">건물을 누르면 설명 · 층별 시설 · 층별 아이소메트릭 도면이 열립니다.</p>
+        <p class="hint" style="margin-bottom:8px;">건물을 누르면 설명과 층별 시설이 열립니다. 경상학관(S3)·인문사회관(S4)·창의혁신관(N11)은 층별 내부지도(아이소메트릭)도 함께 볼 수 있습니다.</p>
         <div class="bldg-list" id="bldg-list"></div>
       </div>
     </section>
@@ -846,8 +941,8 @@
       <div class="floor-lines" id="bd-floors"></div>
     </div>
 
-    <div class="bd-sec">
-      <h4>3. 층별 아이소메트릭 도면</h4>
+    <div class="bd-sec" id="bd-sec-iso">
+      <h4>3. 층별 아이소메트릭 내부지도</h4>
       <div class="floor-btns" id="bd-floor-btns"></div>
       <p class="hint" style="margin:2px 0 4px;">🟧 주황색 호실 = 내 시간표에 있는 수업</p>
       <div class="iso-wrap" id="iso-wrap">
@@ -860,6 +955,11 @@
       </div>
       <p class="hint" id="iso-room-info" style="margin-top:6px;">도면 안의 호실을 누르면 설명이 나옵니다.</p>
       <div class="ev-guide" id="iso-ev-guide">🛗 E/V에서 나온 뒤 어느 쪽으로 가면 되는지 여기에 표시됩니다.</div>
+    </div>
+
+    <div class="bd-sec" id="bd-sec-no-iso" style="display:none;">
+      <h4>3. 층별 내부지도</h4>
+      <div class="bd-note" id="bd-no-iso">층별 내부지도(아이소메트릭)는 <b>경상학관(S3) · 인문사회관(S4) · 창의혁신관(N11)</b> 3개 건물에서만 제공합니다.<br>이 건물은 위의 설명과 층별 시설로 안내합니다.</div>
     </div>
 
     <button class="btn-main" id="bd-nav2">🚀 이 건물로 길안내</button>
@@ -899,9 +999,18 @@
       <h3>📲 홈 화면에 추가하기</h3>
       <button class="modal-close" id="im-close">✕</button>
     </div>
-    <p class="hint" id="im-lead">앱처럼 전체 화면으로 열고, 데이터가 없어도 지도가 뜹니다.</p>
-    <div id="im-steps" style="display:flex;flex-direction:column;gap:9px;"></div>
-    <p class="hint" style="margin-top:2px;">이미 추가했다면 홈 화면의 <b>내갈길</b> 아이콘으로 열면 됩니다.</p>
+
+    <button class="im-install-now" id="im-install-now" style="display:none;">⚡ 한 번에 설치하기</button>
+    <div class="im-lead" id="im-lead">브라우저마다 메뉴 이름만 다릅니다. 쓰는 브라우저를 고르고 번호 순서대로 따라 하세요.</div>
+
+    <div class="im-tabs" id="im-tabs">
+      <button class="im-tab on" data-browser="chrome">Chrome</button>
+      <button class="im-tab" data-browser="samsung">삼성 인터넷</button>
+      <button class="im-tab" data-browser="ios">iPhone Safari</button>
+    </div>
+
+    <div class="im-steps" id="im-steps"></div>
+    <p class="im-foot">추가한 뒤에는 홈 화면의 <b>내갈길</b> 아이콘으로 열면 됩니다. 인터넷이 끊겨도 오프라인 지도가 뜨니다.</p>
     <button class="btn-sub" id="im-ok">확인</button>
   </div>
 </div>
@@ -1272,6 +1381,8 @@
   });
 
   var WEEKDAYS = ['월', '화', '수', '목', '금'];
+  /* 층별 아이소메트릭 내부지도는 이 3개 건물에만 제공한다 */
+  var ISO_CODES = { S3: 1, S4: 1, N11: 1 };
   var SPEED = 70;          // 분당 보행 거리(m). 캠퍼스 평균 도보 속도이자 개인 속도의 기본값
   var SPEED_OK_MIN = 35;   // 실제 이동에서 믿을 수 있는 속도 범위(분당 m)
   var SPEED_OK_MAX = 130;
@@ -1334,7 +1445,8 @@
     layers: {},
     markers: null,
     tileErrors: 0,
-    view: null            // 마지막 경로 계산 결과
+    view: null,           // 마지막 경로 계산 결과
+    offView: { z: 1, x: 0, y: 0 }   // 오프라인 지도 확대(z)·이동(x,y)
   };
 
   function $(id) { return document.getElementById(id); }
@@ -1578,8 +1690,7 @@
     if (savedDate && /^\d{4}-\d{2}-\d{2}$/.test(savedDate) && startOfDay(savedDate) >= startOfDay(today)) {
       state.today = savedDate;
     }
-    state.day = dayOf(state.today);
-    if (WEEKDAYS.indexOf(state.day) < 0) state.day = '월';
+    state.day = dayOf(state.today);   /* 주말이면 '토'·'일' 그대로 (표기 일치) */
     /* 처음 쓰거나 이전 버전 데이터였으면 지금의 시간표로 저장을 맞춰 둔다 */
     if (schema !== SCHEMA) {
       try {
@@ -1629,7 +1740,11 @@
     });
     state.today = fmtDate(new Date());
     state.day = dayOf(state.today);
-    if (WEEKDAYS.indexOf(state.day) < 0) state.day = '월';
+    state.startSel = 'GPS';
+    state.mapMode = 'osm';
+    state.offView = { z: 1, x: 0, y: 0 };
+    state.isoRot = 0;
+    state.compassOn = false;
     state.timetable = JSON.parse(JSON.stringify(DEFAULT_TIMETABLE));
     state.records = [];
     state.visits = {};
@@ -1640,15 +1755,20 @@
     state.floor = 1;
     state.bldg = null;
     state.gps.pos = null;
-    state.isoRot = 0;
     saveState();
     renderAll();
+    /* 출발지 <select>도 내부 상태와 같게 GPS로 맞춘다 */
+    $('select-start').value = state.startSel;
+    $('btn-compass').className = '';
+    $('btn-compass').textContent = '🧭 폰 방향 센서';
     if (state.map) {
       try { state.map.remove(); } catch (e) {}
       state.map = null;
       state.markers = null;
       initMap();
     }
+    applyMapMode();
+    drawRoute();
     switchTab('tab-home');
     toast('모든 데이터를 지우고 오늘(' + state.today + ') 기준으로 초기화했습니다');
   }
@@ -1707,6 +1827,12 @@
     return { measured: measured, inRange: inRange, prev: prev, next: state.walkSpeed };
   }
 
+  /* GPS가 없을 때 쓸 출발지: 홈에서 고른 건물, 그것도 'GPS'면 학생생활관(D7 미래동) */
+  function fallbackStartCode() {
+    if (state.startSel && state.startSel !== 'GPS' && BLD[state.startSel]) return state.startSel;
+    return 'D7';
+  }
+
   function renderNextClass() {
     var card = $('next-class-card');
     var nc = nextClass();
@@ -1720,6 +1846,8 @@
       $('nc-name').textContent = state.day + '요일 남은 수업 없음';
       $('nc-room').textContent = '';
       for (var r0 = 0; r0 < rows.length; r0++) rows[r0].style.display = 'none';
+      $('nc-from').style.display = 'none';
+      $('nc-travel-label').textContent = '목적지까지 예상 소요';
       return;
     }
     for (var r1 = 0; r1 < rows.length; r1++) rows[r1].style.display = 'flex';
@@ -1729,11 +1857,24 @@
     var b = BLD[nc.code];
     var travel = 1;
 
-    /* 실제 보행로 경로로 계산 */
+    /* 실제 보행로 경로로 계산한다.
+       GPS가 없을 때 도착 건물(b.node)을 출발지로 쓰면 거리가 0이 되어 늘 2분이 나오므로,
+       홈에서 고른 출발지 건물, 그것도 'GPS'면 생활관(D7)에서 출발한 것으로 계산한다. */
+    var fromLabel = '';
     if (b) {
-      var from = state.gps.pos ? nearestNode(state.gps.pos).node : b.node;
-      var res = findPath(from, b.node);
-      if (res) travel = travelMinutes(res.dist + distM(b.entrance, WALK_NODES[b.node]));
+      var fromNode, extra = 0, gpsOn = !!state.gps.pos;
+      if (gpsOn) {
+        var near = nearestNode(state.gps.pos);
+        fromNode = near.node;
+        extra = near.dist;
+        fromLabel = '내 현재 위치(GPS)';
+      } else {
+        var fb = fallbackStartCode();
+        fromNode = BLD[fb].node;
+        fromLabel = fb + ' ' + BLD[fb].name;
+      }
+      var res = findPath(fromNode, b.node);
+      if (res) travel = travelMinutes(res.dist + distM(b.entrance, WALK_NODES[b.node]) + extra);
     }
 
     $('nc-time').textContent = remain > 0 ? remain + '분' : '지금';
@@ -1741,6 +1882,17 @@
     $('nc-room').textContent = nc.code + ' ' + (b ? b.name : '') + ' · ' + nc.room;
     $('nc-travel').textContent = travel + '분';
     $('nc-buffer').textContent = (remain - travel) + '분';
+
+    /* 어디서 출발한 것으로 계산했는지 작게 보여 준다 */
+    $('nc-travel-label').textContent = (fromLabel ? fromLabel + '에서 ' : '') + '예상 소요';
+    var fromNote = $('nc-from');
+    if (state.gps.pos) {
+      fromNote.style.display = 'block';
+      fromNote.textContent = '📍 내 현재 위치(GPS)에서 출발한 예상 시간입니다.';
+    } else {
+      fromNote.style.display = 'block';
+      fromNote.textContent = '📍 GPS가 꺼져 있어 ' + fromLabel + ' 기준입니다. [2 지도]의 📍 GPS를 누르면 내 위치 기준으로 계산합니다.';
+    }
 
     if (remain > 0 && travel > remain) {
       card.className = 'next-class risk';
@@ -1785,7 +1937,9 @@
     var box = $('schedule-list');
     var list = dayClasses(state.day);
     if (!list.length) {
-      box.innerHTML = '<div class="empty-box">' + state.day + '요일에는 등록된 수업이 없습니다.<br>오른쪽 위 <b>[✏️ 시간표 관리]</b>로 수업을 추가해 보세요.</div>';
+      var weekend = (state.day === '토' || state.day === '일');
+      box.innerHTML = '<div class="empty-box">' + state.day + '요일에는 등록된 수업이 없습니다.<br>' +
+        (weekend ? '위 요일 버튼에서 월~금을 눌러 그 요일 시간표를 볼 수 있습니다.' : '오른쪽 위 <b>[✏️ 시간표 관리]</b>로 수업을 추가해 보세요.') + '</div>';
       return;
     }
     var html = '';
@@ -1924,6 +2078,13 @@
       fromNode = near.node;
       startConnector = near.dist;
       startLabel = '내 현재 위치 (GPS)';
+    } else if (startCode === 'GPS') {
+      /* GPS가 없을 때: 홈에서 고른 출발지, 그것도 GPS면 생활관(D7 미래동)에서 출발한 것으로 계산한다 */
+      var fb = fallbackStartCode();
+      fromNode = BLD[fb].node;
+      startConnector = distM(BLD[fb].entrance, WALK_NODES[fromNode]);
+      startLabel = fb + ' ' + BLD[fb].name + ' (GPS 꺼짐)';
+      startCode = fb;
     } else if (BLD[startCode]) {
       fromNode = BLD[startCode].node;
       startLabel = startCode + ' ' + BLD[startCode].name;
@@ -1968,6 +2129,7 @@
     route.changed = false;
     route.changedFrom = '';
     state.nav = route;
+    state.offView = { z: 1, x: 0, y: 0 };   /* 길안내를 시작하면 오프라인 지도를 전체 보기로 되돌린다 */
     state.simIdx = 0;
     saveState();
     renderRoutePanel();
@@ -1976,8 +2138,22 @@
     if (state.map) setTimeout(function () { state.map.invalidateSize(); }, 200);
   }
 
+  /* 길안내 목적지가 내부지도가 있는 건물이면 지도 아래에 내부지도 보기 버튼을 띄운다 */
+  function syncIndoorButton(nav) {
+    var btn = $('btn-dest-indoor');
+    if (!btn) return;
+    if (nav && ISO_CODES[nav.destCode]) {
+      var b = BLD[nav.destCode];
+      btn.innerHTML = '🏢 ' + esc(nav.destCode + ' ' + (b ? b.name : '') + (nav.room ? ' ' + nav.room : '')) + ' 내부지도 보기';
+      btn.style.display = 'flex';
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+
   function renderRoutePanel() {
     var nav = state.nav;
+    syncIndoorButton(nav);
     var nc = nextClass();
     var remain = nc ? hhmmToMin(nc.time) - nowMin() : null;
 
@@ -2104,12 +2280,17 @@
     $('offline-map').style.display = useSvg ? 'block' : 'none';
     $('leaflet-map').style.display = useSvg ? 'none' : 'block';
 
+    /* 오프라인 지도에서만 확대·이동 버튼과 안내 문구를 보여 준다 */
+    var ctrl = $('offline-ctrl'), tip = $('offline-tip');
+    if (ctrl) ctrl.className = 'map-ctrl' + (useSvg ? ' on' : '');
+    if (tip) tip.className = 'offline-tip' + (useSvg ? ' on' : '');
+
     $('btn-mode-map').className = 'map-mode-btn' + (state.mapMode === 'osm' ? ' active' : '');
     $('btn-mode-sat').className = 'map-mode-btn' + (state.mapMode === 'sat' ? ' active' : '');
     $('btn-mode-svg').className = 'map-mode-btn' + (state.mapMode === 'svg' ? ' active' : '');
 
     if (state.mapMode === 'svg') {
-      $('map-badge').textContent = '📴 내장 오프라인 지도 (데이터 없이 작동)';
+      $('map-badge').textContent = '📴 내장 오프라인 지도';
     } else if (!hasLeaflet()) {
       $('map-badge').textContent = '📴 지도 라이브러리 없음 · 내장 지도로 표시';
     } else if (state.mapMode === 'sat') {
@@ -2155,7 +2336,7 @@
     var hostRect = svgHost.getBoundingClientRect ? svgHost.getBoundingClientRect() : { width: 0, height: 0 };
     var W = Math.max(300, Math.round(hostRect.width || 360));
     var H = Math.max(220, Math.round(hostRect.height || 300));
-    var pad = 14;
+    var pad = 18;
     var pts = [];
     if (state.nav && state.nav.coords.length) {
       state.nav.coords.forEach(function (c) { pts.push(c); });
@@ -2187,6 +2368,8 @@
     var s = [];
     s.push('<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">');
     s.push('<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#eef3ea"/>');
+    /* 확대·이동은 이 그룹의 transform만 바꿔 처리한다 (나침반·안내는 화면 기준으로 고정) */
+    s.push('<g class="off-view">');
 
     /* 보행로 */
     s.push('<g stroke="#c3cdd6" stroke-width="1.1" fill="none" stroke-linecap="round">');
@@ -2212,10 +2395,10 @@
           d += (i === 0 ? 'M' : 'L') + q[0] + ' ' + q[1];
         });
         d += 'Z';
-        s.push('<path d="' + d + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="0.7" opacity="0.95"/>');
+        s.push('<path d="' + d + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="0.7" opacity="0.95" data-obldg="' + b.code + '"/>');
       } else {
         var c = P(b.lat, b.lng);
-        s.push('<rect x="' + (Number(c[0]) - 6) + '" y="' + (Number(c[1]) - 4) + '" width="12" height="8" rx="2" fill="' + fill + '" stroke="' + stroke + '" stroke-width="0.7"/>');
+        s.push('<rect x="' + (Number(c[0]) - 6) + '" y="' + (Number(c[1]) - 4) + '" width="12" height="8" rx="2" fill="' + fill + '" stroke="' + stroke + '" stroke-width="0.7" data-obldg="' + b.code + '"/>');
       }
     });
     s.push('</g>');
@@ -2227,7 +2410,7 @@
       if (b.cat === 'G') return;
       if (!KEYBLD[b.code]) return;
       var c = P(b.lat, b.lng);
-      s.push('<text x="' + c[0] + '" y="' + (Number(c[1]) + 3) + '" stroke="#ffffff" stroke-width="3" paint-order="stroke" fill="#111827">' + esc(b.code) + '</text>');
+      s.push('<text x="' + c[0] + '" y="' + (Number(c[1]) + 3) + '" stroke="#ffffff" stroke-width="3" paint-order="stroke" fill="#111827" pointer-events="none">' + esc(b.code) + '</text>');
     });
     s.push('</g>');
 
@@ -2236,8 +2419,8 @@
       var b = BLD[g];
       if (!b) return;
       var c = P(b.lat, b.lng);
-      s.push('<circle cx="' + c[0] + '" cy="' + c[1] + '" r="3" fill="#334155" stroke="#fff" stroke-width="1"/>');
-      s.push('<text x="' + c[0] + '" y="' + (Number(c[1]) - 5) + '" font-size="6.5" font-weight="800" fill="#334155" text-anchor="middle" stroke="#fff" stroke-width="2" paint-order="stroke">' + esc(b.name.replace(' (버스정류장)', '')) + '</text>');
+      s.push('<circle cx="' + c[0] + '" cy="' + c[1] + '" r="4.5" fill="#334155" stroke="#fff" stroke-width="1" data-obldg="' + b.code + '"/>');
+      s.push('<text x="' + c[0] + '" y="' + (Number(c[1]) - 5) + '" font-size="6.5" font-weight="800" fill="#334155" text-anchor="middle" stroke="#fff" stroke-width="2" paint-order="stroke" pointer-events="none">' + esc(b.name.replace(' (버스정류장)', '')) + '</text>');
     });
 
     /* 경로 */
@@ -2258,18 +2441,123 @@
       s.push('<circle cx="' + sp[0] + '" cy="' + sp[1] + '" r="5" fill="#2563eb" stroke="#fff" stroke-width="2"/>');
     }
 
-    /* 나침반 */
+    s.push('</g>');
+
+    /* 나침반 (화면 기준 고정) */
     s.push('<g transform="translate(' + (W - 26) + ',26)">');
     s.push('<circle r="14" fill="rgba(255,255,255,0.85)" stroke="#94a3b8"/>');
     s.push('<path d="M0,-9 L4,4 L0,1 L-4,4 Z" fill="#d90429"/>');
     s.push('<text y="-16" font-size="8" font-weight="800" fill="#334155" text-anchor="middle">N</text>');
     s.push('</g>');
 
-    if (state.nav) {
-      s.push('<text x="8" y="' + (H - 8) + '" font-size="8" font-weight="700" fill="#475569">📴 오프라인 지도 · 보행 ' + state.nav.meters + 'm · 약 ' + state.nav.estMin + '분</text>');
-    }
     s.push('</svg>');
     svgHost.innerHTML = s.join('');
+    applyOffView();
+  }
+
+  /* ── 오프라인 지도 확대·이동 ── */
+  function offHostSize() {
+    var host = $('offline-map');
+    return {
+      W: Math.max(300, Math.round((host && host.clientWidth) || 360)),
+      H: Math.max(220, Math.round((host && host.clientHeight) || 300))
+    };
+  }
+  function clampOffView() {
+    var v = state.offView, sz = offHostSize();
+    if (v.z <= 1.001) { v.z = 1; v.x = 0; v.y = 0; return; }
+    var mx = (sz.W * (v.z - 1)) / 2 + 6;
+    var my = (sz.H * (v.z - 1)) / 2 + 6;
+    v.x = Math.max(-mx, Math.min(mx, v.x));
+    v.y = Math.max(-my, Math.min(my, v.y));
+  }
+  function applyOffView() {
+    var host = $('offline-map');
+    var g = host ? host.querySelector('g.off-view') : null;
+    if (!g) return;
+    clampOffView();
+    var v = state.offView, sz = offHostSize();
+    g.setAttribute('transform',
+      'translate(' + v.x.toFixed(1) + ' ' + v.y.toFixed(1) + ') ' +
+      'translate(' + (sz.W / 2) + ' ' + (sz.H / 2) + ') scale(' + v.z.toFixed(3) + ') ' +
+      'translate(' + (-sz.W / 2) + ' ' + (-sz.H / 2) + ')');
+  }
+  function setOffView(z, x, y) {
+    state.offView = { z: z, x: x || 0, y: y || 0 };
+    applyOffView();
+  }
+  function zoomOfflineMap(step) {
+    var v = state.offView;
+    var next = Math.min(4, Math.max(1, v.z * step));
+    if (Math.abs(next - v.z) < 0.001) return;
+    v.z = Math.round(next * 100) / 100;
+    if (v.z === 1) { v.x = 0; v.y = 0; }
+    applyOffView();
+  }
+
+  var offDragMoved = 0;
+  function setupOfflineMap() {
+    var host = $('offline-map');
+    if (!host) return;
+    var drag = null;
+    function svgMode() { return !(state.mapMode !== 'svg' && hasLeaflet() && state.map); }
+
+    host.addEventListener('pointerdown', function (e) {
+      if (!svgMode()) return;
+      drag = { id: e.pointerId, x: e.clientX, y: e.clientY, ox: state.offView.x, oy: state.offView.y, moved: 0 };
+      offDragMoved = 0;
+      try { if (host.setPointerCapture) host.setPointerCapture(e.pointerId); } catch (err) {}
+      host.className = 'dragging';
+    });
+
+    host.addEventListener('pointermove', function (e) {
+      if (!drag || e.pointerId !== drag.id) return;
+      var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      var d = Math.abs(dx) + Math.abs(dy);
+      if (d > drag.moved) drag.moved = d;
+      if (drag.moved < 5) return;
+      state.offView.x = drag.ox + dx;
+      state.offView.y = drag.oy + dy;
+      applyOffView();
+      if (e.cancelable) e.preventDefault();
+    });
+
+    /* 누른 곳에서 가장 가까운 건물/출입구를 찾아 상세를 연다 */
+    function openBuildingAt(x, y) {
+      var el = document.elementFromPoint(x, y);
+      while (el && el !== host && !(el.getAttribute && el.getAttribute('data-obldg'))) el = el.parentNode;
+      if (!el || el === host || !el.getAttribute) return false;
+      var code = el.getAttribute('data-obldg');
+      if (!code || !BLD[code]) return false;
+      openBuilding(code, '');
+      return true;
+    }
+
+    function endDrag(e) {
+      if (!drag) return;
+      offDragMoved = drag.moved;
+      drag = null;
+      host.className = '';
+      try { if (host.releasePointerCapture && e && e.pointerId !== undefined) host.releasePointerCapture(e.pointerId); } catch (err) {}
+      /* 끌지 않고 그냥 눌렀으면 건물 상세를 연다.
+         포인터 캡처 때문에 click 대상이 지도 상자로 바뀌므로 좌표로 다시 찾는다. */
+      if (offDragMoved <= 6 && e && e.clientX !== undefined) openBuildingAt(e.clientX, e.clientY);
+    }
+    host.addEventListener('pointerup', endDrag);
+    host.addEventListener('pointercancel', endDrag);
+
+    /* 포인터 이벤트가 없는 환경을 위한 대비 */
+    host.addEventListener('click', function (e) {
+      if (offDragMoved > 6) { offDragMoved = 0; return; }
+      if (e.clientX !== undefined) openBuildingAt(e.clientX, e.clientY);
+    });
+
+    /* 마우스 휠로도 확대·축소 */
+    host.addEventListener('wheel', function (e) {
+      if (!svgMode()) return;
+      e.preventDefault();
+      zoomOfflineMap(e.deltaY < 0 ? 1.25 : 0.8);
+    }, { passive: false });
   }
 
   /* GPS */
@@ -2282,6 +2570,7 @@
       $('gps-dot').className = 'gps-dot live';
       var acc = pos.coords.accuracy ? Math.round(pos.coords.accuracy) : null;
       $('gps-text').textContent = 'GPS 추적 중' + (acc ? ' (±' + acc + 'm)' : '');
+      renderNextClass();
       if (state.nav) {
         var r = computeRoute('GPS', state.nav.destCode);
         if (r) {
@@ -2300,6 +2589,7 @@
     }, function (err) {
       $('gps-dot').className = 'gps-dot';
       $('gps-text').textContent = 'GPS 수신 불가 · 출발지 건물 기준';
+      renderNextClass();
       toast('위치 권한을 허용하면 현재 자리에서 경로가 다시 계산됩니다');
     }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 12000 });
   }
@@ -2421,7 +2711,7 @@
     list.innerHTML = h;
   }
 
-  function openBuilding(code) {
+  function openBuilding(code, room) {
     var b = BLD[code];
     if (!b) return;
     state.bldg = code;
@@ -2444,6 +2734,10 @@
         }
       }
     }
+    /* 길안내에서 넘어온 호실이 있으면 그 층을 먼저 보여 준다 */
+    var rf = roomFloorOf(code, room);
+    if (rf) state.floor = rf;
+
     $('bd-code').textContent = b.code;
     $('bd-code').className = 'bd-code';
     $('bd-title').textContent = b.name;
@@ -2457,9 +2751,28 @@
     $('bd-floors').innerHTML = fl;
     $('iso-room-info').textContent = '도면 안의 호실을 누르면 설명이 나옵니다.';
 
-    renderFloorButtons();
-    renderIso();
+    /* 층별 내부지도(아이소메트릭)는 S3·S4·N11 3곳에만 제공한다 */
+    var hasIso = !!ISO_CODES[code] && b.levels > 0;
+    $('bd-sec-iso').style.display = hasIso ? '' : 'none';
+    $('bd-sec-no-iso').style.display = hasIso ? 'none' : '';
+    if (hasIso) {
+      renderFloorButtons();
+      renderIso();
+    } else {
+      $('bd-floor-btns').innerHTML = '';
+      $('iso-svg').innerHTML = '';
+      $('iso-room-info').textContent = '';
+    }
     $('building-modal').className = 'modal on';
+  }
+
+  /* "410호" 같은 호실에서 층 번호를 뽑아낸다 */
+  function roomFloorOf(code, room) {
+    var b = BLD[code];
+    var m = String(room || '').match(/(\d{3,4})/);
+    if (!b || !m) return null;
+    var f = Math.floor(parseInt(m[1], 10) / 100);
+    return (f >= 1 && f <= b.levels) ? String(f) : null;
   }
 
   function renderFloorButtons() {
@@ -2566,12 +2879,8 @@
     var svg = $('iso-svg');
     if (!b) { svg.innerHTML = ''; return; }
 
-    if (b.levels <= 0) {
-      svg.innerHTML = '<text x="180" y="112" text-anchor="middle" font-size="11" fill="#64748b">출입구 · 보행로 연결 지점입니다.</text>' +
-        '<text x="180" y="132" text-anchor="middle" font-size="10" fill="#94a3b8">건물 내부 도면은 없습니다.</text>';
-      if ($('iso-ev-guide')) $('iso-ev-guide').textContent = '건물 내부 도면이 없는 출입구입니다. 엘리베이터는 안내 건물(경상학관·인문사회관 등)의 층별 도면에서 확인할 수 있습니다.';
-      return;
-    }
+    /* 층별 내부지도는 경상학관(S3)·인문사회관(S4)·창의혁신관(N11)에만 있다 */
+    if (!ISO_CODES[b.code] || b.levels <= 0) { svg.innerHTML = ''; return; }
 
     var rot = state.isoRot;
     var floor = state.floor;
@@ -2957,30 +3266,88 @@
     } catch (e) { /* 아이콘 생성이 안 되면 기본 매니페스트 사용 */ }
   }
 
+  /* 브라우저별 홈 화면 추가 안내 (번호 카드 + 경로 칩) */
+  var INSTALL_GUIDE = {
+    chrome: {
+      lead: '크롬은 오른쪽 위 <b>⋮</b> 메뉴에서 바로 추가합니다.',
+      steps: [
+        { t: '크롬 메뉴 열기', d: '주소창 오른쪽 위의 <b>⋮</b> 를 누릅니다.', path: ['⋮'] },
+        { t: '홈 화면에 추가 선택', d: '메뉴에서 <b>홈 화면에 추가</b>를 누릅니다. (PC 크롬은 <b>앱 설치</b>)', path: ['⋮', '홈 화면에 추가'] },
+        { t: '추가 누르기', d: '이름이 <b>내갈길</b>인지 확인하고 <b>추가</b>를 누릅니다.', path: ['내갈길', '추가'] }
+      ]
+    },
+    samsung: {
+      lead: '삼성 인터넷은 오른쪽 <b>≡</b> 메뉴의 <b>현재 페이지 추가</b>에서 시작합니다.',
+      steps: [
+        { t: '삼성 인터넷 메뉴 열기', d: '오른쪽 아래(또는 위)의 <b>≡</b> 를 누릅니다.', path: ['≡'] },
+        { t: '현재 페이지 추가 선택', d: '메뉴에서 <b>현재 페이지 추가</b>를 누릅니다.', path: ['≡', '현재 페이지 추가'] },
+        { t: '홈 화면 선택 후 추가', d: '나오는 목록에서 <b>홈 화면</b>을 고르고 <b>추가</b>를 누릅니다.', path: ['현재 페이지 추가', '홈 화면'] }
+      ]
+    },
+    ios: {
+      lead: '아이폰 사파리는 아래(또는 위) <b>공유</b> 버튼 <b>□↑</b> 에서 시작합니다.',
+      steps: [
+        { t: '공유 버튼 누르기', d: '사파리 화면 아래(또는 위)의 <b>공유</b> 버튼 <b>□↑</b> 을 누릅니다.', path: ['공유 □↑'] },
+        { t: '홈 화면에 추가 선택', d: '목록을 조금 내려 <b>홈 화면에 추가</b>를 누릅니다.', path: ['공유 □↑', '홈 화면에 추가'] },
+        { t: '추가 누르기', d: '이름이 <b>내갈길</b>인지 확인하고 <b>추가</b>를 누릅니다.', path: ['내갈길', '추가'] }
+      ]
+    }
+  };
+
+  function renderInstallSteps(key) {
+    var g = INSTALL_GUIDE[key] || INSTALL_GUIDE.chrome;
+    $('im-lead').innerHTML = g.lead;
+    var h = '';
+    g.steps.forEach(function (st, i) {
+      var path = '';
+      if (st.path && st.path.length) {
+        path += '<div class="im-path">';
+        st.path.forEach(function (p2, k) {
+          if (k) path += '<span class="im-arrow">→</span>';
+          path += '<span class="im-chip' + (k === st.path.length - 1 ? ' hit' : '') + '">' + esc(p2) + '</span>';
+        });
+        path += '</div>';
+      }
+      h += '<div class="im-step"><span class="im-num">' + (i + 1) + '</span>' +
+        '<div class="im-step-body"><div class="im-step-t">' + esc(st.t) + '</div>' +
+        '<div class="im-step-d">' + st.d + '</div>' + path + '</div></div>';
+    });
+    $('im-steps').innerHTML = h;
+  }
+
+  function setInstallTab(key) {
+    var tabs = $('im-tabs').querySelectorAll('.im-tab');
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].className = 'im-tab' + (tabs[i].getAttribute('data-browser') === key ? ' on' : '');
+    }
+    renderInstallSteps(key);
+  }
+
   function showInstallGuide() {
     var ua = navigator.userAgent || '';
     var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    var isAndroid = /Android/.test(ua);
     var isSamsung = /SamsungBrowser/.test(ua);
-    var steps = '';
-    if (isIOS) {
-      $('im-lead').textContent = '아이폰 사파리에서는 아래 순서로 추가합니다.';
-      steps += '<div class="step"><b>1</b><div>사파리 아래쪽(또는 위쪽) <b>공유 버튼</b>(□↑)을 누릅니다.</div></div>';
-      steps += '<div class="step"><b>2</b><div>목록을 내려 <b>“홈 화면에 추가”</b>를 누릅니다.</div></div>';
-      steps += '<div class="step"><b>3</b><div>이름이 <b>내갈길</b>인지 확인하고 <b>추가</b>를 누릅니다.</div></div>';
-    } else if (isAndroid) {
-      $('im-lead').textContent = '안드로이드 크롬·삼성인터넷에서는 아래 순서로 추가합니다.';
-      steps += '<div class="step"><b>1</b><div>오른쪽 위 <b>⋮ 메뉴</b>(삼성인터넷은 ☰)를 누릅니다.</div></div>';
-      steps += '<div class="step"><b>2</b><div><b>“앱 설치”</b> 또는 <b>“홈 화면에 추가”</b>를 누릅니다.</div></div>';
-      steps += '<div class="step"><b>3</b><div><b>추가</b>를 누르면 홈 화면에 아이콘이 생깁니다.</div></div>';
-    } else {
-      $('im-lead').textContent = 'PC 브라우저에서는 주소창 오른쪽의 설치 아이콘을 쓰면 됩니다.';
-      steps += '<div class="step"><b>1</b><div>주소창 오른쪽의 <b>설치 아이콘</b>(모니터↓)을 누릅니다.</div></div>';
-      steps += '<div class="step"><b>2</b><div><b>설치</b>를 누르면 앱처럼 열립니다.</div></div>';
-      steps += '<div class="step"><b>3</b><div>휴대폰에서는 이 페이지를 열고 “홈 화면에 추가”를 쓰면 됩니다.</div></div>';
-    }
-    $('im-steps').innerHTML = steps;
+    $('im-install-now').style.display = deferredPrompt ? 'flex' : 'none';
+    setInstallTab(isIOS ? 'ios' : (isSamsung ? 'samsung' : 'chrome'));
     modalOpen('install-modal');
+  }
+
+  /* 설치 프롬프트가 잡혀 있으면 브라우저 기본 설치 창을 띄운다 */
+  function promptInstall() {
+    if (!deferredPrompt) { showInstallGuide(); return; }
+    var p = deferredPrompt;
+    deferredPrompt = null;
+    p.prompt();
+    try {
+      p.userChoice.then(function (r) {
+        if (r && r.outcome === 'accepted') {
+          toast('홈 화면에 추가했습니다');
+          modalClose('install-modal');
+        }
+        $('im-install-now').style.display = 'none';
+        $('btn-install').textContent = '📲 홈 화면 추가';
+      })['catch'](function () {});
+    } catch (e) {}
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -3017,6 +3384,7 @@
 
     /* 테스트 툴바 */
     $('btn-prev-day').addEventListener('click', function () { shiftDay(-1); });
+    $('btn-today').addEventListener('click', goToday);
     $('btn-next-day').addEventListener('click', function () { shiftDay(1); });
     $('btn-reset-all').addEventListener('click', function () {
       if (confirm('저장된 시간표와 이동 기록을 모두 지우고 처음 상태로 돌아갑니다. 계속할까요?')) resetAll();
@@ -3031,6 +3399,7 @@
     $('select-start').addEventListener('change', function () {
       state.startSel = this.value;
       saveState();
+      renderNextClass();
       if (state.nav) startNav(state.nav.destCode, state.nav.room);
     });
     $('select-dest').addEventListener('change', function () { /* 시작 버튼으로 실행 */ });
@@ -3062,6 +3431,20 @@
     $('btn-mode-map').addEventListener('click', function () { setMapMode('osm'); });
     $('btn-mode-sat').addEventListener('click', function () { setMapMode('sat'); });
     $('btn-mode-svg').addEventListener('click', function () { setMapMode('svg'); });
+    $('btn-zoom-in').addEventListener('click', function () { zoomOfflineMap(1.35); });
+    $('btn-zoom-out').addEventListener('click', function () { zoomOfflineMap(1 / 1.35); });
+    $('btn-zoom-fit').addEventListener('click', function () {
+      setOffView(1, 0, 0);
+      toast('오프라인 지도를 전체 보기로 돌렸습니다');
+    });
+    $('btn-dest-indoor').addEventListener('click', function () {
+      if (!state.nav) { toast('먼저 길안내를 시작해 주세요'); return; }
+      openBuilding(state.nav.destCode, state.nav.room);
+      setTimeout(function () {
+        var w = $('iso-wrap');
+        if (w && w.scrollIntoView) { try { w.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }
+      }, 150);
+    });
     $('btn-gps').addEventListener('click', function () {
       if (state.gps.watchId !== null) { stopGps(); toast('GPS를 껐습니다'); }
       else startGps();
@@ -3193,16 +3576,12 @@
     });
 
     /* 설치 */
-    $('btn-install').addEventListener('click', function () {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(function (r) {
-          if (r && r.outcome === 'accepted') toast('홈 화면에 추가했습니다');
-          deferredPrompt = null;
-        });
-      } else {
-        showInstallGuide();
-      }
+    $('btn-install').addEventListener('click', showInstallGuide);
+    $('im-install-now').addEventListener('click', promptInstall);
+    $('im-tabs').addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.getAttribute || !t.getAttribute('data-browser')) return;
+      setInstallTab(t.getAttribute('data-browser'));
     });
     $('im-close').addEventListener('click', function () { modalClose('install-modal'); });
     $('im-ok').addEventListener('click', function () { modalClose('install-modal'); });
@@ -3211,6 +3590,7 @@
       e.preventDefault();
       deferredPrompt = e;
       $('btn-install').textContent = '📲 앱 설치';
+      if ($('install-modal').className.indexOf('on') >= 0) $('im-install-now').style.display = 'flex';
     });
     window.addEventListener('appinstalled', function () {
       toast('홈 화면에 추가되었습니다');
@@ -3267,6 +3647,20 @@
     if (state.mapMode === 'svg') drawRoute();
   }
 
+  /* 저장된 기록·시간표·걸음속도는 그대로 두고 날짜·요일만 실제 오늘로 되돌린다 */
+  function goToday() {
+    var now = new Date();
+    state.today = fmtDate(now);
+    state.day = dayOf(state.today);
+    var weekend = (state.day === '토' || state.day === '일');
+    saveState();
+    renderAll();
+    if (state.mapMode === 'svg') drawRoute();
+    toast(weekend
+      ? '오늘은 토·일요일이라 수업이 없습니다 · 오늘 ' + state.today + ' (' + state.day + ')'
+      : '오늘 ' + state.today + ' (' + state.day + ') 기준으로 돌아왔습니다');
+  }
+
   /* ══════════════════════════════════════════════════════════════
      14. 초기화
      ══════════════════════════════════════════════════════════════ */
@@ -3275,6 +3669,7 @@
     setupPwa();
     bindEvents();
     setupIsoDrag();
+    setupOfflineMap();
     state.startSel = 'GPS';
     $('select-start').value = state.startSel;
     renderAll();
@@ -3311,6 +3706,9 @@
       day: state.day,
       classes: dayClasses(state.day).length,
       walkSpeed: Math.round(state.walkSpeed * 10) / 10,
+      offZoom: state.offView.z,
+      isoBuildings: Object.keys(ISO_CODES),
+      indoorBtn: $('btn-dest-indoor') ? $('btn-dest-indoor').style.display : '-',
       nav: state.nav ? { dest: state.nav.destCode, m: state.nav.meters, min: state.nav.estMin } : null,
       records: state.records.length
     };
