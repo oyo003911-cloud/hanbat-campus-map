@@ -1641,14 +1641,16 @@
     card.className = 'next-class';
     $('nc-risk').style.display = 'none';
 
+    var rows = card.querySelectorAll('.nc-row');
+
     if (!nc) {
       $('nc-time').textContent = '없음';
       $('nc-name').textContent = state.day + '요일 남은 수업 없음';
       $('nc-room').textContent = '';
-      $('nc-travel').textContent = '-';
-      $('nc-buffer').textContent = '-';
+      for (var r0 = 0; r0 < rows.length; r0++) rows[r0].style.display = 'none';
       return;
     }
+    for (var r1 = 0; r1 < rows.length; r1++) rows[r1].style.display = 'flex';
 
     var start = hhmmToMin(nc.time);
     var remain = start - nowMin();
