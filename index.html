@@ -1948,8 +1948,9 @@
         state.map = L.map('leaflet-map', {
           center: [CAMPUS.lat0, CAMPUS.lon0],
           zoom: 17, maxZoom: 19, minZoom: 15,
-          zoomControl: true, attributionControl: true
+          zoomControl: false, attributionControl: true
         });
+        L.control.zoom({ position: 'topright' }).addTo(state.map);
         state.layers.osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19, attribution: '© OpenStreetMap'
         });
@@ -2048,7 +2049,10 @@
     var svgHost = $('offline-map');
     if (state.mapMode !== 'svg' && hasLeaflet() && state.map) return;   // 숨겨져 있을 때는 그리지 않음
 
-    var W = 360, H = 440, pad = 16;
+    var hostRect = svgHost.getBoundingClientRect ? svgHost.getBoundingClientRect() : { width: 0, height: 0 };
+    var W = Math.max(300, Math.round(hostRect.width || 360));
+    var H = Math.max(220, Math.round(hostRect.height || 300));
+    var pad = 14;
     var pts = [];
     if (state.nav && state.nav.coords.length) {
       state.nav.coords.forEach(function (c) { pts.push(c); });
@@ -2383,7 +2387,7 @@
     return out;
   }
 
-  var ISO = { ax: 0.866, ay: 0.5, zs: 0.62, k: 2.35, ox: 180, oy: 122 };
+  var ISO = { ax: 0.866, ay: 0.5, zs: 0.66, k: 2.45, ox: 180, oy: 128 };
 
   function isoPoint(x, y, z, rot) {
     var r = rad(rot);
@@ -2432,7 +2436,7 @@
     var cor = [[4, 25], [92, 25], [92, 35], [4, 35]].map(function (p) { return isoPoint(p[0], p[1], 0, rot); });
     s.push(poly(cor, '#e2e8f0', '#cbd5e1', 0.4));
     var cMid = isoPoint(48, 30, 0, rot);
-    s.push('<text x="' + cMid[0].toFixed(1) + '" y="' + (cMid[1] + 2).toFixed(1) + '" font-size="5.4" fill="#94a3b8" text-anchor="middle">복도</text>');
+    s.push('<text x="' + cMid[0].toFixed(1) + '" y="' + (cMid[1] + 2).toFixed(1) + '" font-size="6" font-weight="700" fill="#94a3b8" text-anchor="middle">복도</text>');
 
     var COLORS = {
       class: ['#dbeafe', '#93c5fd', '#1e3a8a'],
@@ -2451,9 +2455,14 @@
       var rp = r.x + r.w / 2, rq = r.y + r.h / 2;
       s.push(poly(q, c[0], c[1], 0.5, 'data-no="' + esc(r.no) + '" data-name="' + esc(r.name) + '"'));
       var cen = isoPoint(rp, rq, 0, rot);
-      var label = r.name && r.name !== '강의실' ? r.no + ' ' + r.name : r.no + '호';
-      if (label.length > 9) label = label.slice(0, 9) + '…';
-      s.push('<text x="' + cen[0].toFixed(1) + '" y="' + (cen[1] + 1.6).toFixed(1) + '" font-size="5" font-weight="700" fill="' + c[2] + '" text-anchor="middle" pointer-events="none">' + esc(label) + '</text>');
+      var eW = Math.abs(isoPoint(r.x + r.w, r.y, 0, rot)[0] - isoPoint(r.x, r.y, 0, rot)[0]);
+      var named = r.name && r.name !== '강의실';
+      var yBase = named && eW > 26 ? cen[1] - 1 : cen[1] + 2;
+      s.push('<text x="' + cen[0].toFixed(1) + '" y="' + yBase.toFixed(1) + '" font-size="6.4" font-weight="800" fill="' + c[2] + '" text-anchor="middle" pointer-events="none">' + esc(r.no) + '</text>');
+      if (named && eW > 26) {
+        var nm = r.name.length > 8 ? r.name.slice(0, 8) + '…' : r.name;
+        s.push('<text x="' + cen[0].toFixed(1) + '" y="' + (cen[1] + 6.4).toFixed(1) + '" font-size="5.2" font-weight="700" fill="' + c[2] + '" text-anchor="middle" pointer-events="none">' + esc(nm) + '</text>');
+      }
     });
 
     /* 외벽 */
@@ -2461,9 +2470,9 @@
       var w2 = (w + 1) % 4;
       var a1 = isoPoint(out[w][0], out[w][1], 0, rot);
       var a2p = isoPoint(out[w2][0], out[w2][1], 0, rot);
-      var b1 = isoPoint(out[w][0], out[w][1], 10, rot);
-      var b2 = isoPoint(out[w2][0], out[w2][1], 10, rot);
-      s.push(poly([a1, a2p, b2, b1], 'rgba(255,255,255,0.55)', '#94a3b8', 0.6));
+      var b1 = isoPoint(out[w][0], out[w][1], 12, rot);
+      var b2 = isoPoint(out[w2][0], out[w2][1], 12, rot);
+      s.push(poly([a1, a2p, b2, b1], 'rgba(241,245,249,0.88)', '#94a3b8', 0.8));
     }
 
     /* 계단 · 엘리베이터 */
@@ -2520,14 +2529,12 @@
 
   function signboard(p, angleDeg, text, color) {
     var a = angleDeg;
-    var flip = false;
     var aa = ((a % 360) + 360) % 360;
-    if (aa > 90 && aa < 270) { a = a + 180; flip = true; }
-    var anchor = 'middle';
-    var tx = p[0], ty = p[1];
-    var g = '<g transform="translate(' + tx.toFixed(1) + ',' + ty.toFixed(1) + ') rotate(' + a.toFixed(1) + ')">';
-    g += '<rect x="-16" y="-4.4" width="32" height="8.8" rx="2.4" fill="' + color + '" opacity="0.94"/>';
-    g += '<text x="0" y="2" font-size="5" font-weight="800" fill="#ffffff" text-anchor="' + anchor + '">' + esc(text) + '</text>';
+    if (aa > 90 && aa < 270) a = a + 180;
+    var w = Math.max(20, text.length * 4.1 + 7), h = 10.5;
+    var g = '<g transform="translate(' + p[0].toFixed(1) + ',' + p[1].toFixed(1) + ') rotate(' + a.toFixed(1) + ')">';
+    g += '<rect x="' + (-w / 2).toFixed(1) + '" y="' + (-h / 2).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h + '" rx="2.6" fill="' + color + '" opacity="0.95"/>';
+    g += '<text x="0" y="2.2" font-size="6" font-weight="800" fill="#ffffff" text-anchor="middle">' + esc(text) + '</text>';
     g += '</g>';
     return g;
   }
@@ -2610,7 +2617,10 @@
     }
     if (id === 'tab-map') {
       if (state.mapMode !== 'svg' && hasLeaflet() && !state.map) initMap();
-      else if (state.map) setTimeout(function () { state.map.invalidateSize(); }, 120);
+      else if (state.map) setTimeout(function () {
+        state.map.invalidateSize();
+        drawLeafletRoute();
+      }, 150);
       applyMapMode();
       drawRoute();
     }
