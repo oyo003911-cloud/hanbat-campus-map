@@ -2322,6 +2322,13 @@
     if (b.levels > 0) {
       /* 수업이 있는 층을 먼저 보여 준다 */
       var cls = dayClasses(state.day).filter(function (c) { return c.code === code; });
+      if (!cls.length) {
+        /* 오늘 수업이 없으면 이번 주 시간표에서 그 건물 수업을 찾는다 */
+        WEEKDAYS.forEach(function (d) {
+          if (cls.length) return;
+          cls = dayClasses(d).filter(function (c) { return c.code === code; });
+        });
+      }
       if (cls.length) {
         var roomFloor = parseInt(String(cls[0].room), 10);
         if (!isNaN(roomFloor) && roomFloor >= 100) {
