@@ -619,7 +619,7 @@
       padding: 0 6px;
     }
     .floor-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-    .iso-wrap { position: relative; border: 1.5px solid var(--border); border-radius: 10px; background: linear-gradient(180deg, #f8fbff, #eef3f9); overflow: hidden; touch-action: none; }
+    .iso-wrap { position: relative; border: 1.5px solid var(--border); border-radius: 10px; background: linear-gradient(180deg, #f8fbff, #eef3f9); overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
     .iso-wrap svg { display: block; width: 100%; height: 300px; }
     .iso-legend { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 4px 0 6px; font-size: 9.5px; font-weight: 800; color: #475569; }
     .iso-legend span { display: inline-flex; align-items: center; gap: 3px; }
@@ -3634,7 +3634,7 @@
       var size = Math.max(Math.hypot(wb[0] - wa[0], wb[1] - wa[1]), Math.hypot(wc2[0] - wa[0], wc2[1] - wa[1]));
       if (r.no) {
         var num = r.no + (isMine ? '★' : '');
-        s += haloText(c[0], c[1] - 0.6, num, 7.6, 900, ink, 2.1);
+        s += haloText(c[0], c[1] - 0.4, num, 8.1, 900, ink, 2.2);
         var showName = isMine || (size > 34 && Math.min(r.w, r.h) > 4.6);
         if (showName) {
           var nm = isMine && typeof r.subject === 'string' ? r.subject : r.name;
