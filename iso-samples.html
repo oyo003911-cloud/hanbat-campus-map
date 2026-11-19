@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef4fb">
+<title>경상학관 4층 아이소메트릭 3가지 · 내갈길</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic",
+                 "Noto Sans KR", system-ui, sans-serif;
+    background: #eef3fa;
+    color: #0f172a;
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+  }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 14px 10px 42px; }
+  .back {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 13px; font-weight: 800; color: #0369a1; text-decoration: none;
+    background: #fff; border: 1px solid #dbe6f3; border-radius: 999px;
+    padding: 7px 12px;
+  }
+  .back:active { background: #e0f2fe; }
+  h1 { font-size: 19px; line-height: 1.34; margin: 12px 0 6px; letter-spacing: -0.02em; }
+  .lead { font-size: 12.8px; line-height: 1.6; color: #475569; margin: 0 0 4px; }
+  .lead b { color: #0f172a; }
+
+  .card {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 16px;
+    padding: 10px; margin: 14px 0;
+    box-shadow: 0 3px 14px rgba(15, 23, 42, .06);
+  }
+  .tag {
+    display: inline-block; font-size: 10.5px; font-weight: 900; letter-spacing: .02em;
+    color: #0369a1; background: #e0f2fe; border-radius: 999px; padding: 3px 9px;
+  }
+  .card h2 { font-size: 15px; margin: 6px 0 0; letter-spacing: -0.01em; }
+  .pros { font-size: 12px; line-height: 1.55; color: #475569; margin: 5px 0 9px; }
+  .pros b { color: #0f172a; }
+  .pros .plus { color: #0369a1; }
+  .pros .minus { color: #b45309; }
+
+  .visual {
+    position: relative; border-radius: 12px; overflow: hidden;
+    background: #f8fbff; border: 1px solid #e6eef8;
+    touch-action: pan-y; cursor: grab;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .visual.drag { cursor: grabbing; }
+  .visual svg { display: block; width: 100%; height: auto; }
+  .visual.three { height: 300px; background: #eaf2fb; }
+  .visual.three canvas { display: block; width: 100% !important; height: 100% !important; }
+  #three-note {
+    position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    text-align: center; padding: 20px; font-size: 12.5px; line-height: 1.6; color: #475569;
+  }
+  .visual.dark { background: radial-gradient(120% 90% at 50% 0%, #16233a 0%, #080c14 72%); border-color: #1e2c42; }
+
+  .hint {
+    display: flex; justify-content: space-between; gap: 8px;
+    font-size: 11px; color: #64748b; margin: 7px 2px 1px;
+  }
+  .hint b { color: #0f172a; }
+  .hint .mine { color: #b45309; font-weight: 800; }
+
+  /* 샘플 3 화면 위 유리 HUD */
+  .hud {
+    position: absolute; left: 9px; top: 9px; right: 9px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    pointer-events: none; gap: 6px;
+  }
+  .hud .chip {
+    font-size: 10px; font-weight: 800; letter-spacing: .04em;
+    color: #d7f7ee; background: rgba(15, 32, 48, .58);
+    border: 1px solid rgba(94, 234, 212, .38);
+    border-radius: 999px; padding: 4px 9px; backdrop-filter: blur(6px);
+    white-space: nowrap;
+  }
+  .hud .chip.acc { color: #0b1220; background: #5eead4; border-color: #5eead4; }
+  .hud .col { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+  .hud .col.right { align-items: flex-end; }
+  .hud .glass {
+    font-size: 9.5px; font-weight: 700; color: #b9cbe0;
+    background: rgba(10, 20, 32, .5); border: 1px solid rgba(148, 178, 210, .22);
+    border-radius: 8px; padding: 3px 7px; backdrop-filter: blur(6px);
+  }
+  .hud .glass.star { color: #8ff0d3; border-color: rgba(94, 234, 212, .5); }
+
+  .note {
+    font-size: 12px; line-height: 1.65; color: #475569;
+    background: #fff; border: 1px dashed #cbd5e1; border-radius: 14px;
+    padding: 11px 12px; margin: 16px 0 0;
+  }
+  .note b { color: #0f172a; }
+  .foot { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="./index.html">← 내갈길 지도로</a>
+
+  <h1>경상학관(S3) 4층<br>아이소메트릭 3가지</h1>
+  <p class="lead">
+    같은 층(404호 · 거시경제의 이해)을 세 가지 느낌으로 그려 봤어요.
+    그림을 <b>손가락으로 좌우로 밀면</b> 돌아갑니다.
+  </p>
+
+  <!-- ─────────── 샘플 1 ─────────── -->
+  <section class="card">
+    <span class="tag">샘플 1</span>
+    <h2>건축 일러스트 2.5D</h2>
+    <p class="pros">
+      <span class="plus">▲</span> 파스텔 벽면·부드러운 그림자로 호실이 가장 잘 읽히고 앱 화면과 톤이 맞아요.<br>
+      <span class="minus">▼</span> 정지 그림이라 실제 3D처럼 깊이감이 살아나진 않아요.
+    </p>
+    <div class="visual" id="v-arch"></div>
+    <div class="hint"><span>← 드래그해서 돌리기 →</span><span class="mine">★ 404 내 수업</span></div>
+  </section>
+
+  <!-- ─────────── 샘플 2 ─────────── -->
+  <section class="card">
+    <span class="tag">샘플 2</span>
+    <h2>Three.js 실시간 3D</h2>
+    <p class="pros">
+      <span class="plus">▲</span> 반투명 유리 벽과 실시간 그림자로 가장 입체적이고 360도로 부드럽게 돕니다.<br>
+      <span class="minus">▼</span> 인터넷에서 3D 라이브러리를 받아야 해서 느린 회선·구형 폰에서는 무거워요.
+    </p>
+    <div class="visual three" id="v-three">
+      <div id="three-note">3D를 불러오지 못했어요.<br>인터넷에 연결한 뒤 새로고침해 주세요.</div>
+    </div>
+    <div class="hint"><span>← 드래그하면 관성으로 돌아가요 →</span><span class="mine">★ 404 내 수업</span></div>
+  </section>
+
+  <!-- ─────────── 샘플 3 ─────────── -->
+  <section class="card">
+    <span class="tag">샘플 3</span>
+    <h2>모던 내비 다크</h2>
+    <p class="pros">
+      <span class="plus">▲</span> 네이버·카카오 실내지도처럼 어둡고 세련된 느낌, 길 안내 중에 특히 잘 보여요.<br>
+      <span class="minus">▼</span> 밝은 야외에서 화면이 어두워 글씨가 작게 느껴질 수 있어요.
+    </p>
+    <div class="visual dark" id="v-dark"></div>
+    <div class="hint"><span>← 드래그해서 돌리기 →</span><span class="mine">★ 404 내 수업</span></div>
+  </section>
+
+  <p class="note">
+    <b>어떤 걸 고르면 좋을까요?</b><br>
+    · 평소 화면이 밝고 도면을 오래 봐야 한다면 <b>샘플 1</b><br>
+    · "진짜 3D" 느낌이 중요하면 <b>샘플 2</b><br>
+    · 밤이나 길 안내 중에 세련되게 보이고 싶다면 <b>샘플 3</b><br>
+    마음에 드는 번호 하나만 말해 주면 그 스타일로 앱 내부지도를 다시 그릴게요.
+  </p>
+
+  <p class="foot">한밭대 캠퍼스 길찾기 · 경상학관(S3) 4층 · 401·402 컴퓨터실습실 / 403 준비실 / 404~406 강의실</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ══════════════════════════════════════════════════════════════
+     도면 데이터 (경상학관 S3 4층 · 0~100 x 0~60 평면도)
+     ══════════════════════════════════════════════════════════════ */
+  var PLAN = {
+    slab: [[0, 0], [100, 0], [100, 60], [0, 60]],
+    corridor: [[4, 25], [92, 25], [92, 35], [4, 35]],
+    rooms: [
+      { no: '401', name: '컴퓨터실습실', t: 'lab',   x: 6,  y: 5,  w: 26, h: 20 },
+      { no: '402', name: '컴퓨터실습실', t: 'lab',   x: 32, y: 5,  w: 26, h: 20 },
+      { no: '403', name: '준비실',       t: 'etc',   x: 58, y: 5,  w: 26, h: 20 },
+      { no: '404', name: '거시경제의 이해', t: 'mine', x: 6,  y: 35, w: 26, h: 20 },
+      { no: '405', name: '강의실',       t: 'class', x: 32, y: 35, w: 26, h: 20 },
+      { no: '406', name: '강의실',       t: 'class', x: 58, y: 35, w: 26, h: 20 }
+    ],
+    ev: { no: 'E/V', name: '엘리베이터', t: 'ev', x: 87, y: 27, w: 9, h: 8 },
+    /* E/V → 복도 → 404호 문 */
+    route: [[91.5, 30], [74, 30], [19, 30], [19, 35.8]]
+  };
+
+  /* ══════════════════════════════════════════════════════════════
+     아이소메트릭 투영 도구
+     ══════════════════════════════════════════════════════════════ */
+  function projector(S) {
+    var cr = Math.cos, sr = Math.sin;
+    return function (x, y, z, rot) {
+      var r = rot * Math.PI / 180, dx = x - 50, dy = y - 30;
+      var rx = dx * cr(r) - dy * sr(r);
+      var ry = dx * sr(r) + dy * cr(r);
+      return [S.ox + (rx - ry) * S.ax * S.k,
+              S.oy + ((rx + ry) * S.ay - z * S.zs) * S.k];
+    };
+  }
+  function depthOf(x, y, rot) {
+    var r = rot * Math.PI / 180, dx = x - 50, dy = y - 30;
+    return (dx * Math.cos(r) - dy * Math.sin(r)) + (dx * Math.sin(r) + dy * Math.cos(r));
+  }
+  function rotVec(nx, ny, rot) {
+    var r = rot * Math.PI / 180;
+    return [nx * Math.cos(r) - ny * Math.sin(r), nx * Math.sin(r) + ny * Math.cos(r)];
+  }
+  function pathOf(pts, close) {
+    var d = '';
+    for (var i = 0; i < pts.length; i++) {
+      d += (i ? 'L' : 'M') + pts[i][0].toFixed(1) + ' ' + pts[i][1].toFixed(1);
+    }
+    return close === false ? d : d + 'Z';
+  }
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /* 호실 하나 = 벽 + 윗면 + 안의 책상을 한 덩어리로 (깊이 정렬 단위) */
+  function roomBlock(r, rot, P, pal, h, edgeW, deskPal, deskN, deskH) {
+    var list = [];
+    roomFaces(list, r, rot, P, pal, h, edgeW, 0);
+    var svg = list.map(function (f) { return f.svg; }).join('');
+    if (deskN) {
+      var dl = [];
+      deskFaces(dl, r, rot, P, deskPal, h, deskN, deskH);
+      dl.sort(function (a, b) { return a.d - b.d; });
+      svg += dl.map(function (f) { return f.svg; }).join('');
+    }
+    return { d: depthOf(r.x + r.w / 2, r.y + r.h / 2, rot), svg: svg };
+  }
+
+  /* 방 하나를 낮은 벽이 있는 블록으로: 옆면(보이는 것만) + 윗면 */
+  function roomFaces(list, r, rot, P, pal, h, edgeW, z0) {
+    z0 = z0 || 0;
+    var pts = [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.h], [r.x, r.y + r.h]];
+    var cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+
+    for (var i = 0; i < 4; i++) {
+      var a = pts[i], b = pts[(i + 1) % 4];
+      var mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      var nx = mx - cx, ny = my - cy;
+      var len = Math.sqrt(nx * nx + ny * ny) || 1;
+      nx /= len; ny /= len;
+      var rn = rotVec(nx, ny, rot);
+      /* 카메라 쪽(화면 아래)을 향한 면만 그린다 */
+      if (rn[0] + rn[1] >= -0.02) continue;
+      var q = [P(a[0], a[1], z0 + h, rot), P(b[0], b[1], z0 + h, rot),
+               P(b[0], b[1], z0, rot), P(a[0], a[1], z0, rot)];
+      list.push({
+        d: depthOf(mx, my, rot),
+        svg: '<path d="' + pathOf(q) + '" fill="' + (Math.abs(rn[0]) > Math.abs(rn[1]) ? pal.sideB : pal.sideA) +
+             '" stroke="' + pal.edge + '" stroke-width="' + edgeW + '" stroke-linejoin="round"/>'
+      });
+    }
+
+    var top = pts.map(function (p) { return P(p[0], p[1], z0 + h, rot); });
+    list.push({
+      d: depthOf(cx, cy, rot) + 0.001,
+      svg: '<path d="' + pathOf(top) + '" fill="' + pal.top + '" stroke="' + pal.edge +
+           '" stroke-width="' + edgeW + '" stroke-linejoin="round"/>'
+    });
+  }
+
+  /* 호실 안 책상 (작은 블록 여러 개) */
+  function deskFaces(list, r, rot, P, pal, z0, n, dh) {
+    var cols = 3, rows = Math.max(1, Math.round(n / 3));
+    var w = Math.min(5.4, (r.w - 6) / cols - 1.6);
+    var d = Math.min(3.8, (r.h - 6) / rows - 1.4);
+    var gx = (r.w - 4) / cols, gy = (r.h - 5) / rows;
+    for (var i = 0; i < cols; i++) {
+      for (var j = 0; j < rows; j++) {
+        var x = r.x + 2 + i * gx + (gx - w) / 2;
+        var y = r.y + 2.5 + j * gy + (gy - d) / 2;
+        roomFaces(list, { x: x, y: y, w: w, h: d }, rot, P, pal, dh || 3.0, 0.45, z0);
+      }
+    }
+  }
+
+  /* 라벨 · 동선 · 나침반 */
+  function labelsSvg(rot, P, h, cfg) {
+    var s = '';
+    PLAN.rooms.forEach(function (r) {
+      var c = P(r.x + r.w / 2, r.y + r.h / 2, h, rot);
+      var mine = r.t === 'mine';
+      var halo = cfg.textHalo
+        ? ' paint-order="stroke" stroke="' + cfg.textHalo + '" stroke-width="2.6" stroke-linejoin="round"'
+        : '';
+      s += '<text x="' + c[0].toFixed(1) + '" y="' + (c[1] - 1.5).toFixed(1) + '" text-anchor="middle" ' +
+           'font-family="inherit" font-size="' + (mine ? 11.5 : 10.5) + '" font-weight="900" ' +
+           'fill="' + (mine ? cfg.labelMine : cfg.label) + '"' + halo + '>' + esc(r.no) + '</text>';
+      if (cfg.showNames) {
+        s += '<text x="' + c[0].toFixed(1) + '" y="' + (c[1] + (mine ? 7 : 6)).toFixed(1) + '" text-anchor="middle" ' +
+             'font-family="inherit" font-size="6.2" font-weight="800" letter-spacing="-0.25" ' +
+             'fill="' + (mine ? cfg.labelMineSub : cfg.labelSub) + '"' + halo + '>' + esc(r.name) + '</text>';
+      }
+    });
+    return s;
+  }
+
+  function routeSvg(rot, P, cfg) {
+    var rp = PLAN.route.map(function (p) { return P(p[0], p[1], cfg.routeZ, rot); });
+    var d = pathOf(rp, false);
+    var s = '';
+    if (cfg.routeGlow) {
+      s += '<path d="' + d + '" fill="none" stroke="' + cfg.routeColor + '" stroke-width="9" ' +
+           'stroke-linecap="round" stroke-linejoin="round" opacity="0.18" filter="url(#' + cfg.glowId + ')"/>';
+    }
+    s += '<path d="' + d + '" fill="none" stroke="' + cfg.routeColor + '" stroke-width="3.2" ' +
+         'stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 4" opacity="0.96"/>';
+    /* 도착 화살표 */
+    var a = rp[rp.length - 2], b = rp[rp.length - 1];
+    var ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    var tip = [b[0] + Math.cos(ang) * 3, b[1] + Math.sin(ang) * 3];
+    var h1 = [tip[0] - 7 * Math.cos(ang - 0.44), tip[1] - 7 * Math.sin(ang - 0.44)];
+    var h2 = [tip[0] - 7 * Math.cos(ang + 0.44), tip[1] - 7 * Math.sin(ang + 0.44)];
+    s += '<path d="' + pathOf([tip, h1, h2]) + '" fill="' + cfg.routeColor + '"/>';
+    /* 출발(E/V) 점 */
+    s += '<circle cx="' + rp[0][0].toFixed(1) + '" cy="' + rp[0][1].toFixed(1) + '" r="3.4" ' +
+         'fill="' + cfg.evDot + '" stroke="' + cfg.slabTop + '" stroke-width="1.4"/>';
+    return s;
+  }
+
+  function compassSvg(rot, P, cfg) {
+    var p0 = P(50, 30, 0, rot), p1 = P(50, 28, 0, rot);
+    var ang = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]) * 180 / Math.PI;
+    var cp = cfg.compassPos || [328, 30];
+    var x = cp[0], y = cp[1];
+    return '<g transform="translate(' + x + ',' + y + ')">' +
+      '<circle r="12" fill="' + cfg.compassBg + '" stroke="' + cfg.compassEdge + '" stroke-width="0.9"/>' +
+      '<g transform="rotate(' + ang.toFixed(1) + ')">' +
+        '<path d="M8,0 L-4.6,-4.2 L-1.6,0 L-4.6,4.2 Z" fill="' + cfg.compassN + '"/>' +
+      '</g>' +
+      '<text x="0" y="-14" text-anchor="middle" font-family="inherit" font-size="7.5" font-weight="900" ' +
+        'fill="' + cfg.compassText + '">N</text>' +
+    '</g>';
+  }
+
+  function svgOpen(w, h, defs) {
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="xMidYMid meet" role="img" ' +
+           'aria-label="경상학관 4층 아이소메트릭 도면">' +
+           '<defs>' + defs + '</defs>';
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     뒤쪽 외벽 — 보는 사람 반대편 벽만 그려 건물 안이 열려 보이게
+     ══════════════════════════════════════════════════════════════ */
+  function backWalls(rot, P, cfg) {
+    var edges = [
+      { a: [0, 0], b: [100, 0], n: [0, -1] },
+      { a: [100, 0], b: [100, 60], n: [1, 0] },
+      { a: [100, 60], b: [0, 60], n: [0, 1] },
+      { a: [0, 60], b: [0, 0], n: [-1, 0] }
+    ];
+    var s = '';
+    edges.forEach(function (e) {
+      var rn = rotVec(e.n[0], e.n[1], rot);
+      if (rn[0] + rn[1] <= 0.05) return;   /* 화면 앞쪽을 향한 벽은 자른다 */
+      var q = [P(e.a[0], e.a[1], 0, rot), P(e.b[0], e.b[1], 0, rot),
+               P(e.b[0], e.b[1], cfg.wallH, rot), P(e.a[0], e.a[1], cfg.wallH, rot)];
+      s += '<path d="' + pathOf(q) + '" fill="' + cfg.wallFill + '" stroke="' + cfg.wallEdge +
+           '" stroke-width="1" stroke-linejoin="round"/>';
+      var capH = Math.max(1.6, cfg.wallH * 0.13);
+      var q2 = [P(e.a[0], e.a[1], cfg.wallH, rot), P(e.b[0], e.b[1], cfg.wallH, rot),
+                P(e.b[0], e.b[1], cfg.wallH - capH, rot), P(e.a[0], e.a[1], cfg.wallH - capH, rot)];
+      s += '<path d="' + pathOf(q2) + '" fill="' + cfg.wallTop + '"/>';
+      /* 창틀 세로선 */
+      if (cfg.wallMullion) {
+        var len = Math.hypot(e.b[0] - e.a[0], e.b[1] - e.a[1]);
+        var n = Math.max(2, Math.round(len / 12));
+        for (var k = 1; k < n; k++) {
+          var t = k / n;
+          var mx = e.a[0] + (e.b[0] - e.a[0]) * t;
+          var my = e.a[1] + (e.b[1] - e.a[1]) * t;
+          var w0 = P(mx, my, 0, rot), w1 = P(mx, my, cfg.wallH - capH, rot);
+          s += '<path d="M' + w0[0].toFixed(1) + ' ' + w0[1].toFixed(1) + 'L' +
+               w1[0].toFixed(1) + ' ' + w1[1].toFixed(1) + '" stroke="' + cfg.wallMullion +
+               '" stroke-width="0.8" opacity="0.75"/>';
+        }
+      }
+    });
+    return s;
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     샘플 1 · 건축 일러스트 2.5D
+     ══════════════════════════════════════════════════════════════ */
+  var ARCH = {
+    S: { ox: 180, oy: 160, ax: 0.866, ay: 0.5, k: 2.42, zs: 0.95 },
+    curbH: 2.0,          /* 호실 바닥이 살짝 떠 보이는 높이 */
+    evH: 22,
+    deskH: 5,
+    slabT: 8,
+    edgeW: 1.0,
+    wallH: 15,
+    wallFill: '#eff6fc', wallEdge: '#c6d6e6', wallTop: '#dbe8f4', wallMullion: '#b9cfdf',
+    deskPal: { top: '#f7e7cd', sideA: '#e8d3b3', sideB: '#d8bf98', edge: '#ffffff' },
+    deskOf: { lab: 6, mine: 6, class: 0, etc: 0, ev: 0 },
+    slabTop: '#f6fafe', slabSide: '#c9d8e8', slabEdge: '#a9bccf',
+    corridor: '#e6eef8', corridorEdge: '#c4d4e4',
+    label: '#1e3a5f', labelSub: '#5f7893',
+    labelMine: '#8a4b05', labelMineSub: '#a16207',
+    textHalo: '#ffffff',
+    showNames: true,
+    routeZ: 2.7,
+    routeColor: '#f97316',
+    evDot: '#0ea5e9',
+    compassBg: '#ffffff', compassEdge: '#c2d3e4', compassN: '#d90429', compassText: '#475569',
+    compassPos: [330, 264],
+    palette: {
+      lab:   { top: '#dcecff', sideA: '#c8def7', sideB: '#b0cdee', edge: '#ffffff' },
+      class: { top: '#e3f2ff', sideA: '#cee7fb', sideB: '#b6d9f3', edge: '#ffffff' },
+      etc:   { top: '#f0edff', sideA: '#e2ddfb', sideB: '#cec6f4', edge: '#ffffff' },
+      mine:  { top: '#fde08f', sideA: '#fbcd5c', sideB: '#f5ba2b', edge: '#ffffff' },
+      ev:    { top: '#c7ecfd', sideA: '#9bd9f8', sideB: '#77c9f2', edge: '#ffffff' }
+    }
+  };
+
+  function renderArch(rot) {
+    var S = ARCH.S, P = projector(S);
+    var s = svgOpen(360, 300,
+      '<filter id="archBlur" x="-25%" y="-25%" width="160%" height="160%">' +
+        '<feGaussianBlur stdDeviation="7"/>' +
+      '</filter>' +
+      '<linearGradient id="archBg" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="#fdfeff"/><stop offset="100%" stop-color="#e8f0fa"/>' +
+      '</linearGradient>' +
+      '<linearGradient id="archGloss" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="#ffffff" stop-opacity="0.75"/>' +
+        '<stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>' +
+      '</linearGradient>');
+
+    s += '<rect width="360" height="300" fill="url(#archBg)"/>';
+
+    var top = PLAN.slab.map(function (p) { return P(p[0], p[1], 0, rot); });
+    var bot = PLAN.slab.map(function (p) { return P(p[0], p[1], -ARCH.slabT, rot); });
+
+    /* 바닥에 떨어지는 부드러운 그림자 */
+    s += '<path d="' + pathOf(top) + '" transform="translate(0,9)" fill="#1e3a5f" opacity="0.14" filter="url(#archBlur)"/>';
+
+    /* 바닥 슬래브 두께 */
+    for (var i = 0; i < 4; i++) {
+      var j = (i + 1) % 4;
+      s += '<path d="' + pathOf([top[i], top[j], bot[j], bot[i]]) + '" fill="' + ARCH.slabSide +
+           '" stroke="' + ARCH.slabEdge + '" stroke-width="0.8" stroke-linejoin="round"/>';
+    }
+    s += '<path d="' + pathOf(top) + '" fill="' + ARCH.slabTop + '" stroke="' + ARCH.slabEdge + '" stroke-width="1.1"/>';
+
+    /* 뒤쪽 외벽 */
+    s += backWalls(rot, P, ARCH);
+
+    /* 복도 */
+    s += '<path d="' + pathOf(PLAN.corridor.map(function (p) { return P(p[0], p[1], 0.4, rot); })) +
+         '" fill="' + ARCH.corridor + '" stroke="' + ARCH.corridorEdge + '" stroke-width="0.9"/>';
+    var corA = P(6, 30, 0.5, rot), corB = P(90, 30, 0.5, rot);
+    s += '<path d="M' + corA[0].toFixed(1) + ' ' + corA[1].toFixed(1) + 'L' + corB[0].toFixed(1) + ' ' + corB[1].toFixed(1) +
+         '" stroke="#c9d8e8" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="1 8"/>';
+
+    /* 호실 바닥 + 책상 (깊이 순서) */
+    var blocks = [];
+    PLAN.rooms.forEach(function (r) {
+      blocks.push(roomBlock(r, rot, P, ARCH.palette[r.t], ARCH.curbH, ARCH.edgeW,
+        ARCH.deskPal, ARCH.deskOf[r.t] || 0, ARCH.deskH));
+    });
+    blocks.push(roomBlock(PLAN.ev, rot, P, ARCH.palette.ev, ARCH.evH, ARCH.edgeW, null, 0, ARCH.deskH));
+    blocks.sort(function (a, b) { return a.d - b.d; });
+    blocks.forEach(function (b) { s += b.svg; });
+
+    /* E/V 기둥 그림자 */
+    var evSh = P(PLAN.ev.x + PLAN.ev.w / 2 + 2, PLAN.ev.y + PLAN.ev.h / 2 + 2, 0.3, rot);
+    s += '<ellipse cx="' + evSh[0].toFixed(1) + '" cy="' + evSh[1].toFixed(1) + '" rx="13" ry="6.5" fill="#1e3a5f" opacity="0.16" filter="url(#archBlur)"/>';
+
+    /* 404 강조 테두리 */
+    var m = PLAN.rooms[3];
+    var inset = 1.6;
+    var ring = [[m.x + inset, m.y + inset], [m.x + m.w - inset, m.y + inset],
+                [m.x + m.w - inset, m.y + m.h - inset], [m.x + inset, m.y + m.h - inset]]
+      .map(function (p) { return P(p[0], p[1], ARCH.curbH + 0.15, rot); });
+    s += '<path d="' + pathOf(ring) + '" fill="none" stroke="#f59e0b" stroke-width="1.7" stroke-linejoin="round" opacity="0.95"/>';
+
+    /* E/V 이름표 */
+    var evc = PLAN.ev;
+    var evTop = P(evc.x + evc.w / 2, evc.y + evc.h / 2, ARCH.evH, rot);
+    s += '<g transform="translate(' + evTop[0].toFixed(1) + ',' + (evTop[1] - 12).toFixed(1) + ')">' +
+         '<rect x="-14" y="-7.5" width="28" height="15" rx="7.5" fill="#ffffff" stroke="#38bdf8" stroke-width="1"/>' +
+         '<text x="0" y="4" text-anchor="middle" font-family="inherit" font-size="8" font-weight="900" fill="#0284c7">E/V</text>' +
+         '</g>';
+
+    /* 404 별 */
+    var sc = P(m.x + 4.6, m.y + 4.6, ARCH.curbH + 0.2, rot);
+    s += '<g transform="translate(' + sc[0].toFixed(1) + ',' + sc[1].toFixed(1) + ')">' +
+         '<path d="M0,-6.4 L1.8,-2 L6.5,-1.8 L2.9,1.2 L4.1,5.8 L0,3.1 L-4.1,5.8 L-2.9,1.2 L-6.5,-1.8 L-1.8,-2 Z" ' +
+         'fill="#f59e0b" stroke="#ffffff" stroke-width="1.1"/></g>';
+
+    s += labelsSvg(rot, P, ARCH.curbH, ARCH);
+    s += routeSvg(rot, P, ARCH);
+    s += compassSvg(rot, P, ARCH);
+
+    s += '<g transform="translate(16,20)"><rect width="48" height="17" rx="8.5" fill="#ffffff" opacity="0.92" stroke="#dbe6f3"/>' +
+         '<text x="24" y="12" text-anchor="middle" font-family="inherit" font-size="8.5" font-weight="900" fill="#0369a1">S3 · 4F</text></g>';
+
+    return s + '</svg>';
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     샘플 3 · 모던 내비 다크
+     ══════════════════════════════════════════════════════════════ */
+  var DARK = {
+    S: { ox: 180, oy: 160, ax: 0.866, ay: 0.5, k: 2.42, zs: 0.95 },
+    curbH: 2.2,
+    evH: 24,
+    deskH: 4.6,
+    slabT: 8,
+    edgeW: 1.05,
+    wallH: 14,
+    wallFill: '#0f1c2d', wallEdge: 'rgba(56,189,248,0.45)', wallTop: '#16405c', wallMullion: 'rgba(56,189,248,0.28)',
+    deskPal: { top: '#26364d', sideA: '#1c2941', sideB: '#141e2f', edge: 'rgba(125,211,252,0.32)' },
+    deskOf: { lab: 6, mine: 6, class: 0, etc: 0, ev: 0 },
+    slabTop: '#101a2b', slabSide: '#0a1320', slabEdge: 'rgba(94,234,212,0.30)',
+    corridor: '#0d1626', corridorEdge: 'rgba(94,234,212,0.16)',
+    label: '#d7e3f2', labelSub: '#8aa0b8',
+    labelMine: '#5eead4', labelMineSub: '#99f6e4',
+    textHalo: '',
+    showNames: true,
+    routeZ: 2.9,
+    routeColor: '#34d399',
+    routeGlow: true,
+    glowId: 'darkGlow',
+    evDot: '#5eead4',
+    compassBg: 'rgba(10,20,32,0.72)', compassEdge: 'rgba(148,178,210,0.35)',
+    compassPos: [330, 264],
+    compassN: '#5eead4', compassText: '#93a4b8',
+    palette: {
+      lab:   { top: '#1b2a3d', sideA: '#152233', sideB: '#0f1a28', edge: 'rgba(125,211,252,0.5)' },
+      class: { top: '#1c2b3f', sideA: '#162435', sideB: '#101b2a', edge: 'rgba(125,211,252,0.42)' },
+      etc:   { top: '#212a40', sideA: '#1a2236', sideB: '#131a2b', edge: 'rgba(167,139,250,0.4)' },
+      mine:  { top: '#123b33', sideA: '#0e302a', sideB: '#092420', edge: '#34d399' },
+      ev:    { top: '#0d3a4b', sideA: '#0a2c3a', sideB: '#071f2a', edge: '#22d3ee' }
+    }
+  };
+
+  function renderDark(rot) {
+    var P = projector(DARK.S);
+    var s = svgOpen(360, 300,
+      '<filter id="darkGlow" x="-30%" y="-30%" width="160%" height="160%">' +
+        '<feGaussianBlur stdDeviation="4.5"/>' +
+      '</filter>' +
+      '<filter id="neonSoft" x="-40%" y="-40%" width="180%" height="180%">' +
+        '<feGaussianBlur stdDeviation="3"/>' +
+      '</filter>');
+
+    /* 바닥 그리드 */
+    s += '<g opacity="0.09" stroke="#38bdf8" stroke-width="0.7">';
+    for (var gx = 0; gx <= 360; gx += 24) s += '<path d="M' + gx + ' 0V300"/>';
+    for (var gy = 0; gy <= 300; gy += 24) s += '<path d="M0 ' + gy + 'H360"/>';
+    s += '</g>';
+
+    var top = PLAN.slab.map(function (p) { return P(p[0], p[1], 0, rot); });
+    var bot = PLAN.slab.map(function (p) { return P(p[0], p[1], -DARK.slabT, rot); });
+
+    s += '<path d="' + pathOf(top) + '" transform="translate(0,7)" fill="#34d399" opacity="0.16" filter="url(#darkGlow)"/>';
+
+    for (var i = 0; i < 4; i++) {
+      var j = (i + 1) % 4;
+      s += '<path d="' + pathOf([top[i], top[j], bot[j], bot[i]]) + '" fill="' + DARK.slabSide +
+           '" stroke="' + DARK.slabEdge + '" stroke-width="0.9" stroke-linejoin="round"/>';
+    }
+    s += '<path d="' + pathOf(top) + '" fill="' + DARK.slabTop + '" stroke="' + DARK.slabEdge + '" stroke-width="1.1"/>';
+
+    /* 뒤쪽 외벽 (네온) */
+    s += backWalls(rot, P, DARK);
+
+    /* 복도 */
+    s += '<path d="' + pathOf(PLAN.corridor.map(function (p) { return P(p[0], p[1], 0.4, rot); })) +
+         '" fill="' + DARK.corridor + '" stroke="' + DARK.corridorEdge + '" stroke-width="0.9"/>';
+
+    var blocks = [];
+    PLAN.rooms.forEach(function (r) {
+      blocks.push(roomBlock(r, rot, P, DARK.palette[r.t], DARK.curbH, DARK.edgeW,
+        DARK.deskPal, DARK.deskOf[r.t] || 0, DARK.deskH));
+    });
+    blocks.push(roomBlock(PLAN.ev, rot, P, DARK.palette.ev, DARK.evH, DARK.edgeW, null, 0, DARK.deskH));
+    blocks.sort(function (a, b) { return a.d - b.d; });
+    blocks.forEach(function (b) { s += b.svg; });
+
+    /* 404 네온 테두리 */
+    var m = PLAN.rooms[3];
+    var inset = 1.4;
+    var ring = [[m.x + inset, m.y + inset], [m.x + m.w - inset, m.y + inset],
+                [m.x + m.w - inset, m.y + m.h - inset], [m.x + inset, m.y + m.h - inset]]
+      .map(function (p) { return P(p[0], p[1], DARK.curbH + 0.2, rot); });
+    s += '<path d="' + pathOf(ring) + '" fill="none" stroke="#34d399" stroke-width="6" opacity="0.45" filter="url(#neonSoft)"/>';
+    s += '<path d="' + pathOf(ring) + '" fill="none" stroke="#5eead4" stroke-width="1.8"/>';
+
+    /* E/V 네온 표시 */
+    var evc = PLAN.ev;
+    var evBase = P(evc.x + evc.w / 2, evc.y + evc.h / 2, 0.5, rot);
+    s += '<ellipse cx="' + evBase[0].toFixed(1) + '" cy="' + evBase[1].toFixed(1) + '" rx="15" ry="7.5" ' +
+         'fill="#22d3ee" opacity="0.45" filter="url(#neonSoft)"/>';
+    var evTop = P(evc.x + evc.w / 2, evc.y + evc.h / 2, DARK.evH, rot);
+    s += '<g transform="translate(' + evTop[0].toFixed(1) + ',' + (evTop[1] - 11).toFixed(1) + ')">' +
+         '<rect x="-14" y="-7" width="28" height="14" rx="7" fill="rgba(6,20,28,0.85)" stroke="#22d3ee" stroke-width="1"/>' +
+         '<text x="0" y="3.6" text-anchor="middle" font-family="inherit" font-size="7.6" font-weight="900" fill="#7ff2f8">E/V</text>' +
+         '</g>';
+
+    /* 404 별 */
+    var sc = P(m.x + 4.6, m.y + 4.6, DARK.curbH + 0.25, rot);
+    s += '<g transform="translate(' + sc[0].toFixed(1) + ',' + sc[1].toFixed(1) + ')">' +
+         '<path d="M0,-6.4 L1.8,-2 L6.5,-1.8 L2.9,1.2 L4.1,5.8 L0,3.1 L-4.1,5.8 L-2.9,1.2 L-6.5,-1.8 L-1.8,-2 Z" ' +
+         'fill="#5eead4"/></g>';
+
+    s += labelsSvg(rot, P, DARK.curbH, DARK);
+    s += routeSvg(rot, P, DARK);
+    s += compassSvg(rot, P, DARK);
+
+    return s + '</svg>';
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     드래그 회전 공통
+     ══════════════════════════════════════════════════════════════ */
+  function makeSpinner(host, render) {
+    var rot = -18, dragging = false, lastX = 0, pid = null, raf = null;
+    function draw() {
+      raf = null;
+      render(rot);
+    }
+    function schedule() {
+      if (raf === null) raf = window.requestAnimationFrame(draw);
+    }
+    host.addEventListener('pointerdown', function (e) {
+      dragging = true; lastX = e.clientX; pid = e.pointerId;
+      host.classList.add('drag');
+      try { host.setPointerCapture(pid); } catch (err) {}
+    });
+    host.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      var dx = e.clientX - lastX;
+      lastX = e.clientX;
+      rot += dx * 0.75;
+      schedule();
+    });
+    function end(e) {
+      if (!dragging) return;
+      dragging = false;
+      host.classList.remove('drag');
+      if (pid !== null) { try { host.releasePointerCapture(pid); } catch (err) {} pid = null; }
+    }
+    host.addEventListener('pointerup', end);
+    host.addEventListener('pointercancel', end);
+    host.addEventListener('lostpointercapture', end);
+    host.addEventListener('dragstart', function (e) { e.preventDefault(); });
+    render(rot);
+  }
+
+  var archHost = document.getElementById('v-arch');
+  makeSpinner(archHost, function (rot) { archHost.innerHTML = renderArch(rot); });
+
+  var darkHost = document.getElementById('v-dark');
+  var darkHud = '<div class="hud">' +
+      '<div class="col"><span class="chip">S3 · 4F</span><span class="glass">경상학관 4층</span></div>' +
+      '<div class="col right"><span class="chip acc">E/V → 404</span>' +
+      '<span class="glass">약 1분 · 45m</span>' +
+      '<span class="glass star">★ 404 거시경제의 이해</span></div>' +
+    '</div>';
+  makeSpinner(darkHost, function (rot) { darkHost.innerHTML = renderDark(rot) + darkHud; });
+
+  /* ══════════════════════════════════════════════════════════════
+     샘플 2 · Three.js 실시간 3D
+     ══════════════════════════════════════════════════════════════ */
+  function initThree() {
+    var host = document.getElementById('v-three');
+    var note = document.getElementById('three-note');
+
+    function fail() {
+      if (note) note.style.display = 'flex';
+    }
+
+    import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js').then(function (THREE) {
+      try { start(THREE); } catch (e) { fail(); }
+    }).catch(fail);
+
+    function start(THREE) {
+      var W = host.clientWidth || 320, H = host.clientHeight || 300;
+      var renderer;
+      try {
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      } catch (e) { fail(); return; }
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(W, H, false);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      if ('outputColorSpace' in renderer && THREE.SRGBColorSpace) {
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+      }
+      host.appendChild(renderer.domElement);
+
+      var scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xecf3fb);
+      scene.fog = new THREE.Fog(0xecf3fb, 22, 40);
+
+      var camera = new THREE.PerspectiveCamera(40, W / H, 0.1, 100);
+      camera.position.set(0, 12.8, 12.2);
+      camera.lookAt(0, 0.3, 0);
+
+      /* 바닥 그림자를 받는 바닥 */
+      var ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(40, 40),
+        new THREE.ShadowMaterial({ opacity: 0.14 })
+      );
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -0.36;
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      var root = new THREE.Group();
+      root.rotation.y = -0.52;
+      scene.add(root);
+
+      function wx(x) { return (x - 50) / 10; }
+      function wz(y) { return (y - 30) / 10; }
+
+      /* 슬래브 */
+      var slab = new THREE.Mesh(
+        new THREE.BoxGeometry(10.3, 0.3, 6.3),
+        new THREE.MeshStandardMaterial({ color: 0xf8fbff, roughness: 0.92, metalness: 0.02 })
+      );
+      slab.position.y = -0.15;
+      slab.receiveShadow = true;
+      slab.castShadow = true;
+      root.add(slab);
+
+      /* 복도 바닥 */
+      var cor = new THREE.Mesh(
+        new THREE.BoxGeometry(8.8, 0.04, 1.0),
+        new THREE.MeshStandardMaterial({ color: 0xdde8f5, roughness: 1 })
+      );
+      cor.position.set(wx(48), 0.02, wz(30));
+      cor.receiveShadow = true;
+      root.add(cor);
+
+      var GLASS = new THREE.MeshPhysicalMaterial({
+        color: 0xbfe4ff, transparent: true, opacity: 0.20, roughness: 0.06,
+        metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.1,
+        side: THREE.DoubleSide, depthWrite: false
+      });
+      var EDGE = new THREE.LineBasicMaterial({ color: 0x7fb0dc, transparent: true, opacity: 0.62 });
+      var FLOOR_MAT = {
+        lab:   new THREE.MeshStandardMaterial({ color: 0xd8ebff, roughness: 0.85 }),
+        class: new THREE.MeshStandardMaterial({ color: 0xe3f0ff, roughness: 0.85 }),
+        etc:   new THREE.MeshStandardMaterial({ color: 0xe9e4ff, roughness: 0.85 }),
+        mine:  new THREE.MeshStandardMaterial({ color: 0xffe6ad, roughness: 0.8, emissive: 0x3a2a00, emissiveIntensity: 0.35 })
+      };
+
+      var WALL_H = 1.05;
+
+      function addWalls(r) {
+        var w = r.w / 10, d = r.h / 10;
+        var cx = wx(r.x + r.w / 2), cz = wz(r.y + r.h / 2);
+        var panels = [
+          { g: [w, WALL_H, 0.05], p: [cx, WALL_H / 2, cz - d / 2] },
+          { g: [w, WALL_H, 0.05], p: [cx, WALL_H / 2, cz + d / 2] },
+          { g: [0.05, WALL_H, d], p: [cx - w / 2, WALL_H / 2, cz] },
+          { g: [0.05, WALL_H, d], p: [cx + w / 2, WALL_H / 2, cz] }
+        ];
+        panels.forEach(function (pn) {
+          var geo = new THREE.BoxGeometry(pn.g[0], pn.g[1], pn.g[2]);
+          var mesh = new THREE.Mesh(geo, GLASS);
+          mesh.position.set(pn.p[0], pn.p[1], pn.p[2]);
+          root.add(mesh);
+          var lines = new THREE.LineSegments(new THREE.EdgesGeometry(geo), EDGE);
+          lines.position.copy(mesh.position);
+          root.add(lines);
+        });
+      }
+
+      function addFloorTile(r) {
+        var w = r.w / 10, d = r.h / 10;
+        var tile = new THREE.Mesh(
+          new THREE.BoxGeometry(w - 0.04, 0.06, d - 0.04),
+          FLOOR_MAT[r.t] || FLOOR_MAT.class
+        );
+        tile.position.set(wx(r.x + r.w / 2), 0.03, wz(r.y + r.h / 2));
+        tile.receiveShadow = true;
+        root.add(tile);
+        addWalls(r);
+      }
+
+      PLAN.rooms.forEach(addFloorTile);
+
+      /* 책상 (404 교실 · 401·402 실습실) */
+      var deskMat = new THREE.MeshStandardMaterial({ color: 0xf5f8fc, roughness: 0.7 });
+      var deskTop = new THREE.MeshStandardMaterial({ color: 0xf9f6ee, roughness: 0.6 });
+      [PLAN.rooms[0], PLAN.rooms[1], PLAN.rooms[3]].forEach(function (rm) {
+        for (var di = 0; di < 3; di++) {
+          for (var dj = 0; dj < 2; dj++) {
+            var dx = wx(rm.x + 6 + di * 7.5);
+            var dz = wz(rm.y + 7 + dj * 10);
+            var top = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.06, 0.46), deskTop);
+            top.position.set(dx, 0.46, dz);
+            top.castShadow = true;
+            top.receiveShadow = true;
+            root.add(top);
+            var leg = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.44, 0.3), deskMat);
+            leg.position.set(dx, 0.22, dz);
+            leg.castShadow = true;
+            root.add(leg);
+          }
+        }
+      });
+
+      /* E/V 기둥 */
+      var evGeo = new THREE.BoxGeometry(0.92, 2.0, 0.92);
+      var evMesh = new THREE.Mesh(evGeo, new THREE.MeshPhysicalMaterial({
+        color: 0x38bdf8, transparent: true, opacity: 0.55, roughness: 0.15,
+        metalness: 0.1, clearcoat: 1
+      }));
+      var evc = PLAN.ev;
+      evMesh.position.set(wx(evc.x + evc.w / 2), 1.0, wz(evc.y + evc.h / 2));
+      evMesh.castShadow = true;
+      evMesh.receiveShadow = true;
+      root.add(evMesh);
+      var evEdges = new THREE.LineSegments(new THREE.EdgesGeometry(evGeo), new THREE.LineBasicMaterial({ color: 0x0ea5e9 }));
+      evEdges.position.copy(evMesh.position);
+      root.add(evEdges);
+
+      /* 이동 동선 */
+      var routePts = PLAN.route.map(function (p) {
+        return new THREE.Vector3(wx(p[0]), 0.12, wz(p[1]));
+      });
+      var curve = new THREE.CatmullRomCurve3(routePts, false, 'catmullrom', 0.0);
+      var tube = new THREE.Mesh(
+        new THREE.TubeGeometry(curve, 80, 0.062, 8, false),
+        new THREE.MeshStandardMaterial({ color: 0xf97316, emissive: 0xc2410c, emissiveIntensity: 0.8, roughness: 0.35 })
+      );
+      tube.castShadow = false;
+      root.add(tube);
+      var pulse = new THREE.Mesh(
+        new THREE.SphereGeometry(0.095, 16, 12),
+        new THREE.MeshStandardMaterial({ color: 0xfff7ed, emissive: 0xf97316, emissiveIntensity: 1.6, roughness: 0.3 })
+      );
+      root.add(pulse);
+
+      /* 호실 라벨 (항상 카메라를 바라보는 스프라이트) */
+      function labelSprite(text, fg, bg) {
+        var c = document.createElement('canvas');
+        c.width = 256; c.height = 128;
+        var g = c.getContext('2d');
+        g.clearRect(0, 0, 256, 128);
+        g.fillStyle = bg;
+        var rw = 168, rh = 74, rx = (256 - rw) / 2, ry = (128 - rh) / 2, rr = 22;
+        g.beginPath();
+        g.moveTo(rx + rr, ry);
+        g.arcTo(rx + rw, ry, rx + rw, ry + rh, rr);
+        g.arcTo(rx + rw, ry + rh, rx, ry + rh, rr);
+        g.arcTo(rx, ry + rh, rx, ry, rr);
+        g.arcTo(rx, ry, rx + rw, ry, rr);
+        g.closePath();
+        g.fill();
+        g.fillStyle = fg;
+        g.font = '900 64px -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+        g.textAlign = 'center';
+        g.textBaseline = 'middle';
+        g.fillText(text, 128, 66);
+        var tex = new THREE.CanvasTexture(c);
+        if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+        var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+        sp.scale.set(1.66, 0.83, 1);
+        return sp;
+      }
+
+      PLAN.rooms.forEach(function (r) {
+        var mine = r.t === 'mine';
+        var sp = labelSprite(r.no, mine ? '#7c2d12' : '#12395c', mine ? '#fde68a' : 'rgba(255,255,255,0.86)');
+        sp.position.set(wx(r.x + r.w / 2), 1.55, wz(r.y + r.h / 2));
+        root.add(sp);
+      });
+      var evLabel = labelSprite('E/V', '#053044', '#bae6fd');
+      evLabel.position.set(wx(evc.x + evc.w / 2), 2.45, wz(evc.y + evc.h / 2));
+      evLabel.scale.set(1.25, 0.62, 1);
+      root.add(evLabel);
+
+      /* 조명 */
+      scene.add(new THREE.HemisphereLight(0xffffff, 0xcfe2f5, 0.9));
+      var key = new THREE.DirectionalLight(0xffffff, 2.1);
+      key.position.set(6.5, 12, 7.5);
+      key.castShadow = true;
+      key.shadow.mapSize.set(1024, 1024);
+      key.shadow.camera.left = -9;
+      key.shadow.camera.right = 9;
+      key.shadow.camera.top = 9;
+      key.shadow.camera.bottom = -9;
+      key.shadow.camera.near = 1;
+      key.shadow.camera.far = 40;
+      key.shadow.bias = -0.0009;
+      key.shadow.radius = 3;
+      scene.add(key);
+      var fill = new THREE.DirectionalLight(0xdbeafe, 0.6);
+      fill.position.set(-7, 6, -6);
+      scene.add(fill);
+
+      /* 드래그 회전 + 관성 */
+      var dragging = false, lastX = 0, vel = 0, pid = null;
+      host.addEventListener('pointerdown', function (e) {
+        dragging = true; lastX = e.clientX; pid = e.pointerId;
+        host.classList.add('drag');
+        try { host.setPointerCapture(pid); } catch (err) {}
+      });
+      host.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        var dx = e.clientX - lastX;
+        lastX = e.clientX;
+        root.rotation.y += dx * 0.0085;
+        vel = dx * 0.0085;
+      });
+      function endDrag() {
+        if (!dragging) return;
+        dragging = false;
+        host.classList.remove('drag');
+        if (pid !== null) { try { host.releasePointerCapture(pid); } catch (err) {} pid = null; }
+      }
+      host.addEventListener('pointerup', endDrag);
+      host.addEventListener('pointercancel', endDrag);
+      host.addEventListener('lostpointercapture', endDrag);
+
+      function resize() {
+        var w = host.clientWidth, h = host.clientHeight;
+        if (!w || !h) return;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+      if (window.ResizeObserver) new ResizeObserver(resize).observe(host);
+      window.addEventListener('resize', resize);
+      resize();
+
+      var t0 = performance.now();
+      renderer.setAnimationLoop(function () {
+        var t = (performance.now() - t0) / 1000;
+        if (!dragging) {
+          root.rotation.y += vel;
+          vel *= 0.94;
+          if (Math.abs(vel) < 0.0002) vel = 0;
+        }
+        pulse.position.copy(curve.getPointAt((t * 0.16) % 1));
+        pulse.scale.setScalar(1 + Math.sin(t * 5) * 0.12);
+        renderer.render(scene, camera);
+      });
+    }
+  }
+
+  /* CDN을 못 받아도 콘솔 에러가 남지 않도록 감싼다 */
+  try { initThree(); } catch (e) {
+    var n = document.getElementById('three-note');
+    if (n) n.style.display = 'flex';
+  }
+})();
+</script>
+</body>
+</html>

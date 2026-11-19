@@ -1528,6 +1528,7 @@
     isoRot: 0,
     compassOn: false,
     heading: null,
+    compassSmooth: null,  // 센서 스무딩된 화면 위쪽 방위(0=북)
     simIdx: 0,
     map: null,            // Leaflet 인스턴스
     layers: {},
@@ -1838,6 +1839,9 @@
     state.offView = { z: 1, x: 0, y: 0 };
     state.isoRot = 0;
     state.compassOn = false;
+    state.heading = null;
+    state.compassSmooth = null;
+    disableCompass();
     state.timetable = JSON.parse(JSON.stringify(DEFAULT_TIMETABLE));
     state.records = [];
     state.visits = {};
@@ -1852,8 +1856,6 @@
     renderAll();
     /* 출발지 <select>도 내부 상태와 같게 GPS로 맞춘다 */
     $('select-start').value = state.startSel;
-    $('btn-compass').className = '';
-    $('btn-compass').textContent = '🧭 폰 방향 센서';
     if (state.map) {
       try { state.map.remove(); } catch (e) {}
       state.map = null;
@@ -3303,38 +3305,144 @@
   }
 
   /* 폰 방향 센서 */
-  function enableCompass() {
-    function onOrient(e) {
-      var heading = null;
-      if (typeof e.webkitCompassHeading === 'number') heading = e.webkitCompassHeading;
-      else if (e.alpha !== null && e.alpha !== undefined) heading = 360 - e.alpha;
-      if (heading === null) return;
-      state.heading = heading;
-      /* 폰이 향한 방향이 화면 위로 오도록 도면 회전 */
-      var h = rad(heading);
-      var A = Math.sin(h) + Math.cos(h);
-      var B = Math.sin(h) - Math.cos(h);
-      state.isoRot = Math.atan2(-A, -B) * 180 / Math.PI;
-      renderIso();
+  var compass = {
+    handler: null,     // 지금 등록된 이벤트 핸들러
+    eventName: null,   // 'deviceorientationabsolute' 또는 'deviceorientation'
+    raf: null,         // renderIso를 프레임당 한 번만 부르기 위한 예약
+    warnedRel: false
+  };
+
+  /* 화면 회전 각도(가로로 돌렸을 때 위쪽이 걷는 방향이 되도록 보정) */
+  function screenAngle() {
+    var a = 0;
+    if (window.screen && window.screen.orientation &&
+        typeof window.screen.orientation.angle === 'number') {
+      a = window.screen.orientation.angle;
+    } else if (typeof window.orientation === 'number') {
+      a = window.orientation;
     }
+    a = Number(a);
+    if (!isFinite(a)) a = 0;
+    return ((a % 360) + 360) % 360;
+  }
+
+  /* 센서 이벤트 → 화면 위쪽이 향한 방위(0=북, 90=동) */
+  function headingOf(e) {
+    var h = null, rel = false;
+    if (typeof e.webkitCompassHeading === 'number' && isFinite(e.webkitCompassHeading)) {
+      /* iOS: 이미 절대 방위라 그대로 쓴다 */
+      h = e.webkitCompassHeading;
+    } else if (e.alpha !== null && e.alpha !== undefined && isFinite(e.alpha)) {
+      /* alpha는 반시계 방향이라 시계 방향 방위로 뒤집는다 */
+      h = 360 - e.alpha;
+      /* 상대 방향(absolute=false)만 오는 기기는 보정 안내를 한 번 보여 준다 */
+      rel = (e.absolute !== true);
+    }
+    if (h === null) return null;
+    h = (h + screenAngle()) % 360;
+    if (h < 0) h += 360;
+    return { heading: h, relative: rel };
+  }
+
+  /* 방위 → 도면 회전각 (폰이 향한 방향이 화면 위로 오게) */
+  function rotFromHeading(h) {
+    var t = -45 - h;
+    t = ((t + 540) % 360) - 180;
+    return t;
+  }
+
+  function scheduleIso() {
+    if (compass.raf !== null) return;
+    compass.raf = requestAnimationFrame(function () {
+      compass.raf = null;
+      renderIso();
+    });
+  }
+
+  function onDeviceOrient(e) {
+    var r = headingOf(e);
+    if (!r) return;
+    if (r.relative && !compass.warnedRel) {
+      compass.warnedRel = true;
+      $('iso-hint').textContent = '방향 센서가 상대 방향입니다 · 폰을 8자로 두 번 그리면 북쪽이 맞춰집니다';
+    }
+    /* 최단각 기준 지수 스무딩 (계수 0.18 · 0.6° 데드존) */
+    if (state.compassSmooth === null || !isFinite(state.compassSmooth)) {
+      state.compassSmooth = r.heading;
+    } else {
+      var diff = ((r.heading - state.compassSmooth + 540) % 360) - 180;
+      if (Math.abs(diff) > 0.6) {
+        state.compassSmooth = (state.compassSmooth + diff * 0.18 + 360) % 360;
+      }
+    }
+    state.heading = state.compassSmooth;
+    var target = rotFromHeading(state.compassSmooth);
+    if (Math.abs(target - state.isoRot) < 0.05) return;
+    state.isoRot = target;
+    scheduleIso();
+  }
+
+  /* 지금 등록된 센서 리스너를 모두 해제한다 */
+  function unbindCompass() {
+    if (compass.handler) {
+      if (compass.eventName) {
+        window.removeEventListener(compass.eventName, compass.handler, true);
+      }
+      /* 예전 버전이 둘 다 등록해 둔 경우까지 확실히 정리 */
+      window.removeEventListener('deviceorientationabsolute', compass.handler, true);
+      window.removeEventListener('deviceorientation', compass.handler, true);
+    }
+    compass.handler = null;
+    compass.eventName = null;
+    if (compass.raf !== null) {
+      cancelAnimationFrame(compass.raf);
+      compass.raf = null;
+    }
+  }
+
+  function bindCompass() {
+    unbindCompass();
+    compass.handler = onDeviceOrient;
+    /* 절대 방향 이벤트가 있으면 그것만 등록한다.
+       둘을 같이 등록하면 안드로이드 크롬에서 두 값이 서로 달라 도면이 튄다. */
+    compass.eventName = ('ondeviceorientationabsolute' in window)
+      ? 'deviceorientationabsolute'
+      : 'deviceorientation';
+    window.addEventListener(compass.eventName, compass.handler, true);
+  }
+
+  function disableCompass() {
+    unbindCompass();
+    state.compassOn = false;
+    state.heading = null;
+    state.compassSmooth = null;
+    var btn = $('btn-compass');
+    if (btn) { btn.className = ''; btn.textContent = '🧭 폰 방향 센서'; }
+    var hint = $('iso-hint');
+    if (hint) hint.textContent = '도면을 손가락으로 좌우로 드래그하면 회전합니다 · 표지판이 따라 돕니다';
+  }
+
+  function enableCompass() {
     function start() {
       state.compassOn = true;
+      state.compassSmooth = null;
+      compass.warnedRel = false;
+      bindCompass();
       $('btn-compass').className = 'on';
       $('btn-compass').textContent = '🧭 센서 켜짐';
-      window.addEventListener('deviceorientationabsolute', onOrient, true);
-      window.addEventListener('deviceorientation', onOrient, true);
       $('iso-hint').textContent = '폰을 돌리면 도면과 표지판이 같이 돌아갑니다';
     }
     if (typeof DeviceOrientationEvent !== 'undefined' &&
         typeof DeviceOrientationEvent.requestPermission === 'function') {
       DeviceOrientationEvent.requestPermission().then(function (r) {
         if (r === 'granted') start();
-        else toast('방향 센서 권한이 거부되어 드래그 회전만 씁니다');
-      }).catch(function () { toast('방향 센서를 켤 수 없습니다'); });
+        else { toast('방향 센서 권한이 거부되어 드래그 회전만 씁니다'); disableCompass(); }
+      }).catch(function () { toast('방향 센서를 켤 수 없습니다'); disableCompass(); });
     } else if (window.DeviceOrientationEvent) {
       start();
     } else {
       toast('이 브라우저에서는 방향 센서를 쓸 수 없습니다');
+      disableCompass();
     }
   }
 
@@ -3757,18 +3865,12 @@
       startNav(state.bldg, '');
     });
     $('btn-compass').addEventListener('click', function () {
-      if (state.compassOn) {
-        state.compassOn = false;
-        this.className = '';
-        this.textContent = '🧭 폰 방향 센서';
-        $('iso-hint').textContent = '도면을 손가락으로 좌우로 드래그하면 회전합니다 · 표지판이 따라 돕니다';
-      } else enableCompass();
+      if (state.compassOn) disableCompass();
+      else enableCompass();
     });
     $('btn-iso-reset').addEventListener('click', function () {
-      state.compassOn = false;
+      disableCompass();
       state.isoRot = 0;
-      $('btn-compass').className = '';
-      $('btn-compass').textContent = '🧭 폰 방향 센서';
       renderIso();
     });
 
