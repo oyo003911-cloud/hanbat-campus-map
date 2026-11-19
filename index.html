@@ -3073,7 +3073,7 @@
 
   var ISO_ART = {
     pan: 0.866, zScale: 0.5,
-    wallH: 6.2, slabT: 3.4, roomH: 1.9, evH: 9.4, edgeW: 0.5,
+    wallH: 6.2, slabT: 3.4, roomH: 1.9, evH: 4.2, edgeW: 0.5,
     slabTop: '#fbfdff', slabSide: '#c9dced', slabEdge: '#9fb6cb',
     corr: '#e9f1fa', corrEdge: '#c6d6e6',
     wall: '#f8fbff', wallEdge: '#b6cde2', wallTop: '#dce9f5',
@@ -3114,23 +3114,27 @@
     S3: {
       '1': {
         foot: 'L',
-        corr: [[0.3, 7.2, 53.8, 2.7], [18.0, 9.9, 8.6, 7.2]],
+        /* 종합교육센터(S3) 1층 종별안내판 평면도 기준
+           북쪽 줄: 101 · 계단 · E/V · 여 · 남 · 107 · 계단 · 부출입구
+           남쪽 줄: 102 · 103 · 104 · 현관홀(주출입구) · 105 · 과제도서실 · 106 */
+        corr: [[0.3, 7.2, 53.8, 2.7], [18.2, 9.9, 5.2, 7.2]],
         rooms: [
-          IR('101', 'class', 0.3, 0.3, 17.4, 16.9, '강의실'),
-          IR('107', 'class', 34.6, 0.3, 14.6, 6.9, '강의실'),
-          IR('102', 'etc',   18.1, 9.9, 4.4, 7.2, '준비실'),
-          IR('103', 'etc',   22.7, 9.9, 3.6, 7.2, '강사휴게실'),
-          IR('103-1', 'office', 26.5, 9.9, 3.2, 7.2, '빅데이터비즈니스학과'),
-          IR('104', 'office', 29.9, 9.9, 3.6, 7.2, '관리실'),
-          IR('105', 'class', 33.7, 9.9, 8.6, 7.2, '강의실'),
-          IR('106', 'office', 42.5, 9.9, 5.5, 7.2, '지역협력센터'),
-          IR('106-1', 'etc', 48.2, 9.9, 6.0, 7.2, '과제도서실'),
-          IR('108', 'class', 45.2, 17.6, 11.0, 12.2, '강의실')
+          IR('101', 'class', 0.3, 0.3, 17.9, 6.7, '강의실'),
+          IR('107', 'class', 34.5, 0.3, 11.0, 6.7, '강의실'),
+          IR('102', 'etc',   0.3, 9.9, 3.7, 7.2, '준비실'),
+          IR('103', 'etc',   4.3, 9.9, 6.6, 7.2, '강사휴게실'),
+          IR('103-1', 'office', 11.2, 9.9, 2.4, 7.2, '빅데이터비즈니스학과'),
+          IR('104', 'office', 13.9, 9.9, 4.0, 7.2, '관리실'),
+          IR('105', 'class', 23.4, 9.9, 7.8, 7.2, '강의실'),
+          IR('106-1', 'etc', 31.5, 9.9, 5.0, 7.2, '과제도서실'),
+          IR('106', 'office', 36.8, 9.9, 6.0, 7.2, '지역협력센터'),
+          IR('108', 'class', 45.2, 17.6, 11.0, 12.2, '강의실'),
+          IR('',    'hall', 49.6, 0.3, 4.4, 6.7, '부출입구')
         ],
-        ev: [22.9, 0.4, 3.6, 6.8],
-        wc: [[30.3, 0.4, 3.6, 6.8, '여'], [34.1, 0.4, 3.3, 6.8, '남']],
-        stairs: [[18.1, 0.4, 4.6, 6.8], [49.4, 0.4, 4.8, 6.8]],
-        equip: [[26.9, 0.4, 3.2, 6.8, 'EPS']]
+        ev: [23.1, 0.3, 3.5, 6.7],
+        wc: [[27.0, 0.3, 3.5, 6.7, '여'], [30.8, 0.3, 3.3, 6.7, '남']],
+        stairs: [[18.5, 0.3, 4.2, 6.7], [45.9, 0.3, 3.4, 6.7]],
+        ents: [[20.8, 17.4, '주출입구', 0, 10], [54.2, 3.6, '부출입구', -6, -9]]
       },
       '4': {
         foot: 'L',
@@ -3248,7 +3252,7 @@
     rooms.forEach(function (r) { byNo[String(r.no)] = r; });
 
     var plan = { code: code, floor: key, bar: foot.bar, rooms: [], corr: [], ev: null,
-                 wc: [], stairs: [], equip: [], terr: [], circle: null, ent: foot.ent, foot: 'bar' };
+                 wc: [], stairs: [], equip: [], terr: [], circle: null, ent: foot.ent, ents: null, foot: 'bar' };
 
     if (special) {
       plan.foot = special.foot || 'bar';
@@ -3259,6 +3263,7 @@
       plan.equip = special.equip || [];
       plan.terr = special.terr || [];
       plan.circle = special.circle || null;
+      plan.ents = special.ents || null;
       special.rooms.forEach(function (r) {
         var src = byNo[String(r.no)];
         plan.rooms.push({
@@ -3547,13 +3552,7 @@
     plan.rooms.forEach(function (r) { blocks.push(isoBlock(P, plan, rot, r)); });
     s.push(blocks.sort(function (x, y) { return x.d - y.d; }).map(function (x) { return x.svg; }).join(''));
 
-    /* E/V · 계단 · 화장실 · 설비실 */
-    s.push(isoBox(P, plan, rot, plan.ev[0], plan.ev[1], plan.ev[2], plan.ev[3], pal('ev'), A.evH, 0, ' data-ev="1"'));
-    var evc = P(plan.ev[0] + plan.ev[2] / 2, plan.ev[1] + plan.ev[3] / 2, A.evH + 0.6);
-    s.push('<g transform="translate(' + evc[0].toFixed(1) + ',' + (evc[1] - 8).toFixed(1) + ')" pointer-events="none">' +
-           '<rect x="-13" y="-6.5" width="26" height="13" rx="6.5" fill="#ffffff" stroke="#38bdf8" stroke-width="0.9"/>' +
-           '<text x="0" y="3.2" text-anchor="middle" font-size="7.4" font-weight="900" fill="#0284c7">E/V</text></g>');
-
+    /* 계단 · 화장실 · 설비실 */
     plan.stairs.forEach(function (t) {
       s.push(isoBox(P, plan, rot, t[0], t[1], t[2], t[3], pal('stair'), 2.2, 0));
       var c = P(t[0] + t[2] / 2, t[1] + t[3] / 2, 2.6);
@@ -3570,18 +3569,22 @@
       s.push('<text x="' + c[0].toFixed(1) + '" y="' + c[1].toFixed(1) + '" font-size="4.4" font-weight="800" fill="#475569" text-anchor="middle" pointer-events="none">' + (t[4] || '') + '</text>');
     });
 
-    /* 출입구 (1층) */
-    if (String(floor) === '1' && plan.ent) {
-      var en = P(plan.ent[0], plan.ent[1], 0.4);
-      s.push('<circle cx="' + en[0].toFixed(1) + '" cy="' + en[1].toFixed(1) + '" r="3.6" fill="#16a34a" stroke="#fff" stroke-width="1.2"/>');
+    /* 출입구 (1층) — 주출입구·부출입구 */
+    if (String(floor) === '1') {
+      var entries = plan.ents || (plan.ent ? [[plan.ent[0], plan.ent[1], '']] : []);
+      entries.forEach(function (e) {
+        var en = P(e[0], e[1], 0.4);
+        s.push('<circle cx="' + en[0].toFixed(1) + '" cy="' + en[1].toFixed(1) +
+               '" r="3" fill="#16a34a" stroke="#fff" stroke-width="1.2"/>');
+        if (e[2]) s.push(haloText(en[0] + (e[3] || 0), en[1] + (e[4] || 9), e[2], 5.2, 800, '#15803d', 1.7));
+      });
     }
 
     /* 호실 이름표 */
     s.push(isoLabels(P, plan, rot, floor));
 
-    /* E/V → 내 호실 붉은 실선 경로 */
+    /* E/V → 내 호실 붉은 실선 경로 (E/V를 그린 뒤 맨 위에 — 아래에서 그린다) */
     var myRoom = plan.rooms.filter(function (r) { return r.t === 'mine'; })[0] || null;
-    if (myRoom) s.push(isoRoute(P, plan, rot, myRoom));
 
     /* 복도 표지판 */
     var corrY = plan.corr.length ? plan.corr[0][1] + plan.corr[0][3] / 2 : 8.5;
@@ -3594,7 +3597,17 @@
     var corrAngle = signAngle(rot);
     if (westList) s.push(signboard(P(corrX0 + 1.5, corrY, 3.2), corrAngle + 180, '◀ ' + westList, '#0b2545'));
     if (eastList) s.push(signboard(P(corrX1 - 1.5, corrY, 3.2), corrAngle, eastList + ' ▶', '#0b2545'));
-    s.push(signboard(P(corrX0 + (corrX1 - corrX0) * 0.2, corrY, 3.4), corrAngle - 90, b.code + ' · ' + floorLabel(floor), '#b45309'));
+    s.push(signboard(P(corrX0 + (corrX1 - corrX0) * 0.42, corrY, 3.4), corrAngle - 90, b.code + ' · ' + floorLabel(floor), '#b45309'));
+
+    /* E/V는 맨 위에 — 문과 출발점이 표지판·호실 이름표에 가리지 않게 */
+    s.push(isoEvCore(P, plan, rot, plan.ev));
+    s.push(isoEvDoor(P, plan, rot, plan.ev));
+    var evc = P(plan.ev[0] + plan.ev[2] / 2, plan.ev[1] + plan.ev[3] / 2, A.evH + 0.6);
+    s.push('<g transform="translate(' + evc[0].toFixed(1) + ',' + (evc[1] - 8).toFixed(1) + ')" pointer-events="none">' +
+           '<rect x="-13" y="-6.5" width="26" height="13" rx="6.5" fill="#ffffff" stroke="#38bdf8" stroke-width="0.9"/>' +
+           '<text x="0" y="3.2" text-anchor="middle" font-size="7.4" font-weight="900" fill="#0284c7">E/V</text></g>');
+    /* 붉은 동선은 E/V 위에 — 문 앞에서 출발하는 것이 보이게 */
+    if (myRoom) s.push(isoRoute(P, plan, rot, myRoom));
 
     /* 나침반 */
     s.push(isoCompass(P, plan, rot));
@@ -3612,6 +3625,63 @@
   function pal(t) {
     var p = ISO_PAL[t] || ISO_PAL.class;
     return { top: p.top, a: p.a, b: p.b, edge: '#ffffff', ink: p.ink };
+  }
+
+  /* E/V 코어 — 복도 쪽 정면이 보이도록 세우고, 그 면에 문 두 짝을 그린다 */
+  function isoEvCore(P, plan, rot, ev) {
+    var H = ISO_ART.evH, pe = pal('ev');
+    var x0 = ev[0], y0 = ev[1], x1 = ev[0] + ev[2], y1 = ev[1] + ev[3];
+    var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    var quad = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]], faces = [];
+    for (var i = 0; i < 4; i++) {
+      var a = quad[i], b = quad[(i + 1) % 4];
+      var mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      var nx = mx - cx, ny = my - cy, len = Math.sqrt(nx * nx + ny * ny) || 1;
+      var rn = isoRot(nx / len, ny / len, rot);
+      if (rn[0] + rn[1] <= 0.02) continue;      /* 보는 쪽을 향한 면만 그린다 */
+      var q = [P(a[0], a[1], H), P(b[0], b[1], H), P(b[0], b[1], 0), P(a[0], a[1], 0)];
+      faces.push({
+        d: isoDepth(mx, my, rot, plan),
+        svg: '<path d="' + isoPath(q) + '" fill="' + (Math.abs(rn[0]) > Math.abs(rn[1]) ? pe.b : pe.a) +
+             '" stroke="#ffffff" stroke-width="' + ISO_ART.edgeW + '" stroke-linejoin="round"/>'
+      });
+    }
+    faces.sort(function (p, q) { return p.d - q.d; });
+    return faces.map(function (f) { return f.svg; }).join('') +
+      '<path d="' + isoRect(P, x0, y0, ev[2], ev[3], H) + '" fill="' + pe.top +
+      '" stroke="#ffffff" stroke-width="' + ISO_ART.edgeW + '" stroke-linejoin="round" data-ev="1"/>';
+  }
+
+  /* E/V 정면(복도 쪽) 문 두 짝 — 가운데가 열리는 방향까지 보이게 */
+  function isoEvDoor(P, plan, rot, ev) {
+    var rn = isoRot(0, 1, rot);                    /* 정면(남쪽)이 보는 쪽을 향하는지 */
+    if (rn[0] + rn[1] <= 0.02) return '';
+    var y = ev[1] + ev[3];                         /* 복도와 마주한 면 */
+    var cxe = ev[0] + ev[2] / 2;
+    var dw = Math.min(ev[2] * 0.88, 2.6), dh = 2.5;
+    var xa = cxe - dw / 2, xb = cxe + dw / 2;
+    function face(x0, x1, z0, z1, fill, extra) {
+      return '<path d="' + isoPath([P(x0, y, z1), P(x1, y, z1), P(x1, y, z0), P(x0, y, z0)]) +
+             '" fill="' + fill + '"' + (extra || '') + '/>';
+    }
+    var s = '';
+    /* 문 앞 바닥 — 문턱에서 복도까지 이어지는 길 */
+    s += '<path d="' + isoPath([P(xa - 0.2, y, 0.13), P(xb + 0.2, y, 0.13),
+         P(xb + 0.2, y + 1.05, 0.13), P(xa - 0.2, y + 1.05, 0.13)]) +
+         '" fill="#bae6fd" stroke="#38bdf8" stroke-width="0.4" pointer-events="none"/>';
+    /* 문틀 */
+    s += face(xa - 0.16, xb + 0.16, 0, dh + 0.16, '#0c4a6e');
+    /* 문 두 짝과 가운데 틈 */
+    s += face(xa, cxe - 0.08, 0.05, dh, '#f0f9ff', ' stroke="#7dd3fc" stroke-width="0.3"');
+    s += face(cxe + 0.08, xb, 0.05, dh, '#f0f9ff', ' stroke="#7dd3fc" stroke-width="0.3"');
+    s += face(cxe - 0.08, cxe + 0.08, 0.05, dh, '#0369a1');
+    /* 열리는 방향 — 두 짝이 바깥으로 미끄러지는 표시 */
+    var za = 1.62, zb = 1.2, zc = 2.04;
+    s += '<path d="' + isoPath([P(xa + 0.2, y, za), P(xa + 0.62, y, zb), P(xa + 0.62, y, zc)]) +
+         '" fill="#0284c7"/>';
+    s += '<path d="' + isoPath([P(xb - 0.2, y, za), P(xb - 0.62, y, zb), P(xb - 0.62, y, zc)]) +
+         '" fill="#0284c7"/>';
+    return s;
   }
 
   /* 호실 하나 = 낮은 벽 블록 + 이름표 */
@@ -3660,12 +3730,22 @@
   /* E/V 문 앞 → 복도 → 내 호실 문 : 붉은 실선 */
   function isoRoute(P, plan, rot, room) {
     var ev = plan.ev;
-    var corrY = plan.corr.length ? plan.corr[0][1] + plan.corr[0][3] / 2 : 8.5;
-    var ex = ev[0] + ev[2] / 2;
+    var corr = plan.corr.length ? plan.corr[0] : [0.3, 7.2, 10, 2.7];
+    var cTop = corr[1], cBot = corr[1] + corr[3], cMid = (cTop + cBot) / 2;
+    var ex = ev[0] + ev[2] / 2, evFace = ev[1] + ev[3];
     var rx = room.x + room.w / 2;
-    var south = (room.y + room.h / 2) > corrY;
-    var pts = [[ex, ev[1] + ev[3]], [ex, corrY], [rx, corrY], [rx, south ? room.y + 0.6 : room.y + room.h - 0.6]];
-    var pp = pts.map(function (q) { return P(q[0], q[1], 0.9); });
+    var north = (room.y + room.h / 2) < cMid;
+    var pts = [];
+    if (ex > room.x + 0.8 && ex < room.x + room.w - 0.8) {
+      /* 문 바로 앞이 그 호실이면 곧장 건너간다 */
+      pts = [[ex, evFace + 0.55], [ex, north ? room.y + room.h - 1.2 : room.y + 1.2]];
+    } else {
+      /* 복도에 선 사람이 E/V 문에서 나와 걷는 차선 — 호실이 있는 쪽 차선으로 건넌다 */
+      var lane = north ? (cTop + 0.55) : (cBot - 0.55);
+      var doorY = north ? (room.y + room.h - 0.35) : (room.y + 0.35);
+      pts = [[ex, evFace + 0.55], [ex, lane], [rx, lane], [rx, doorY]];
+    }
+    var pp = pts.map(function (q) { return P(q[0], q[1], 0.5); });
     var d = isoPath(pp, false);
     var s = '';
     s += '<path d="' + d + '" fill="none" stroke="' + ISO_ART.routeCasing + '" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>';
@@ -3676,7 +3756,7 @@
     var h1 = [tip[0] - 5.4 * Math.cos(ang - 0.42), tip[1] - 5.4 * Math.sin(ang - 0.42)];
     var h2 = [tip[0] - 5.4 * Math.cos(ang + 0.42), tip[1] - 5.4 * Math.sin(ang + 0.42)];
     s += '<path d="' + isoPath([tip, h1, h2]) + '" fill="' + ISO_ART.route + '" stroke="#fff" stroke-width="0.7"/>';
-    s += '<circle cx="' + pp[0][0].toFixed(1) + '" cy="' + pp[0][1].toFixed(1) + '" r="3.2" fill="' + ISO_ART.evDot + '" stroke="#fff" stroke-width="1.2"/>';
+    s += '<circle cx="' + pp[0][0].toFixed(1) + '" cy="' + pp[0][1].toFixed(1) + '" r="2.3" fill="' + ISO_ART.evDot + '" stroke="#fff" stroke-width="1"/>';
     return s;
   }
 
@@ -3701,12 +3781,30 @@
         for (var k = 0; k < plan.rooms.length; k++) {
           if (String(plan.rooms[k].no) === String(no)) { rr = plan.rooms[k]; break; }
         }
-        var evx = plan.ev[0] + plan.ev[2] / 2;
-        var side = rr ? ((rr.x + rr.w / 2 < evx) ? '왼쪽' : '오른쪽') : '';
+        var g = rr ? evSides(plan, rr) : null;
         $('iso-room-info').textContent = no + '호 ' + nm + ' · ' + floor + '층' +
-          (side ? ' · E/V에서 나와 ' + side : ' · 복도에서 표지판 방향으로 이동');
+          (g ? ' · E/V 문에서 나와 ' + g.side + (g.side === '정면' ? ' (복도 건너편)' : '') : ' · 복도에서 표지판 방향으로 이동');
       });
     });
+  }
+
+  /* E/V 문(복도 쪽)을 나서서 복도를 마주 보면, 도면 +x 쪽이 내 왼쪽이다 */
+  function evSides(plan, room) {
+    var corr = plan.corr.length ? plan.corr[0] : [0.3, 7.2, 10, 2.7];
+    var cMid = corr[1] + corr[3] / 2;
+    var evx = plan.ev[0] + plan.ev[2] / 2;
+    var d = (room.x + room.w / 2) - evx;
+    var ahead = evx > room.x + 0.8 && evx < room.x + room.w - 0.8;
+    var side = ahead ? '정면' : (d < 0 ? '오른쪽' : '왼쪽');
+    var evNorth = (plan.ev[1] + plan.ev[3] / 2) < cMid;
+    var roomNorth = (room.y + room.h / 2) < cMid;
+    /* E/V 바로 열 계단이 어느 쪽에 있는지 — 나와서 어느 쪽으로 도는지 설명하는 기준 */
+    var stairSide = '';
+    plan.stairs.forEach(function (t) {
+      var sx = t[0] + t[2] / 2;
+      if (Math.abs(sx - evx) < 10) stairSide = sx < evx ? '오른쪽' : '왼쪽';
+    });
+    return { side: side, across: evNorth !== roomNorth, stairSide: stairSide };
   }
 
   /* 도면 아래에 E/V에서 나온 뒤 어느 쪽으로 가야 하는지 크게 적어 준다 */
@@ -3714,17 +3812,24 @@
     var el = $('iso-ev-guide');
     if (!el) return;
     if (!myRoom) {
-      el.innerHTML = '🛗 <b>E/V</b>는 파란 칸입니다. E/V에서 나온 뒤 복도 좌우 표지판을 보고 내 호실 쪽으로 가세요.';
+      el.innerHTML = '🛗 <b>E/V</b>는 파란 칸입니다. <b>문은 복도 쪽으로 열립니다.</b> 문을 나서서 복도 좌우 표지판을 보고 내 호실 쪽으로 가세요.';
       return;
     }
-    var evx = plan.ev[0] + plan.ev[2] / 2;
-    var corrY = plan.corr.length ? plan.corr[0][1] : 8.5;
-    var side = (myRoom.x + myRoom.w / 2 < evx) ? '왼쪽' : '오른쪽';
-    var sameSide = (myRoom.y + myRoom.h / 2) > corrY;
-    el.innerHTML = '🛗 <b>E/V</b>에서 나와서 <b style="color:#b45309;">' + side + '</b> · ' + esc(myRoom.no) + '★ (' + floorLabel(floor) + ')<br>' +
-      '<span style="font-weight:600;color:#475569;">E/V에서 나와 복도로 나간 뒤 ' + side + '으로 걸어 ' +
-      (sameSide ? 'E/V와 같은 쪽에 있는 ' : '복도 건너편에 있는 ') + esc(myRoom.no) + '호로 들어가세요.</span><br>' +
-      '<span style="font-weight:600;color:#64748b;">도면의 붉은 선이 가는 길입니다. 도면을 돌려도 왼쪽·오른쪽은 엘리베이터에서 나란히 선 기준이라 그대로이고, 🧭 나침반을 켜면 화면 위쪽이 걷는 방향이 되어 실제와 같아집니다.</span>';
+    var g = evSides(plan, myRoom);
+    var head, body;
+    if (g.side === '정면') {
+      head = '정면';
+      body = '문을 나서면 바로 앞이 복도 건너편 ' + esc(myRoom.no) + '호입니다. 복도를 건너 들어가세요.';
+    } else {
+      head = g.side;
+      var mv = (g.stairSide && g.stairSide !== g.side) ? '계단 반대쪽(' + g.side + ')으로 걸어 '
+             : (g.stairSide ? '계단 쪽(' + g.side + ')으로 걸어 ' : g.side + '으로 걸어 ');
+      body = mv + (g.across ? '복도 건너편에 있는 ' : 'E/V와 같은 쪽에 있는 ') + esc(myRoom.no) + '호로 들어가세요.';
+    }
+    el.innerHTML = '🛗 <b>E/V</b>에서 나와 <b style="color:#b45309;">' + head + '</b> · ' +
+      esc(myRoom.no) + '★ (' + floorLabel(floor) + ')<br>' +
+      '<span style="font-weight:600;color:#475569;">E/V 문은 복도 쪽으로 열립니다. ' + body + '</span><br>' +
+      '<span style="font-weight:600;color:#64748b;">도면의 붉은 선이 가는 길입니다. 왼쪽·오른쪽은 E/V 문에서 나와 복도를 마주 본 기준이라 도면을 돌려도 그대로이고, 🧭 나침반을 켜면 화면 위쪽이 걷는 방향이 되어 실제와 같아집니다.</span>';
   }
 
   /* 화면 위에서 복도(가로축)가 향하는 각도 */
