@@ -3740,10 +3740,12 @@
       if (r.no) {
         var num = r.no + (isMine ? '★' : '');
         s += haloText(c[0], c[1] - 0.4, num, 8.1, 900, ink, 2.2);
-        var showName = isMine || (size > 34 && Math.min(r.w, r.h) > 4.6);
+        var showName = isMine || (size > 30 && Math.min(r.w, r.h) > 4.6);
         if (showName) {
           var nm = isMine && typeof r.subject === 'string' ? r.subject : r.name;
           var maxLen = size > 62 ? 9 : (size > 46 ? 6 : 4);
+          /* 경상학관(S3)은 조금 작은 호실도 이름이 잘리지 않게 한 글자 더 보여 준다 (예: 106 과제도서실) */
+          if (plan.code === 'S3' && maxLen < 5) maxLen = 5;
           if (nm && nm.length > maxLen) nm = nm.slice(0, maxLen) + '…';
           s += haloText(c[0], c[1] + 5.2, nm, size > 46 ? 5.3 : 4.8, 800, (isMine ? '#a16207' : ISO_ART.labelSub), 1.6);
         }
