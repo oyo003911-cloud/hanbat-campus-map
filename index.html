@@ -620,7 +620,10 @@
     }
     .floor-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
     .iso-wrap { position: relative; border: 1.5px solid var(--border); border-radius: 10px; background: linear-gradient(180deg, #f8fbff, #eef3f9); overflow: hidden; touch-action: none; }
-    .iso-wrap svg { display: block; width: 100%; height: 260px; }
+    .iso-wrap svg { display: block; width: 100%; height: 300px; }
+    .iso-legend { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 4px 0 6px; font-size: 9.5px; font-weight: 800; color: #475569; }
+    .iso-legend span { display: inline-flex; align-items: center; gap: 3px; }
+    .iso-legend i { width: 9px; height: 9px; border-radius: 2px; border: 1px solid rgba(15,23,42,.16); display: inline-block; }
     .iso-hint { position: absolute; bottom: 4px; left: 6px; right: 6px; font-size: 9px; color: #64748b; text-align: center; pointer-events: none; line-height: 1.4; }
     .ev-guide {
       margin-top: 8px; padding: 7px 9px; border-radius: 9px;
@@ -1031,9 +1034,15 @@
     <div class="bd-sec" id="bd-sec-iso">
       <h4>3. 층별 아이소메트릭 내부지도</h4>
       <div class="floor-btns" id="bd-floor-btns"></div>
-      <p class="hint" style="margin:2px 0 4px;">🟧 주황색 호실 = 내 시간표에 있는 수업</p>
+      <div class="iso-legend" id="iso-legend">
+        <span><i style="background:#f7c948;"></i>내 강의실</span>
+        <span><i style="background:#bfe8fd;"></i>E/V</span>
+        <span><i style="background:#16a34a;"></i>출입구</span>
+        <span><i style="background:#f9c9d5;"></i>화장실</span>
+        <span><i style="background:#d7dce2;"></i>계단</span>
+      </div>
       <div class="iso-wrap" id="iso-wrap">
-        <svg id="iso-svg" viewBox="0 0 360 260" preserveAspectRatio="xMidYMid meet"></svg>
+        <svg id="iso-svg" viewBox="0 0 360 300" preserveAspectRatio="xMidYMid meet"></svg>
         <div class="iso-hint" id="iso-hint">도면을 손가락으로 좌우로 드래그하면 회전합니다 · 표지판이 따라 돕니다</div>
       </div>
       <div class="iso-tools">
@@ -3016,11 +3025,16 @@
   /* 오늘 시간표에 있는 호실 (도면에서 강조) */
   function myRoomsOf(code) {
     var set = {};
+    var tt = state.timetable || {};
     WEEKDAYS.forEach(function (d) {
-      (state.timetable[d] || []).forEach(function (c) {
-        if (c.code === code && c.room) set[String(c.room).replace(/호$/, '')] = true;
+      (tt[d] || []).forEach(function (c) {
+        if (c.code === code && c.room) set[String(c.room).replace(/호$/, '')] = c.title || c.subject || true;
       });
     });
+    /* 지금 길안내 중인 목적지 호실도 같이 강조한다 */
+    if (state.nav && state.nav.destCode === code && state.nav.room) {
+      set[String(state.nav.room).replace(/호$/, '')] = set[String(state.nav.room).replace(/호$/, '')] || true;
+    }
     return set;
   }
 
@@ -3045,172 +3059,650 @@
     return out;
   }
 
-  var ISO = { ax: 0.866, ay: 0.5, zs: 0.66, k: 2.45, ox: 180, oy: 128 };
+  /* ══════════════════════════════════════════════════════════════════════
+     내부지도 2.5D 건축 일러스트 엔진  (iso-samples.html 1번 스타일)
 
-  function isoPoint(x, y, z, rot) {
+     평면 좌표는 실제 도면 PDF(downloads/floorplans/…)에서 뽑은 값입니다.
+       · S3 경상학관 : 긴 복도동 + 남동쪽 ㄱ자 날개   → ㄱ자 평면
+       · S4 인문사회관 : 복도동 + 북쪽 원형 홀(아트리움/옥상휴게공간)
+       · N11 창의혁신관 : 도면이 없어 기존 호실 데이터로 만든 참고 도면
+     도면이 있는 층(S3 1·4·7층, S4 1·4층)은 호실 위치·크기를 도면 그대로 옮겼고,
+     나머지 층은 같은 건물 평면 안에 그 층의 공식 호실 목록을 배치합니다.
+     교수님 성함 같은 개인 인명은 넣지 않고 공식 호실·시설명만 씁니다.
+     ══════════════════════════════════════════════════════════════════════ */
+
+  var ISO_ART = {
+    pan: 0.866, zScale: 0.5,
+    wallH: 6.2, slabT: 3.4, roomH: 1.9, evH: 9.4, edgeW: 0.5,
+    slabTop: '#fbfdff', slabSide: '#c9dced', slabEdge: '#9fb6cb',
+    corr: '#e9f1fa', corrEdge: '#c6d6e6',
+    wall: '#f8fbff', wallEdge: '#b6cde2', wallTop: '#dce9f5',
+    terrTop: '#eef2f6', terrEdge: '#c3ccd6',
+    label: '#1d3a5c', labelSub: '#5d7691', halo: '#ffffff',
+    mine: '#b45309',
+    route: '#e11d48', routeCasing: '#ffffff',
+    evDot: '#0284c7',
+    compassBg: '#ffffff', compassEdge: '#c2d3e4', compassN: '#d90429'
+  };
+
+  /* 호실 종류별 색 (위 → 옆면A → 옆면B → 글자) */
+  var ISO_PAL = {
+    class: { top: '#cfe6ff', a: '#b6d7f6', b: '#9ac7ef', ink: '#173a5e', name: '강의실' },
+    lab:   { top: '#e0d9fd', a: '#cbc0f8', b: '#b3a5f1', ink: '#39287a', name: '실습실' },
+    office:{ top: '#cdf0d9', a: '#b4e6c7', b: '#97d8b0', ink: '#14532d', name: '사무실' },
+    etc:   { top: '#fce9bd', a: '#f8d998', b: '#f0c778', ink: '#78350f', name: '기타' },
+    mine:  { top: '#fde08f', a: '#fbcd5c', b: '#f5ba2b', ink: '#7c2d12', name: '내 강의실' },
+    ev:    { top: '#bfe8fd', a: '#93d8fa', b: '#67c6f3', ink: '#075985', name: '엘리베이터' },
+    wc:    { top: '#fde4ea', a: '#f9c9d5', b: '#f2aebf', ink: '#881337', name: '화장실' },
+    stair: { top: '#e8ebef', a: '#d7dce2', b: '#c3cad2', ink: '#334155', name: '계단' },
+    hall:  { top: '#f1f5f9', a: '#e2e8f0', b: '#cbd5e1', ink: '#334155', name: '홀' }
+  };
+
+  /* 건물 기본 평면 (미터) */
+  var ISO_FOOT = {
+    S3:  { bar: [0, 0, 54.4, 17.4], wing: [40.8, 17.4, 15.6, 12.6], wingLabel: '옥외휴게공간',
+           core: [22.6, 28.4], ev: [23.3, 0.4, 3.2, 6.8], ent: [31, 17.4] },
+    S4:  { bar: [0, 0, 60, 20], circle: { cx: 30, cy: -9.2, r: 8.6 }, circleLabel: '원형 홀',
+           core: [25, 33], ev: [26.2, 0.4, 3.2, 8.2], ent: [36, 20] },
+    N11: { bar: [0, 0, 56, 18], core: [44, 50], ev: [44.6, 0.4, 3.2, 7.0], ent: [28, 18] }
+  };
+
+  /* 도면을 그대로 옮긴 층 (r = [호실번호, 종류, x, y, 가로, 세로]) */
+  function IR(no, t, x, y, w, h, nm) { return { no: no, t: t, x: x, y: y, w: w, h: h, nm: nm || '' }; }
+
+  var ISO_FLOORS = {
+    S3: {
+      '1': {
+        foot: 'L',
+        corr: [[0.3, 7.2, 53.8, 2.7], [18.0, 9.9, 8.6, 7.2]],
+        rooms: [
+          IR('101', 'class', 0.3, 0.3, 17.4, 16.9, '강의실'),
+          IR('107', 'class', 34.6, 0.3, 14.6, 6.9, '강의실'),
+          IR('102', 'etc',   18.1, 9.9, 4.4, 7.2, '준비실'),
+          IR('103', 'etc',   22.7, 9.9, 3.6, 7.2, '강사휴게실'),
+          IR('103-1', 'office', 26.5, 9.9, 3.2, 7.2, '빅데이터비즈니스학과'),
+          IR('104', 'office', 29.9, 9.9, 3.6, 7.2, '관리실'),
+          IR('105', 'class', 33.7, 9.9, 8.6, 7.2, '강의실'),
+          IR('106', 'office', 42.5, 9.9, 5.5, 7.2, '지역협력센터'),
+          IR('106-1', 'etc', 48.2, 9.9, 6.0, 7.2, '과제도서실'),
+          IR('108', 'class', 45.2, 17.6, 11.0, 12.2, '강의실')
+        ],
+        ev: [22.9, 0.4, 3.6, 6.8],
+        wc: [[30.3, 0.4, 3.6, 6.8, '여'], [34.1, 0.4, 3.3, 6.8, '남']],
+        stairs: [[18.1, 0.4, 4.6, 6.8], [49.4, 0.4, 4.8, 6.8]],
+        equip: [[26.9, 0.4, 3.2, 6.8, 'EPS']]
+      },
+      '4': {
+        foot: 'L',
+        corr: [[0.3, 7.2, 53.8, 2.7]],
+        rooms: [
+          IR('401', 'lab',   0.3, 0.3, 17.8, 6.9, '컴퓨터실습실'),
+          IR('406', 'class', 42.0, 0.3, 9.4, 6.9, '강의실'),
+          IR('402', 'lab',   0.3, 9.9, 17.7, 7.2, '컴퓨터실습실'),
+          IR('403', 'etc',  18.2, 9.9,  2.4, 7.2, '준비실'),
+          IR('',    'hall', 21.1, 0.3,  6.0, 6.2, 'E/V 홀'),
+          IR('404', 'class',27.3, 9.9, 13.1, 7.2, '강의실'),
+          IR('405', 'class',40.6, 9.9, 13.6, 7.2, '강의실'),
+          IR('',    'hall', 20.8, 9.9,  6.3, 7.2, '홀')
+        ],
+        ev: [27.3, 0.3, 2.4, 6.2],
+        wc: [[30.3, 0.3, 3.4, 6.2, '여'], [36.0, 0.3, 4.0, 6.2, '남']],
+        stairs: [[18.4, 0.3, 2.6, 6.2], [51.6, 0.3, 2.6, 6.2]],
+        equip: [[33.8, 0.3, 2.0, 6.2, 'PS']],
+        terr: [[40.8, 17.4, 15.6, 12.6]]
+      },
+      '7': {
+        foot: 'bar',
+        corr: [[0.3, 7.2, 53.3, 2.7]],
+        rooms: [
+          IR('705', 'office', 0.3, 0.3, 4.4, 6.4, '교수연구실'),
+          IR('704', 'office', 4.9, 0.3, 4.4, 6.4, '교수연구실'),
+          IR('703', 'office', 9.5, 0.3, 4.4, 6.4, '교수연구실'),
+          IR('702', 'office',14.1, 0.3, 4.4, 6.4, '교수연구실'),
+          IR('701', 'office',18.7, 0.3, 4.4, 6.4, '교수연구실'),
+          IR('714', 'office',36.2, 0.3, 3.7, 6.4, '교수연구실'),
+          IR('715', 'etc',   40.1, 0.3, 7.0, 6.4, '교수휴게실'),
+          IR('706', 'office', 0.3, 9.9, 4.4, 7.2, '경제학과 학과장실'),
+          IR('707', 'office', 4.9, 9.9, 4.4, 7.2, '교수연구실'),
+          IR('708', 'office', 9.5, 9.9, 4.4, 7.2, '세미나실'),
+          IR('709', 'office',14.1, 9.9, 3.9, 7.2, '세미나실'),
+          IR('710', 'class', 26.0, 9.9, 10.6, 7.2, '강의실'),
+          IR('711', 'class', 36.8, 9.9,  9.0, 7.2, '강의실'),
+          IR('712', 'office',45.9, 9.9, 3.4, 7.2, '교수연구실'),
+          IR('713', 'class', 49.5, 9.9, 4.7, 7.2, '강의실'),
+          IR('',    'hall',  18.2, 9.9,  7.6, 7.2, '라운지')
+        ],
+        ev: [27.1, 0.4, 2.7, 6.4],
+        wc: [[30.0, 0.4, 3.0, 6.4, '여'], [33.2, 0.4, 2.8, 6.4, '남']],
+        stairs: [[22.7, 0.4, 4.2, 6.4], [47.3, 0.4, 3.0, 6.4]]
+      }
+    },
+    S4: {
+      '1': {
+        foot: 'circle',
+        corr: [[0.3, 8.7, 59.4, 2.6]],
+        rooms: [
+          IR('101', 'class', 1.2, 0.4, 8.4, 8.1, '강의실'),
+          IR('102', 'class', 9.8, 0.4, 8.4, 8.1, '강의실'),
+          IR('103', 'class', 36.0, 0.4, 8.4, 8.1, '강의실'),
+          IR('104', 'class', 44.6, 0.4, 8.4, 8.1, '강의실'),
+          IR('105', 'class', 0.4, 11.4, 12.0, 8.2, '강의실'),
+          IR('106', 'class', 12.6, 11.4, 12.0, 8.2, '강의실'),
+          IR('108', 'class', 25.0, 11.4, 9.0, 8.2, '세미나실'),
+          IR('112', 'class', 34.3, 11.4, 5.0, 8.2, '강의실'),
+          IR('113', 'class', 39.5, 11.4, 5.0, 8.2, '강의실'),
+          IR('114', 'office',44.7, 11.4, 5.0, 8.2, '의사소통클리닉'),
+          IR('115', 'class', 49.9, 11.4, 4.7, 8.2, '전공주임교수실'),
+          IR('116', 'class', 54.8, 11.4, 4.7, 8.2, '전공주임교수실')
+        ],
+        ev: [26.2, 0.4, 3.2, 8.1],
+        wc: [[33.4, 0.4, 3.4, 8.1, '여'], [36.9, 0.4, 3.2, 8.1, '남']],
+        stairs: [[20.8, 0.4, 3.6, 8.1], [55.6, 0.4, 3.9, 8.1]],
+        circle: { cx: 30, cy: -9.2, r: 8.6, label: '원형 홀' }
+      },
+      '4': {
+        foot: 'circle',
+        corr: [[0.3, 8.7, 59.4, 2.6]],
+        rooms: [
+          IR('401', 'class', 2.0, 0.4, 8.0, 8.1, '강의실'),
+          IR('402', 'class', 10.2, 0.4, 8.0, 8.1, '강의실'),
+          IR('405', 'etc',   18.4, 0.4, 6.4, 8.1, '강사휴게실'),
+          IR('406', 'class', 33.6, 0.4, 5.0, 8.1, '강의실'),
+          IR('403', 'class', 38.8, 0.4, 8.4, 8.1, '강의실'),
+          IR('404', 'class', 47.4, 0.4, 8.4, 8.1, '강의실'),
+          IR('407', 'class', 0.4, 11.4, 3.7, 8.2, '강의실'),
+          IR('408', 'class', 4.2, 11.4, 3.7, 8.2, '강의실'),
+          IR('409', 'class', 8.0, 11.4, 3.7, 8.2, '강의실'),
+          IR('410', 'class', 11.8, 11.4, 3.7, 8.2, '강의실'),
+          IR('411', 'class', 15.6, 11.4, 3.7, 8.2, '강의실'),
+          IR('412', 'class', 19.4, 11.4, 3.7, 8.2, '강의실'),
+          IR('413', 'class', 23.2, 11.4, 3.7, 8.2, '강의실'),
+          IR('414', 'class', 27.0, 11.4, 3.7, 8.2, '강의실'),
+          IR('415', 'class', 30.8, 11.4, 3.7, 8.2, '강의실'),
+          IR('416', 'class', 34.6, 11.4, 3.7, 8.2, '강의실'),
+          IR('417', 'class', 38.4, 11.4, 3.7, 8.2, '강의실'),
+          IR('418', 'office',42.2, 11.4, 3.7, 8.2, '인문대학 조교실'),
+          IR('419', 'class', 46.0, 11.4, 3.7, 8.2, '강의실'),
+          IR('420', 'class', 49.8, 11.4, 3.7, 8.2, '강의실'),
+          IR('421', 'class', 53.6, 11.4, 3.0, 8.2, '강의실'),
+          IR('422', 'office',56.7, 11.4, 2.9, 8.2, '교수연구실')
+        ],
+        ev: [25.0, 0.4, 3.0, 8.1],
+        wc: [[28.4, 0.4, 2.5, 8.1, '여'], [31.0, 0.4, 2.4, 8.1, '남']],
+        stairs: [[21.0, 0.4, 3.6, 8.1], [56.0, 0.4, 3.4, 8.1]],
+        circle: { cx: 30, cy: -9.2, r: 8.6, label: '옥상휴게공간' }
+      }
+    }
+  };
+
+  /* ── 평면 계산 ───────────────────────────────────────────── */
+  function isoPlanFor(b, floor) {
+    var code = b.code, key = String(floor);
+    var special = ISO_FLOORS[code] && ISO_FLOORS[code][key];
+    var foot = ISO_FOOT[code] || ISO_FOOT.N11;
+    var rooms = roomsForFloor(b, floor);
+    var mine = myRoomsOf(code);
+
+    /* 호실 이름·종류를 앱의 공식 데이터로 채운다 (도면 데이터가 비어 있을 때) */
+    var byNo = {};
+    rooms.forEach(function (r) { byNo[String(r.no)] = r; });
+
+    var plan = { code: code, floor: key, bar: foot.bar, rooms: [], corr: [], ev: null,
+                 wc: [], stairs: [], equip: [], terr: [], circle: null, ent: foot.ent, foot: 'bar' };
+
+    if (special) {
+      plan.foot = special.foot || 'bar';
+      plan.corr = special.corr || [];
+      plan.ev = special.ev;
+      plan.wc = special.wc || [];
+      plan.stairs = special.stairs || [];
+      plan.equip = special.equip || [];
+      plan.terr = special.terr || [];
+      plan.circle = special.circle || null;
+      special.rooms.forEach(function (r) {
+        var src = byNo[String(r.no)];
+        plan.rooms.push({
+          no: r.no, name: (src && src.name) || r.nm || ISO_PAL[r.t].name,
+          t: r.t, x: r.x, y: r.y, w: r.w, h: r.h
+        });
+      });
+    } else {
+      /* 도면이 없는 층: 같은 건물 평면 안에 그 층 호실을 나눠 배치 */
+      plan.foot = foot.wing ? 'L' : (foot.circle ? 'circle' : 'bar');
+      plan.corr = [[0.3, 7.2, foot.bar[2] - 0.6, 2.7]];
+      plan.ev = foot.ev;
+      plan.stairs = [[foot.ev[0] - 4.4, 0.4, 3.8, 6.8]];
+      plan.wc = [[foot.ev[0] + 4.2, 0.4, 3.4, 6.8, '여'], [foot.ev[0] + 7.9, 0.4, 3.2, 6.8, '남']];
+      if (foot.wing) plan.terr = [[foot.wing[0], foot.wing[1], foot.wing[2], foot.wing[3]]];
+      if (foot.circle) plan.circle = { cx: foot.circle.cx, cy: foot.circle.cy, r: foot.circle.r, label: foot.circle.label };
+
+      /* 복도 북쪽은 E/V·화장실 자리를 비워 두고 앞뒤로 호실을 나눈다 */
+      var coreGap = [foot.ev[0] - 1.2, foot.ev[0] + 11.6];
+      var northSlots = [[0.4, coreGap[0]], [coreGap[1], foot.bar[2] - 0.4]];
+      var northCount = Math.max(0, Math.round(rooms.length * 0.45));
+      var north = rooms.slice(0, northCount), south = rooms.slice(northCount);
+      var areaNorth = (northSlots[0][1] - northSlots[0][0]) + (northSlots[1][1] - northSlots[1][0]);
+      var nA = Math.min(north.length, Math.max(1, Math.round(north.length * (northSlots[0][1] - northSlots[0][0]) / areaNorth)));
+      placeRow(plan, north.slice(0, nA), northSlots[0], 0.4, 6.8);
+      plan.rooms.push({ no: '', name: 'E/V 홀', t: 'hall', x: coreGap[0], y: 0.4, w: (plan.ev[0] - coreGap[0]), h: 6.8 });
+      placeRow(plan, north.slice(nA), northSlots[1], 0.4, 6.8);
+      placeRow(plan, south, [0.4, foot.bar[2] - 0.4], 9.9, 17.0);
+    }
+
+    /* 오늘 수업(또는 안내 중인 목적지) 호실 표시 */
+    plan.rooms.forEach(function (r) {
+      var m = mine[String(r.no)];
+      if (m) { r.t = 'mine'; r.subject = m; }
+    });
+    return plan;
+  }
+
+  function placeRow(plan, list, span, y0, y1) {
+    if (!list.length) return;
+    var w = (span[1] - span[0]) / list.length;
+    list.forEach(function (r, i) {
+      var t = r.t === 'mine' ? 'mine' : r.t;
+      plan.rooms.push({
+        no: r.no, name: r.name, t: (ISO_PAL[r.t] ? r.t : 'class'),
+        x: span[0] + i * w, y: y0, w: w, h: y1 - y0
+      });
+    });
+  }
+
+  /* ── 투영 ─────────────────────────────────────────────────── */
+  function isoProjectFn(plan, rot) {
+    var bar = plan.bar, wing = null;
+    if (plan.foot === 'L') wing = ISO_FOOT[plan.code].wing;
+    var cx = bar[2] / 2, cy = bar[3] / 2;
+    var r = rad(rot), cr = Math.cos(r), sr = Math.sin(r);
+
+    function raw(x, y, z) {
+      var dx = x - cx, dy = y - cy;
+      var rx = dx * cr - dy * sr, ry = dx * sr + dy * cr;
+      return [(rx - ry) * ISO_ART.pan, (rx + ry) * 0.5 - z * ISO_ART.zScale];
+    }
+
+    /* 전체 그림이 화면 안에 꼭 들어오도록 배율·중심을 잡는다 */
+    var pts = [];
+    function addRect(x0, y0, x1, y1, z) {
+      [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].forEach(function (p) { pts.push(raw(p[0], p[1], z)); });
+    }
+    addRect(bar[0], bar[1], bar[2], bar[3], 0);
+    addRect(bar[0], bar[1], bar[2], bar[3], ISO_ART.wallH);
+    if (wing) { addRect(wing[0], wing[1], wing[0] + wing[2], wing[1] + wing[3], 0); }
+    if (plan.circle) {
+      var c = plan.circle;
+      for (var i = 0; i < 12; i++) {
+        var a = i / 12 * Math.PI * 2;
+        pts.push(raw(c.cx + Math.cos(a) * c.r, c.cy + Math.sin(a) * c.r, 0));
+      }
+    }
+    var minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+    pts.forEach(function (p) {
+      if (p[0] < minX) minX = p[0];
+      if (p[0] > maxX) maxX = p[0];
+      if (p[1] < minY) minY = p[1];
+      if (p[1] > maxY) maxY = p[1];
+    });
+    var W = 360, H = 300, MX = 16, MY = 14;
+    var k = Math.min((W - MX * 2) / Math.max(1, maxX - minX), (H - MY * 2) / Math.max(1, maxY - minY));
+    var ox = W / 2 - (minX + maxX) / 2 * k;
+    var oy = H / 2 - (minY + maxY) / 2 * k;
+
+    return function (x, y, z) {
+      var p = raw(x, y, z);
+      return [ox + p[0] * k, oy + p[1] * k];
+    };
+  }
+
+  function isoDepth(x, y, rot, plan) {
+    var r = rad(rot), dx = x - plan.bar[2] / 2, dy = y - plan.bar[3] / 2;
+    return (dx * Math.cos(r) - dy * Math.sin(r)) + (dx * Math.sin(r) + dy * Math.cos(r));
+  }
+
+  function isoRot(vecX, vecY, rot) {
     var r = rad(rot);
-    var dx = x - 50, dy = y - 30;
-    var rx = dx * Math.cos(r) - dy * Math.sin(r);
-    var ry = dx * Math.sin(r) + dy * Math.cos(r);
-    return [
-      ISO.ox + (rx - ry) * ISO.ax * ISO.k,
-      ISO.oy + ((rx + ry) * ISO.ay - z * ISO.zs) * ISO.k
-    ];
-  }
-  function poly(pts, fill, stroke, sw, extra) {
-    var d = '';
-    pts.forEach(function (p, i) { d += (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); });
-    return '<path d="' + d + 'Z" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" ' + (extra || '') + '/>';
+    return [vecX * Math.cos(r) - vecY * Math.sin(r), vecX * Math.sin(r) + vecY * Math.cos(r)];
   }
 
+  function isoPath(pts, close) {
+    var d = '';
+    for (var i = 0; i < pts.length; i++) {
+      d += (i ? 'L' : 'M') + pts[i][0].toFixed(1) + ' ' + pts[i][1].toFixed(1);
+    }
+    return close === false ? d : d + 'Z';
+  }
+
+  /* 바닥 사각형(윗면) */
+  function isoRect(P, x, y, w, h, z) {
+    return isoPath([P(x, y, z), P(x + w, y, z), P(x + w, y + h, z), P(x, y + h, z)]);
+  }
+
+  /* 상자(바닥 + 보이는 옆면) — 깊이 정렬 단위로 돌려준다 */
+  function isoBox(P, plan, rot, x, y, w, h, pal, hgt, z0, extra) {
+    var faces = [], list = [];
+    var p0 = [x, y], p1 = [x + w, y], p2 = [x + w, y + h], p3 = [x, y + h];
+    var quad = [p0, p1, p2, p3], cx = x + w / 2, cy = y + h / 2;
+    for (var i = 0; i < 4; i++) {
+      var a = quad[i], b = quad[(i + 1) % 4];
+      var mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      var nx = mx - cx, ny = my - cy, len = Math.sqrt(nx * nx + ny * ny) || 1;
+      var rn = isoRot(nx / len, ny / len, rot);
+      if (rn[0] + rn[1] >= -0.02) continue;     /* 카메라 반대쪽 면은 그리지 않는다 */
+      var q = [P(a[0], a[1], z0 + hgt), P(b[0], b[1], z0 + hgt), P(b[0], b[1], z0), P(a[0], a[1], z0)];
+      list.push({
+        d: isoDepth(mx, my, rot, plan),
+        svg: '<path d="' + isoPath(q) + '" fill="' + (Math.abs(rn[0]) > Math.abs(rn[1]) ? pal.a : pal.b) +
+             '" stroke="' + pal.edge + '" stroke-width="' + ISO_ART.edgeW + '" stroke-linejoin="round"/>'
+      });
+    }
+    list.push({
+      d: isoDepth(cx, cy, rot, plan) + 0.001,
+      svg: '<path d="' + isoRect(P, x, y, w, h, z0 + hgt) + '" fill="' + pal.top + '" stroke="' + pal.edge +
+           '" stroke-width="' + ISO_ART.edgeW + '" stroke-linejoin="round"' + (extra || '') + '/>'
+    });
+    list.sort(function (a, b) { return a.d - b.d; });
+    return list.map(function (f) { return f.svg; }).join('');
+  }
+
+  /* 외벽(보는 사람 반대편만) — 평면 다각형의 변마다 */
+  function isoBackWalls(P, plan, rot, poly, hgt, fill, edge, topFill) {
+    var s = '', cx = plan.bar[2] / 2, cy = plan.bar[3] / 2;
+    var wing = plan.foot === 'L' ? ISO_FOOT[plan.code].wing : null;
+    for (var i = 0; i < poly.length; i++) {
+      var a = poly[i], b = poly[(i + 1) % poly.length];
+      var mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      /* 옥외 휴게공간 쪽 변은 벽 대신 낮은 난간으로 그린다 */
+      var h = hgt;
+      if (wing && my > wing[1] + 0.2 && mx > wing[0] - 0.2) h = 1.5;
+      var dx = b[0] - a[0], dy = b[1] - a[1], len = Math.sqrt(dx * dx + dy * dy) || 1;
+      /* 다각형 중심에서 바깥으로 향하는 법선 */
+      var nx = dy / len, ny = -dx / len;
+      if ((mx - cx) * nx + (my - cy) * ny < 0) { nx = -nx; ny = -ny; }
+      var rn = isoRot(nx, ny, rot);
+      if (rn[0] + rn[1] <= 0.05) continue;
+      var q = [P(a[0], a[1], 0), P(b[0], b[1], 0), P(b[0], b[1], h), P(a[0], a[1], h)];
+      s += '<path d="' + isoPath(q) + '" fill="' + fill + '" stroke="' + edge +
+           '" stroke-width="0.7" stroke-linejoin="round"/>';
+      var capH = Math.max(0.5, h * 0.14);
+      var q2 = [P(a[0], a[1], h), P(b[0], b[1], h), P(b[0], b[1], h - capH), P(a[0], a[1], h - capH)];
+      s += '<path d="' + isoPath(q2) + '" fill="' + topFill + '"/>';
+      /* 창틀 세로선 */
+      var n = Math.max(2, Math.round(len / 7));
+      for (var k = 1; k < n; k++) {
+        var t = k / n;
+        var px = a[0] + dx * t, py = a[1] + dy * t;
+        var w0 = P(px, py, 0), w1 = P(px, py, h - capH);
+        s += '<path d="M' + w0[0].toFixed(1) + ' ' + w0[1].toFixed(1) + 'L' + w1[0].toFixed(1) + ' ' + w1[1].toFixed(1) +
+             '" stroke="#b9cfe2" stroke-width="0.55" opacity="0.7"/>';
+      }
+    }
+    return s;
+  }
+
+  /* ── 렌더 ─────────────────────────────────────────────────── */
   function renderIso() {
     var b = BLD[state.bldg];
     var svg = $('iso-svg');
     if (!b) { svg.innerHTML = ''; return; }
-
-    /* 층별 내부지도는 경상학관(S3)·인문사회관(S4)·창의혁신관(N11)에만 있다 */
     if (!ISO_CODES[b.code] || b.levels <= 0) { svg.innerHTML = ''; return; }
 
-    var rot = state.isoRot;
-    var floor = state.floor;
-    var rooms = layoutRooms(roomsForFloor(b, floor));
+    var floor = state.floor, rot = state.isoRot;
+    var plan = isoPlanFor(b, floor);
+    var P = isoProjectFn(plan, rot);
+    var A = ISO_ART;
     var s = [];
 
-    /* 바닥 슬래브 + 두께 */
-    var out = [[0, 0], [100, 0], [100, 60], [0, 60]];
-    var basePts = out.map(function (p) { return isoPoint(p[0], p[1], -7, rot); });
-    var topPts = out.map(function (p) { return isoPoint(p[0], p[1], 0, rot); });
-    s.push(poly(basePts, '#b6c2cf', '#94a3b8', 0.6));
-    for (var i = 0; i < 4; i++) {
-      var j = (i + 1) % 4;
-      s.push(poly([topPts[i], topPts[j], basePts[j], basePts[i]], '#cbd5e1', '#94a3b8', 0.5));
+    s.push('<defs>' +
+      '<linearGradient id="isoBg" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="#f4f8fd"/><stop offset="100%" stop-color="#dbe7f3"/></linearGradient>' +
+      '<filter id="isoShadow" x="-30%" y="-30%" width="180%" height="180%"><feGaussianBlur stdDeviation="5"/></filter>' +
+      '<pattern id="isoHatch" width="5" height="5" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">' +
+        '<line x1="0" y1="0" x2="0" y2="5" stroke="#cbd5e1" stroke-width="1.1"/></pattern>' +
+      '</defs>');
+    s.push('<rect width="360" height="300" fill="url(#isoBg)"/>');
+
+    /* 바닥 다각형 */
+    var bar = plan.bar, poly;
+    if (plan.foot === 'L') {
+      var wg = ISO_FOOT[plan.code].wing;
+      poly = [[bar[0], bar[1]], [bar[2], bar[1]], [bar[2], wg[1]], [wg[0] + wg[2], wg[1]],
+              [wg[0] + wg[2], wg[1] + wg[3]], [wg[0], wg[1] + wg[3]], [wg[0], bar[3]], [bar[0], bar[3]]];
+    } else {
+      poly = [[bar[0], bar[1]], [bar[2], bar[1]], [bar[2], bar[3]], [bar[0], bar[3]]];
     }
-    s.push(poly(topPts, '#f8fafc', '#94a3b8', 0.8));
 
-    /* 복도 */
-    var cor = [[4, 25], [92, 25], [92, 35], [4, 35]].map(function (p) { return isoPoint(p[0], p[1], 0, rot); });
-    s.push(poly(cor, '#e2e8f0', '#cbd5e1', 0.4));
-    var cMid = isoPoint(48, 30, 0, rot);
-    s.push('<text x="' + cMid[0].toFixed(1) + '" y="' + (cMid[1] + 2).toFixed(1) + '" font-size="6" font-weight="700" fill="#94a3b8" text-anchor="middle" transform="rotate(' + signAngle(rot).toFixed(1) + ' ' + cMid[0].toFixed(1) + ' ' + cMid[1].toFixed(1) + ')">복도</text>');
+    /* 그림자 */
+    var shadowPts = poly.map(function (p) { var q = P(p[0], p[1], 0); return [q[0], q[1] + 6]; });
+    s.push('<path d="' + isoPath(shadowPts) + '" fill="#1e3a5f" opacity="0.13" filter="url(#isoShadow)"/>');
 
-    var COLORS = {
-      class: ['#dbeafe', '#93c5fd', '#1e3a8a'],
-      office: ['#dcfce7', '#86efac', '#14532d'],
-      lab: ['#ede9fe', '#c4b5fd', '#4c1d95'],
-      etc: ['#fef3c7', '#fcd34d', '#78350f']
-    };
-
-    var mine = myRoomsOf(b.code);
-    var cAngle = signAngle(rot);
-    var cAng = cAngle;
-    var cNorm = ((cAng % 360) + 360) % 360;
-    if (cNorm > 90 && cNorm < 270) cAng = cAng + 180;
-    rooms.sort(function (p, q) { return (p.x + p.y) - (q.x + q.y); });
-    rooms.forEach(function (r) {
-      var c = COLORS[r.t] || COLORS['class'];
-      var isMine = !!mine[String(r.no)];
-      if (isMine) c = ['#ffedd5', '#fb923c', '#9a3412'];
-      var q = [
-        isoPoint(r.x, r.y, 0, rot), isoPoint(r.x + r.w, r.y, 0, rot),
-        isoPoint(r.x + r.w, r.y + r.h, 0, rot), isoPoint(r.x, r.y + r.h, 0, rot)
-      ];
-      var rp = r.x + r.w / 2, rq = r.y + r.h / 2;
-      s.push(poly(q, c[0], c[1], 0.5, 'data-no="' + esc(r.no) + '" data-name="' + esc(r.name) + '"'));
-      var cen = isoPoint(rp, rq, 0, rot);
-      var eW = Math.abs(isoPoint(r.x + r.w, r.y, 0, rot)[0] - isoPoint(r.x, r.y, 0, rot)[0]);
-      var named = r.name && r.name !== '강의실';
-      var yBase = named && eW > 30 ? cen[1] - 1 : cen[1] + 2.2;
-      s.push('<text x="' + cen[0].toFixed(1) + '" y="' + yBase.toFixed(1) + '" font-size="6.8" font-weight="800" fill="' + c[2] + '" text-anchor="middle" pointer-events="none">' + esc(r.no) + (isMine ? '★' : '') + '</text>');
-      if (named && eW > 30) {
-        var nm = r.name.length > 8 ? r.name.slice(0, 8) + '…' : r.name;
-        s.push('<text x="' + cen[0].toFixed(1) + '" y="' + (cen[1] + 6.6).toFixed(1) + '" font-size="5.4" font-weight="700" fill="' + c[2] + '" text-anchor="middle" pointer-events="none">' + esc(nm) + '</text>');
-      }
-    });
+    /* 슬래브 두께 */
+    var topPts = poly.map(function (p) { return P(p[0], p[1], 0); });
+    var botPts = poly.map(function (p) { return P(p[0], p[1], -A.slabT); });
+    for (var i = 0; i < poly.length; i++) {
+      var j = (i + 1) % poly.length;
+      var a = poly[i], c = poly[j];
+      var dn = isoRot(c[1] - a[1], -(c[0] - a[0]), rot);
+      var mx = (a[0] + c[0]) / 2 - bar[2] / 2, my = (a[1] + c[1]) / 2 - bar[3] / 2;
+      if (dn[0] + dn[1] > 0.05 || (mx * dn[0] + my * dn[1]) > 0) { } /* 방향 판정은 아래에서 */
+      s.push('<path d="' + isoPath([topPts[i], topPts[j], botPts[j], botPts[i]]) +
+             '" fill="' + A.slabSide + '" stroke="' + A.slabEdge + '" stroke-width="0.6" stroke-linejoin="round"/>');
+    }
+    s.push('<path d="' + isoPath(topPts) + '" fill="' + A.slabTop + '" stroke="' + A.slabEdge + '" stroke-width="0.9"/>');
 
     /* 외벽 */
-    for (var w = 0; w < 4; w++) {
-      var w2 = (w + 1) % 4;
-      var a1 = isoPoint(out[w][0], out[w][1], 0, rot);
-      var a2p = isoPoint(out[w2][0], out[w2][1], 0, rot);
-      var b1 = isoPoint(out[w][0], out[w][1], 12, rot);
-      var b2 = isoPoint(out[w2][0], out[w2][1], 12, rot);
-      s.push(poly([a1, a2p, b2, b1], 'rgba(241,245,249,0.88)', '#94a3b8', 0.8));
+    s.push(isoBackWalls(P, plan, rot, poly, A.wallH, A.wall, A.wallEdge, A.wallTop));
+
+    /* 복도 바닥 */
+    plan.corr.forEach(function (c) {
+      s.push('<path d="' + isoRect(P, c[0], c[1], c[2], c[3], 0.15) + '" fill="' + A.corr +
+             '" stroke="' + A.corrEdge + '" stroke-width="0.5"/>');
+    });
+
+    /* 옥외 휴게공간(ㄱ자 날개) */
+    plan.terr.forEach(function (t) {
+      s.push('<path d="' + isoRect(P, t[0], t[1], t[2], t[3], 0.1) + '" fill="url(#isoHatch)" stroke="' + A.terrEdge + '" stroke-width="0.6"/>');
+      s.push('<path d="' + isoRect(P, t[0], t[1], t[2], t[3], 0.1) + '" fill="' + A.terrTop + '" opacity="0.55" stroke="none"/>');
+      var tp = P(t[0] + t[2] / 2, t[1] + t[3] / 2, 0.2);
+      s.push('<text x="' + tp[0].toFixed(1) + '" y="' + tp[1].toFixed(1) + '" font-size="5.4" font-weight="800" fill="#94a3b8" text-anchor="middle" pointer-events="none">' +
+             (ISO_FOOT[plan.code].wingLabel || '옥외휴게공간') + '</text>');
+    });
+
+    /* 원형 홀과 본관을 잇는 통로 */
+    if (plan.circle) {
+      var lk = [[plan.circle.cx - 4.2, plan.circle.cy], [plan.circle.cx + 4.2, plan.circle.cy],
+                [plan.circle.cx + 4.2, 1.4], [plan.circle.cx - 4.2, 1.4]];
+      s.push('<path d="' + isoPath(lk.map(function (q) { return P(q[0], q[1], 0.14); })) +
+             '" fill="#eef3f8" stroke="' + A.terrEdge + '" stroke-width="0.6"/>');
     }
 
-    /* 계단 · 엘리베이터(E/V) — E/V는 한눈에 보이도록 진한 파랑으로 강조 */
-    var stPts = [[86, 46], [96, 46], [96, 54], [86, 54]].map(function (p) { return isoPoint(p[0], p[1], 0, rot); });
-    s.push(poly(stPts, '#fee2e2', '#fca5a5', 0.5));
-    var evPts = [[86, 36], [96, 36], [96, 44.4], [86, 44.4]].map(function (p) { return isoPoint(p[0], p[1], 0, rot); });
-    s.push(poly(evPts, '#2563eb', '#1d4ed8', 1.3, 'data-ev="1"'));
-    var evc = isoPoint(91, 40.2, 0, rot);
-    s.push('<text x="' + evc[0].toFixed(1) + '" y="' + (evc[1] + 1.9).toFixed(1) + '" font-size="5.6" font-weight="900" fill="#ffffff" text-anchor="middle" pointer-events="none">E/V</text>');
-    var stc = isoPoint(91, 50, 0, rot);
-    s.push('<text x="' + stc[0].toFixed(1) + '" y="' + (stc[1] + 2).toFixed(1) + '" font-size="4.4" fill="#991b1b" text-anchor="middle" pointer-events="none">계단</text>');
-
-    /* 내 수업 호실(★)이 있는 층이면 E/V 배지에 방향까지 같이 적는다 */
-    var myRoom = null;
-    for (var mri = 0; mri < rooms.length; mri++) {
-      if (mine[String(rooms[mri].no)]) { myRoom = rooms[mri]; break; }
-    }
-    var evSide = '';
-    var evText = '🛗 E/V';
-    if (myRoom) {
-      evSide = ((myRoom.x + myRoom.w / 2) < 91) ? '왼쪽' : '오른쪽';
-      evText = '🛗 E/V · ' + evSide + ' ' + myRoom.no + '★';
-    }
-    s.push(badgePill(evBadgePos(evc, evText), evText));
-
-    /* 방향 표지판 (복도 양 끝 · 중앙) */
-    var corridorAngle = signAngle(rot);
-    var leftRooms = rooms.filter(function (r) { return r.x < 24; })
-      .map(function (r) { return r.no; }).slice(0, 4).join('·');
-    var rightRooms = rooms.filter(function (r) { return r.x > 62; })
-      .map(function (r) { return r.no; }).slice(-4).join('·');
-    if (leftRooms) s.push(signboard(isoPoint(6, 30, 6, rot), corridorAngle + 180, '◀ ' + leftRooms, '#0b2545'));
-    if (rightRooms) s.push(signboard(isoPoint(84, 30, 6, rot), corridorAngle, rightRooms + ' ▶', '#0b2545'));
-    s.push(signboard(isoPoint(48, 30, 8, rot), corridorAngle - 90, floorLabel(floor) + ' · ' + b.code, '#b45309'));
-
-    /* E/V 기준 내 호실(★) 방향 주행선: E/V → 복도 → 호실 */
-    if (myRoom) {
-      var tx = myRoom.x + myRoom.w / 2;
-      var isBottom = (myRoom.y + myRoom.h / 2) > 35;
-      var tyEnd = isBottom ? (myRoom.y + myRoom.h / 2) : (myRoom.y + 2.5);
-      var lp = [[91, 35], [91, 30], [tx, 30], [tx, tyEnd]].map(function (p) { return isoPoint(p[0], p[1], 0.4, rot); });
-      var dLine = lp.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join('');
-      s.push('<path d="' + dLine + '" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="3 2" stroke-linecap="round" stroke-linejoin="round"/>');
-      var pEnd = lp[lp.length - 1], pPrev = lp[lp.length - 2];
-      var ang = Math.atan2(pEnd[1] - pPrev[1], pEnd[0] - pPrev[0]);
-      var ah1 = [pEnd[0] - 4.6 * Math.cos(ang - 0.45), pEnd[1] - 4.6 * Math.sin(ang - 0.45)];
-      var ah2 = [pEnd[0] - 4.6 * Math.cos(ang + 0.45), pEnd[1] - 4.6 * Math.sin(ang + 0.45)];
-      s.push('<path d="M' + pEnd[0].toFixed(1) + ' ' + pEnd[1].toFixed(1) + 'L' + ah1[0].toFixed(1) + ' ' + ah1[1].toFixed(1) + 'L' + ah2[0].toFixed(1) + ' ' + ah2[1].toFixed(1) + 'Z" fill="#f59e0b"/>');
+    /* 원형 홀 (S4) — 둥근 옥상 테라스/아트리움 */
+    if (plan.circle) {
+      var cc = plan.circle, N = 28, ring = [], para = '', ph = 1.6;
+      for (var ci = 0; ci < N; ci++) {
+        var ang = ci / N * Math.PI * 2;
+        ring.push([cc.cx + Math.cos(ang) * cc.r, cc.cy + Math.sin(ang) * cc.r]);
+      }
+      /* 바닥 */
+      s.push('<path d="' + isoPath(ring.map(function (q) { return P(q[0], q[1], 0.15); })) +
+             '" fill="#eef3f8" stroke="' + A.terrEdge + '" stroke-width="0.7"/>');
+      s.push('<path d="' + isoPath(ring.map(function (q) { return P(q[0], q[1], 0.16); })) +
+             '" fill="url(#isoHatch)" opacity="0.55" stroke="none"/>');
+      /* 난간 — 화면 반대쪽 호만 그린다 */
+      for (var cj = 0; cj < N; cj++) {
+        var q1 = ring[cj], q2 = ring[(cj + 1) % N];
+        var qn = isoRot((q1[0] + q2[0]) / 2 - cc.cx, (q1[1] + q2[1]) / 2 - cc.cy, rot);
+        if (qn[0] + qn[1] <= 0.02) continue;
+        para += '<path d="' + isoPath([P(q1[0], q1[1], 0.15), P(q2[0], q2[1], 0.15),
+                  P(q2[0], q2[1], ph), P(q1[0], q1[1], ph)]) +
+                '" fill="#dfe8f1" stroke="' + A.terrEdge + '" stroke-width="0.5"/>';
+      }
+      s.push(para);
+      var ccen = P(cc.cx, cc.cy, ph + 0.2);
+      s.push('<text x="' + ccen[0].toFixed(1) + '" y="' + ccen[1].toFixed(1) + '" font-size="6" font-weight="900" fill="#8fa3b8" text-anchor="middle" pointer-events="none">' + esc(cc.label) + '</text>');
     }
 
-    /* 출입구 표시 */
-    var doorP = isoPoint(50, 60, 0, rot);
-    s.push('<circle cx="' + doorP[0].toFixed(1) + '" cy="' + doorP[1].toFixed(1) + '" r="3.4" fill="#16a34a" stroke="#fff" stroke-width="1"/>');
+    /* 호실·설비 블록 — 깊이 순서대로 */
+    var blocks = [];
+    plan.rooms.forEach(function (r) { blocks.push(isoBlock(P, plan, rot, r)); });
+    s.push(blocks.sort(function (x, y) { return x.d - y.d; }).map(function (x) { return x.svg; }).join(''));
+
+    /* E/V · 계단 · 화장실 · 설비실 */
+    s.push(isoBox(P, plan, rot, plan.ev[0], plan.ev[1], plan.ev[2], plan.ev[3], pal('ev'), A.evH, 0, ' data-ev="1"'));
+    var evc = P(plan.ev[0] + plan.ev[2] / 2, plan.ev[1] + plan.ev[3] / 2, A.evH + 0.6);
+    s.push('<g transform="translate(' + evc[0].toFixed(1) + ',' + (evc[1] - 8).toFixed(1) + ')" pointer-events="none">' +
+           '<rect x="-13" y="-6.5" width="26" height="13" rx="6.5" fill="#ffffff" stroke="#38bdf8" stroke-width="0.9"/>' +
+           '<text x="0" y="3.2" text-anchor="middle" font-size="7.4" font-weight="900" fill="#0284c7">E/V</text></g>');
+
+    plan.stairs.forEach(function (t) {
+      s.push(isoBox(P, plan, rot, t[0], t[1], t[2], t[3], pal('stair'), 2.2, 0));
+      var c = P(t[0] + t[2] / 2, t[1] + t[3] / 2, 2.6);
+      s.push('<text x="' + c[0].toFixed(1) + '" y="' + c[1].toFixed(1) + '" font-size="5" font-weight="800" fill="#475569" text-anchor="middle" pointer-events="none">계단</text>');
+    });
+    plan.wc.forEach(function (t) {
+      s.push(isoBox(P, plan, rot, t[0], t[1], t[2], t[3], pal('wc'), 1.6, 0));
+      var c = P(t[0] + t[2] / 2, t[1] + t[3] / 2, 2.0);
+      s.push('<text x="' + c[0].toFixed(1) + '" y="' + c[1].toFixed(1) + '" font-size="4.6" font-weight="800" fill="#9f1239" text-anchor="middle" pointer-events="none">🚻' + (t[4] || '') + '</text>');
+    });
+    plan.equip.forEach(function (t) {
+      s.push(isoBox(P, plan, rot, t[0], t[1], t[2], t[3], pal('stair'), 1.4, 0));
+      var c = P(t[0] + t[2] / 2, t[1] + t[3] / 2, 1.8);
+      s.push('<text x="' + c[0].toFixed(1) + '" y="' + c[1].toFixed(1) + '" font-size="4.4" font-weight="800" fill="#475569" text-anchor="middle" pointer-events="none">' + (t[4] || '') + '</text>');
+    });
+
+    /* 출입구 (1층) */
+    if (String(floor) === '1' && plan.ent) {
+      var en = P(plan.ent[0], plan.ent[1], 0.4);
+      s.push('<circle cx="' + en[0].toFixed(1) + '" cy="' + en[1].toFixed(1) + '" r="3.6" fill="#16a34a" stroke="#fff" stroke-width="1.2"/>');
+    }
+
+    /* 호실 이름표 */
+    s.push(isoLabels(P, plan, rot, floor));
+
+    /* E/V → 내 호실 붉은 실선 경로 */
+    var myRoom = plan.rooms.filter(function (r) { return r.t === 'mine'; })[0] || null;
+    if (myRoom) s.push(isoRoute(P, plan, rot, myRoom));
+
+    /* 복도 표지판 */
+    var corrY = plan.corr.length ? plan.corr[0][1] + plan.corr[0][3] / 2 : 8.5;
+    var corrX0 = plan.corr.length ? plan.corr[0][0] : 0.5;
+    var corrX1 = plan.corr.length ? plan.corr[0][0] + plan.corr[0][2] : bar[2] - 0.5;
+    var westList = plan.rooms.filter(function (r) { return r.no && (r.x + r.w / 2) < bar[2] / 2 && r.t !== 'mine'; })
+      .map(function (r) { return r.no; }).slice(0, 3).join('·');
+    var eastList = plan.rooms.filter(function (r) { return r.no && (r.x + r.w / 2) >= bar[2] / 2 && r.t !== 'mine'; })
+      .map(function (r) { return r.no; }).slice(-3).join('·');
+    var corrAngle = signAngle(rot);
+    if (westList) s.push(signboard(P(corrX0 + 1.5, corrY, 3.2), corrAngle + 180, '◀ ' + westList, '#0b2545'));
+    if (eastList) s.push(signboard(P(corrX1 - 1.5, corrY, 3.2), corrAngle, eastList + ' ▶', '#0b2545'));
+    s.push(signboard(P(corrX0 + (corrX1 - corrX0) * 0.2, corrY, 3.4), corrAngle - 90, b.code + ' · ' + floorLabel(floor), '#b45309'));
 
     /* 나침반 */
-    var northA = compassAngle(rot);
-    s.push('<g transform="translate(324,32) rotate(' + northA.toFixed(1) + ')">');
-    s.push('<circle r="13" fill="rgba(255,255,255,0.9)" stroke="#94a3b8" stroke-width="0.8"/>');
-    s.push('<path d="M0,-9 L3.6,3.4 L0,0.6 L-3.6,3.4 Z" fill="#d90429"/>');
-    s.push('</g>');
-    s.push('<text x="324" y="12" font-size="7" font-weight="800" fill="#334155" text-anchor="middle">N</text>');
+    s.push(isoCompass(P, plan, rot));
+
+    /* 층 배지 */
+    s.push('<g transform="translate(12,12)"><rect width="52" height="15" rx="7.5" fill="#ffffff" opacity="0.94" stroke="#dbe6f3"/>' +
+           '<text x="26" y="10.6" text-anchor="middle" font-size="8" font-weight="900" fill="#0369a1">' + b.code + ' · ' + floorLabel(floor) + '</text></g>');
 
     svg.innerHTML = s.join('');
-    updateEvGuide(rooms, mine, floor);
+    svg.setAttribute('viewBox', '0 0 360 300');
+    updateEvGuide(plan, myRoom, floor);
+    bindRoomClicks(plan, floor);
+  }
 
-    /* 호실 클릭 */
+  function pal(t) {
+    var p = ISO_PAL[t] || ISO_PAL.class;
+    return { top: p.top, a: p.a, b: p.b, edge: '#ffffff', ink: p.ink };
+  }
+
+  /* 호실 하나 = 낮은 벽 블록 + 이름표 */
+  function isoBlock(P, plan, rot, r) {
+    var p = pal(r.t);
+    var hgt = r.t === 'hall' ? 0.5 : ISO_ART.roomH;
+    var svg = isoBox(P, plan, rot, r.x, r.y, r.w, r.h, p, hgt, 0, r.no ? ' data-no="' + esc(r.no) + '" data-name="' + esc(r.name) + '"' : '');
+    return { d: isoDepth(r.x + r.w / 2, r.y + r.h / 2, rot, plan), svg: svg };
+  }
+
+  /* 호실 번호·이름 — 회전해도 글자는 수평 */
+  function isoLabels(P, plan, rot, floor) {
+    var s = '';
+    plan.rooms.forEach(function (r) {
+      var c = P(r.x + r.w / 2, r.y + r.h / 2, ISO_ART.roomH + 0.05);
+      var isMine = r.t === 'mine';
+      var ink = isMine ? ISO_ART.mine : pal(r.t).ink;
+      /* 화면에 그려질 크기(px)로 글자를 넣을지 정한다 */
+      var wa = P(r.x, r.y, 0), wb = P(r.x + r.w, r.y, 0), wc2 = P(r.x, r.y + r.h, 0);
+      var size = Math.max(Math.hypot(wb[0] - wa[0], wb[1] - wa[1]), Math.hypot(wc2[0] - wa[0], wc2[1] - wa[1]));
+      if (r.no) {
+        var num = r.no + (isMine ? '★' : '');
+        s += haloText(c[0], c[1] - 0.6, num, 7.6, 900, ink, 2.1);
+        var showName = isMine || (size > 34 && Math.min(r.w, r.h) > 4.6);
+        if (showName) {
+          var nm = isMine && typeof r.subject === 'string' ? r.subject : r.name;
+          var maxLen = size > 62 ? 9 : (size > 46 ? 6 : 4);
+          if (nm && nm.length > maxLen) nm = nm.slice(0, maxLen) + '…';
+          s += haloText(c[0], c[1] + 5.2, nm, size > 46 ? 5.3 : 4.8, 800, (isMine ? '#a16207' : ISO_ART.labelSub), 1.6);
+        }
+      } else if (r.name) {
+        s += '<text x="' + c[0].toFixed(1) + '" y="' + (c[1] + 1.8).toFixed(1) + '" text-anchor="middle" font-size="5.6" font-weight="800" fill="#94a3b8" pointer-events="none">' + esc(r.name) + '</text>';
+      }
+    });
+    return s;
+  }
+
+  /* 글자가 도면 위에서 잘 읽히도록 흰 테두리를 깔고 쓴다 */
+  function haloText(x, y, text, size, weight, fill, sw) {
+    var p = 'x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="middle" font-size="' + size +
+            '" font-weight="' + weight + '" pointer-events="none"';
+    return '<text ' + p + ' fill="#ffffff" stroke="#ffffff" stroke-width="' + (sw * 2).toFixed(1) + '" stroke-linejoin="round">' + esc(text) + '</text>' +
+           '<text ' + p + ' fill="' + fill + '">' + esc(text) + '</text>';
+  }
+
+  /* E/V 문 앞 → 복도 → 내 호실 문 : 붉은 실선 */
+  function isoRoute(P, plan, rot, room) {
+    var ev = plan.ev;
+    var corrY = plan.corr.length ? plan.corr[0][1] + plan.corr[0][3] / 2 : 8.5;
+    var ex = ev[0] + ev[2] / 2;
+    var rx = room.x + room.w / 2;
+    var south = (room.y + room.h / 2) > corrY;
+    var pts = [[ex, ev[1] + ev[3]], [ex, corrY], [rx, corrY], [rx, south ? room.y + 0.6 : room.y + room.h - 0.6]];
+    var pp = pts.map(function (q) { return P(q[0], q[1], 0.9); });
+    var d = isoPath(pp, false);
+    var s = '';
+    s += '<path d="' + d + '" fill="none" stroke="' + ISO_ART.routeCasing + '" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>';
+    s += '<path d="' + d + '" fill="none" stroke="' + ISO_ART.route + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>';
+    var a = pp[pp.length - 2], b = pp[pp.length - 1];
+    var ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    var tip = [b[0] + Math.cos(ang) * 2.4, b[1] + Math.sin(ang) * 2.4];
+    var h1 = [tip[0] - 5.4 * Math.cos(ang - 0.42), tip[1] - 5.4 * Math.sin(ang - 0.42)];
+    var h2 = [tip[0] - 5.4 * Math.cos(ang + 0.42), tip[1] - 5.4 * Math.sin(ang + 0.42)];
+    s += '<path d="' + isoPath([tip, h1, h2]) + '" fill="' + ISO_ART.route + '" stroke="#fff" stroke-width="0.7"/>';
+    s += '<circle cx="' + pp[0][0].toFixed(1) + '" cy="' + pp[0][1].toFixed(1) + '" r="3.2" fill="' + ISO_ART.evDot + '" stroke="#fff" stroke-width="1.2"/>';
+    return s;
+  }
+
+  function isoCompass(P, plan, rot) {
+    var p0 = P(plan.bar[2] / 2, plan.bar[3] / 2, 0), p1 = P(plan.bar[2] / 2, plan.bar[3] / 2 - 5, 0);
+    var ang = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]) * 180 / Math.PI;
+    var x = 336, y = 284;
+    return '<g transform="translate(' + x + ',' + y + ')">' +
+      '<circle r="11.5" fill="' + ISO_ART.compassBg + '" stroke="' + ISO_ART.compassEdge + '" stroke-width="0.9"/>' +
+      '<g transform="rotate(' + ang.toFixed(1) + ')"><path d="M7.6,0 L-4.4,-4 L-1.5,0 L-4.4,4 Z" fill="' + ISO_ART.compassN + '"/></g>' +
+      '<text x="0" y="-13" text-anchor="middle" font-size="7" font-weight="900" fill="#475569">N</text></g>';
+  }
+
+  function bindRoomClicks(plan, floor) {
+    var svg = $('iso-svg');
     Array.prototype.forEach.call(svg.querySelectorAll('path[data-no]'), function (el) {
       el.style.cursor = 'pointer';
       el.addEventListener('click', function () {
         var no = el.getAttribute('data-no');
         var nm = el.getAttribute('data-name');
         var rr = null;
-        for (var k = 0; k < rooms.length; k++) {
-          if (String(rooms[k].no) === String(no)) { rr = rooms[k]; break; }
+        for (var k = 0; k < plan.rooms.length; k++) {
+          if (String(plan.rooms[k].no) === String(no)) { rr = plan.rooms[k]; break; }
         }
-        var side = rr ? ((rr.x + rr.w / 2 < 91) ? '왼쪽' : '오른쪽') : '';
+        var evx = plan.ev[0] + plan.ev[2] / 2;
+        var side = rr ? ((rr.x + rr.w / 2 < evx) ? '왼쪽' : '오른쪽') : '';
         $('iso-room-info').textContent = no + '호 ' + nm + ' · ' + floor + '층' +
           (side ? ' · E/V에서 나와 ' + side : ' · 복도에서 표지판 방향으로 이동');
       });
@@ -3218,42 +3710,37 @@
   }
 
   /* 도면 아래에 E/V에서 나온 뒤 어느 쪽으로 가야 하는지 크게 적어 준다 */
-  function updateEvGuide(rooms, mine, floor) {
+  function updateEvGuide(plan, myRoom, floor) {
     var el = $('iso-ev-guide');
     if (!el) return;
-    var my = null;
-    for (var i = 0; i < rooms.length; i++) {
-      if (mine[String(rooms[i].no)]) { my = rooms[i]; break; }
-    }
-    if (!my) {
-      el.innerHTML = '🛗 <b>E/V</b>는 오른쪽 아래 파란 칸입니다. E/V에서 나온 뒤 복도 좌우 표지판을 보고 내 호실 쪽으로 가세요.';
+    if (!myRoom) {
+      el.innerHTML = '🛗 <b>E/V</b>는 파란 칸입니다. E/V에서 나온 뒤 복도 좌우 표지판을 보고 내 호실 쪽으로 가세요.';
       return;
     }
-    var side = (my.x + my.w / 2 < 91) ? '왼쪽' : '오른쪽';
-    var sameSide = (my.y + my.h / 2) > 35;
-    el.innerHTML = '🛗 <b>E/V</b>에서 나와서 <b style="color:#b45309;">' + side + '</b> · ' + esc(my.no) + '★ (' + floorLabel(floor) + ')<br>' +
+    var evx = plan.ev[0] + plan.ev[2] / 2;
+    var corrY = plan.corr.length ? plan.corr[0][1] : 8.5;
+    var side = (myRoom.x + myRoom.w / 2 < evx) ? '왼쪽' : '오른쪽';
+    var sameSide = (myRoom.y + myRoom.h / 2) > corrY;
+    el.innerHTML = '🛗 <b>E/V</b>에서 나와서 <b style="color:#b45309;">' + side + '</b> · ' + esc(myRoom.no) + '★ (' + floorLabel(floor) + ')<br>' +
       '<span style="font-weight:600;color:#475569;">E/V에서 나와 복도로 나간 뒤 ' + side + '으로 걸어 ' +
-      (sameSide ? 'E/V와 같은 쪽에 있는 ' : '복도 건너편에 있는 ') + esc(my.no) + '호로 들어가세요.</span><br>' +
-      '<span style="font-weight:600;color:#64748b;">도면의 주황 점선이 가는 길입니다. 도면을 돌려도 왼쪽·오른쪽은 엘리베이터에서 나란히 선 기준이라 그대로이고, 🧭 나침반을 켜면 화면 위쪽이 걷는 방향이 되어 실제와 같아집니다.</span>';
+      (sameSide ? 'E/V와 같은 쪽에 있는 ' : '복도 건너편에 있는 ') + esc(myRoom.no) + '호로 들어가세요.</span><br>' +
+      '<span style="font-weight:600;color:#64748b;">도면의 붉은 선이 가는 길입니다. 도면을 돌려도 왼쪽·오른쪽은 엘리베이터에서 나란히 선 기준이라 그대로이고, 🧭 나침반을 켜면 화면 위쪽이 걷는 방향이 되어 실제와 같아집니다.</span>';
   }
 
+  /* 화면 위에서 복도(가로축)가 향하는 각도 */
   function signAngle(rot) {
-    var p1 = isoPoint(4, 30, 0, rot), p2 = isoPoint(30, 30, 0, rot);
-    return Math.atan2(p2[1] - p1[1], p2[0] - p1[0]) * 180 / Math.PI;
-  }
-  function compassAngle(rot) {
-    var p0 = isoPoint(50, 30, 0, rot), p1 = isoPoint(50, 15, 0, rot);
-    return Math.atan2(p1[1] - p0[1], p1[0] - p0[0]) * 180 / Math.PI + 90;
+    var r = rad(rot), cr = Math.cos(r), sr = Math.sin(r);
+    return Math.atan2((cr + sr) * 0.5, (cr - sr) * ISO_ART.pan) * 180 / Math.PI;
   }
 
   function signboard(p, angleDeg, text, color, textColor, borderColor) {
     var a = angleDeg;
     var aa = ((a % 360) + 360) % 360;
     if (aa > 90 && aa < 270) a = a + 180;
-    var w = Math.max(20, text.length * 4.1 + 7), h = 10.5;
+    var w = Math.max(17, text.length * 3.7 + 6), h = 9;
     var g = '<g transform="translate(' + p[0].toFixed(1) + ',' + p[1].toFixed(1) + ') rotate(' + a.toFixed(1) + ')">';
     g += '<rect x="' + (-w / 2).toFixed(1) + '" y="' + (-h / 2).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h + '" rx="2.6" fill="' + color + '"' + (borderColor ? ' stroke="' + borderColor + '" stroke-width="0.8"' : '') + ' opacity="0.95"/>';
-    g += '<text x="0" y="2.2" font-size="6" font-weight="800" fill="' + (textColor || '#ffffff') + '" text-anchor="middle">' + esc(text) + '</text>';
+    g += '<text x="0" y="1.9" font-size="5.3" font-weight="800" fill="' + (textColor || '#ffffff') + '" text-anchor="middle">' + esc(text) + '</text>';
     g += '</g>';
     return g;
   }
@@ -4060,6 +4547,20 @@
     };
   };
   window.__hbOpen = function (code) { openBuilding(code); };
+  /* 내부지도 점검용 (화면·동작에는 영향 없음) */
+  window.__hbIso = function (code, floor) {
+    if (code) state.bldg = code;
+    if (floor !== undefined) state.floor = String(floor);
+    renderFloorButtons();
+    renderIso();
+    return $('iso-svg').innerHTML;
+  };
+  window.__hbIsoPlan = function (code, floor) {
+    return JSON.stringify(isoPlanFor(BLD[code], String(floor)));
+  };
+  window.__hbIsoState = function () {
+    return { bldg: state.bldg, floor: state.floor, rot: state.isoRot, len: $('iso-svg').innerHTML.length };
+  };
   window.__hbParseTime = parseTimeInput;
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
