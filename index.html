@@ -731,8 +731,8 @@
 
     /* ── 지도 위 강아지 (내 위치) ── */
     .dog-marker { background: none !important; border: none !important; }
-    .dog-marker img, .iso-npc-dog, .dog-dive img {
-      filter: drop-shadow(0 2px 3px rgba(15, 23, 42, 0.34)) drop-shadow(0 0 1px rgba(255, 255, 255, 0.95));
+    .dog-marker img, .iso-npc-dog, .dog-dive img, #offline-map image.dog-sprite {
+      filter: drop-shadow(0 2px 3px rgba(15, 23, 42, 0.4)) drop-shadow(0 0 1.4px rgba(30, 41, 59, 0.55));
     }
     .dog-marker img { display: block; width: 34px; height: 41px; }
     .dog-sprite { transform-origin: center bottom; }
@@ -3054,7 +3054,7 @@
       s.push('<ellipse cx="' + dq[0] + '" cy="' + dq[1] + '" rx="11" ry="3.6" fill="#0f172a" opacity="0.2"/>');
       s.push('<circle cx="' + dq[0] + '" cy="' + dq[1] + '" r="7" fill="none" stroke="#2563eb" stroke-width="1.3" opacity="0.5"/>');
       s.push('<image class="dog-sprite dog-img-' + dpose + '" href="assets/dog-' + dpose + '.png" ' +
-        'x="' + (Number(dq[0]) - 14) + '" y="' + (Number(dq[1]) - 34) + '" width="28" height="34" ' +
+        'x="' + (Number(dq[0]) - 15) + '" y="' + (Number(dq[1]) - 37) + '" width="30" height="36" ' +
         'preserveAspectRatio="xMidYMax meet" style="animation-delay:-' + ddelay + 'ms"/>');
       s.push('</g>');
     }
@@ -5203,6 +5203,9 @@
       startFallback: fallbackStartCode(),
       offZoom: state.offView.z,
       isoBuildings: Object.keys(ISO_CODES),
+      dog: { mode: dog.mode, walkLeftMs: Math.max(0, dog.walkUntil - Date.now()), pos: dog.anchor ? dog.anchor.map(function (v) { return Math.round(v * 1e5) / 1e5; }) : null },
+      audio: { status: sfx.ctx ? sfx.ctx.state : 'none', muted: sfx.muted },
+      indoorNpc: $('iso-npc') ? $('iso-npc').className : '-',
       indoorBtn: $('btn-dest-indoor') ? $('btn-dest-indoor').style.display : '-',
       nav: state.nav ? { dest: state.nav.destCode, m: state.nav.meters, min: state.nav.estMin } : null,
       records: state.records.length
