@@ -775,9 +775,9 @@
     @keyframes npcPop { from { opacity: 0; transform: translateY(6px) scale(0.9); } to { opacity: 1; transform: none; } }
     .iso-npc.hide { display: none; }
     .iso-bubble {
-      position: relative; margin-left: 10px; max-width: 120px;
+      position: relative; margin-left: 10px; max-width: 124px;
       background: #fff; border: 1.2px solid #bfdbfe; border-radius: 9px;
-      padding: 4px 17px 4px 7px; font-size: 9.5px; font-weight: 800; line-height: 1.35;
+      padding: 4px 8px; font-size: 9.5px; font-weight: 800; line-height: 1.35;
       color: #0c4a6e; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
       word-break: keep-all;
     }
@@ -787,12 +787,6 @@
       border-bottom: 1.2px solid #bfdbfe; transform: rotate(45deg);
     }
     .iso-npc-dog { width: 32px; height: 39px; margin-left: 4px; cursor: pointer; animation: dogIdleBob 2.6s ease-in-out infinite; }
-    .iso-npc-x {
-      position: absolute; right: 3px; top: 3px; width: 14px; height: 14px;
-      border-radius: 999px; border: none; background: #e2e8f0; color: #475569;
-      font-size: 9px; font-weight: 900; line-height: 1; padding: 0; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
 
     .legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; font-size: 9px; color: var(--muted); }
     .legend i { display: inline-block; width: 10px; height: 6px; border-radius: 2px; margin-right: 3px; vertical-align: middle; }
@@ -1126,9 +1120,8 @@
         <svg id="iso-svg" viewBox="0 0 360 300" preserveAspectRatio="xMidYMid meet"></svg>
         <div class="iso-hint" id="iso-hint">도면을 손가락으로 좌우로 드래그하면 회전합니다 · 표지판이 따라 돕니다</div>
         <div class="iso-npc" id="iso-npc">
-          <button class="iso-npc-x" id="iso-npc-x" aria-label="응원 강아지 닫기" title="닫기">✕</button>
           <div class="iso-bubble" id="iso-bubble">학교 잘 다녀와~ 🐾</div>
-          <img class="iso-npc-dog" id="iso-npc-dog" src="assets/dog-idle.png" alt="응원하는 강아지" data-sprite="idle">
+          <img class="iso-npc-dog" id="iso-npc-dog" src="assets/dog-idle.png" alt="응원하는 강아지" title="누르면 응원 한마디가 바뀝니다" data-sprite="idle">
         </div>
       </div>
       <div class="iso-tools">
@@ -2905,11 +2898,6 @@
     });
     n.addEventListener('click', function (e) {
       e.stopPropagation();
-      if (e.target && e.target.id === 'iso-npc-x') {
-        n.className = 'iso-npc hide';
-        sfx.click();
-        return;
-      }
       cycleIsoNpc();
     });
   }
