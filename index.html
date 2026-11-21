@@ -749,21 +749,160 @@
     }
     .dog-img-idle { animation: dogIdleBob 2.6s ease-in-out infinite; }
     .dog-img-walk { animation: dogWalkBob 0.52s ease-in-out infinite; }
+    .dog-marker { cursor: pointer; }
 
-    /* ── 목적지 건물로 쏙 들어가는 전환 ── */
+    /* ── 쓰담쓰담: 강아지를 누르면 볼 발그레 · 손바닥 · 하트 ── */
+    .dog-sprite.petting, img.iso-npc-dog.petting, #offline-map image.dog-sprite.petting {
+      animation: petSquish 1.2s cubic-bezier(0.36, 0, 0.34, 1) both !important;
+    }
+    @keyframes petSquish {
+      0%   { transform: scale(1, 1); }
+      12%  { transform: scale(1.16, 0.82) translateY(2px); }
+      30%  { transform: scale(0.94, 1.08) translateY(-1px); }
+      48%  { transform: scale(1.1, 0.9) translateY(2px); }
+      66%  { transform: scale(0.97, 1.05); }
+      84%  { transform: scale(1.05, 0.96); }
+      100% { transform: scale(1, 1); }
+    }
+    .pet-fx {
+      position: fixed; z-index: 2650; display: none;
+      pointer-events: none; opacity: 0;
+    }
+    .pet-fx.on { display: block; opacity: 1; }
+    .pet-fx > * { position: absolute; }
+    .pet-fx .pf-blush {
+      width: 32%; height: 18%; border-radius: 50%; opacity: 0;
+      background: radial-gradient(closest-side, rgba(244, 114, 182, 0.95), rgba(251, 113, 133, 0.45) 62%, rgba(251, 113, 133, 0) 100%);
+      animation: pfBlush 1.2s ease-out both;
+    }
+    .pet-fx .pf-blush.l { left: 7%; top: 43%; }
+    .pet-fx .pf-blush.r { right: 7%; top: 43%; }
+    @keyframes pfBlush {
+      0% { opacity: 0; transform: scale(0.4); }
+      20% { opacity: 1; transform: scale(1.15); }
+      70% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1); }
+    }
+    .pet-fx .pf-hand {
+      left: 50%; top: -12%; width: 66%; margin-left: -33%; opacity: 0;
+      filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.3));
+      animation: pfPet 1.2s ease-in-out both;
+    }
+    .pet-fx .pf-hand svg, .pet-fx .pf-heart svg { display: block; width: 100%; height: auto; }
+    @keyframes pfPet {
+      0%   { transform: translate(-30%, 3px) rotate(-18deg); opacity: 0; }
+      14%  { transform: translate(-22%, 0) rotate(-11deg); opacity: 1; }
+      32%  { transform: translate(18%, 0) rotate(9deg); opacity: 1; }
+      50%  { transform: translate(-16%, 0) rotate(-9deg); opacity: 1; }
+      68%  { transform: translate(14%, 0) rotate(8deg); opacity: 1; }
+      86%  { transform: translate(-4%, 0) rotate(-3deg); opacity: 0.85; }
+      100% { transform: translate(0, -2px) rotate(0deg); opacity: 0; }
+    }
+    .pet-fx .pf-heart { width: 46%; opacity: 0; animation: pfHeart 1.2s ease-out both; }
+    .pet-fx .pf-heart.h1 { left: -26%; top: 14%; animation-delay: 0.04s; }
+    .pet-fx .pf-heart.h2 { right: -26%; top: 2%; animation-delay: 0.17s; }
+    @keyframes pfHeart {
+      0%   { transform: translateY(6px) scale(0.35); opacity: 0; }
+      24%  { transform: translateY(-3px) scale(1.12); opacity: 1; }
+      62%  { transform: translateY(-15px) scale(1); opacity: 0.95; }
+      100% { transform: translateY(-26px) scale(0.9); opacity: 0; }
+    }
+
+    /* ── 목적지 건물 문으로 들어가는 전환 (화면 정중앙 고정) ── */
     .dog-dive {
-      position: fixed; left: 0; top: 0; width: 72px; height: 87px;
-      margin-left: -36px; margin-top: -80px;
-      pointer-events: none; z-index: 2600; display: none;
+      position: fixed; inset: 0; z-index: 2700;
+      display: none; align-items: center; justify-content: center;
+      background: radial-gradient(140% 120% at 50% 42%, rgba(15, 23, 42, 0.26), rgba(2, 6, 23, 0.58));
+      pointer-events: none;
     }
-    .dog-dive.on { display: block; }
-    .dog-dive img { width: 100%; height: 100%; object-fit: contain; }
-    .dog-dive.on img { animation: dogDive 0.62s cubic-bezier(0.45, 0, 0.7, 1) forwards; transform-origin: center bottom; }
-    @keyframes dogDive {
-      0% { transform: translateY(0) scale(1); opacity: 1; }
-      45% { transform: translateY(-11px) scale(0.92); opacity: 1; }
-      100% { transform: translateY(7px) scale(0.08); opacity: 0; }
+    .dog-dive.on { display: flex; animation: ddVeil 0.9s ease-out both; }
+    @keyframes ddVeil {
+      0% { opacity: 0; }
+      13% { opacity: 1; }
+      84% { opacity: 1; }
+      100% { opacity: 0; }
     }
+    .dog-dive .dd-card {
+      position: relative; width: 214px; padding: 12px 12px 11px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      background: linear-gradient(165deg, #f8fafc 0%, #e6edf6 100%);
+      border-radius: 20px;
+      box-shadow: 0 20px 44px rgba(2, 6, 23, 0.45), 0 0 0 3px rgba(255, 255, 255, 0.32);
+      animation: ddCard 0.82s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes ddCard {
+      0% { transform: scale(0.82) translateY(10px); opacity: 0; }
+      17% { transform: scale(1) translateY(0); opacity: 1; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    /* 문 그림: 벽 · 바닥 · 문틀 · 열린 문 안쪽(어두운 복도) */
+    .dog-dive .dd-scene {
+      position: relative; width: 100%; height: 138px; overflow: hidden;
+      border-radius: 13px;
+      background: linear-gradient(180deg, #dfe7f2 0%, #cbd7e6 62%, #bccadb 100%);
+    }
+    .dog-dive .dd-wall {
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0 1px, transparent 1px 100%);
+      background-size: 22px 100%;
+      opacity: 0.5;
+    }
+    .dog-dive .dd-floor {
+      position: absolute; left: 0; right: 0; bottom: 0; height: 24px;
+      background: linear-gradient(180deg, #9dabbd, #7b8a9d);
+      box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.4);
+    }
+    .dog-dive .dd-door {
+      position: absolute; left: 50%; bottom: 15px; transform: translateX(-50%);
+      width: 82px; height: 108px; padding: 6px 6px 0; box-sizing: border-box;
+      background: linear-gradient(180deg, #5b6b80 0%, #45556a 100%);
+      border-radius: 5px 5px 0 0;
+      box-shadow: 0 4px 9px rgba(15, 23, 42, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+    .dog-dive .dd-hole {
+      position: relative; width: 100%; height: 100%; overflow: hidden;
+      background: linear-gradient(180deg, #0a1120 0%, #16233a 58%, #0b1322 100%);
+      border-radius: 2px 2px 0 0;
+      box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.95);
+    }
+    .dog-dive .dd-hole:after {
+      content: ''; position: absolute; left: 50%; bottom: -6px;
+      width: 56px; height: 42px; margin-left: -28px;
+      background: radial-gradient(60% 70% at 50% 100%, rgba(125, 211, 252, 0.5), rgba(125, 211, 252, 0) 72%);
+    }
+    .dog-dive .dd-leaf {
+      position: absolute; right: -18px; bottom: 0; width: 22px; height: 100%;
+      background: linear-gradient(90deg, #33455c, #6d7f95);
+      border-radius: 2px 3px 0 0;
+      transform: perspective(140px) rotateY(52deg);
+      transform-origin: left center;
+      box-shadow: 0 3px 6px rgba(15, 23, 42, 0.35);
+    }
+    .dog-dive .dd-dog {
+      position: absolute; left: 50%; bottom: 14px; z-index: 3;
+      width: 48px; height: 58px; margin-left: -24px;
+      transform-origin: center bottom;
+      will-change: transform, opacity;
+    }
+    .dog-dive .dd-dog img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .dog-dive.on .dd-dog { animation: ddDog 0.82s cubic-bezier(0.35, 0, 0.4, 1) both; }
+    @keyframes ddDog {
+      0%   { transform: translate(-52px, 0) scale(1); opacity: 0; }
+      6%   { transform: translate(-50px, 0) scale(1); opacity: 1; }
+      19%  { transform: translate(-50px, 0) scale(1); opacity: 1; }
+      30%  { transform: translate(-38px, -4px) scale(1); }
+      42%  { transform: translate(-26px, 0) scale(0.99); }
+      54%  { transform: translate(-14px, -4px) scale(0.97); }
+      66%  { transform: translate(-2px, 0) scale(0.9); }
+      80%  { transform: translate(4px, 3px) scale(0.6); opacity: 0.9; }
+      100% { transform: translate(6px, 8px) scale(0.16); opacity: 0; }
+    }
+    .dog-dive .dd-label {
+      font-size: 12px; font-weight: 900; color: #1e293b; line-height: 1.35;
+      letter-spacing: -0.3px; text-align: center; word-break: keep-all;
+    }
+    .dog-dive .dd-sub { font-size: 9.5px; font-weight: 700; color: #64748b; margin-top: -2px; }
 
     /* ── 실내 2.5D 지도 구석의 응원 강아지 ── */
     .iso-npc {
@@ -1190,9 +1329,38 @@
   </div>
 </div>
 
+<!-- 강아지 쓰담쓰담 오버레이 (볼 발그레 · 손바닥 · 하트) -->
+<div class="pet-fx" id="pet-fx" aria-hidden="true">
+  <div class="pf-blush l"></div>
+  <div class="pf-blush r"></div>
+  <div class="pf-hand">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="#ffd9c0" stroke="#e6a181" stroke-width="0.85" stroke-linejoin="round"><rect x="6.2" y="8.6" width="11.6" height="11.2" rx="5.2"/><rect x="6.6" y="3.2" width="2.6" height="7.2" rx="1.3"/><rect x="9.7" y="1.9" width="2.6" height="8.2" rx="1.3"/><rect x="12.8" y="2.6" width="2.6" height="7.6" rx="1.3"/><rect x="15.9" y="4.2" width="2.6" height="6.2" rx="1.3"/><rect x="2.1" y="10.4" width="6.2" height="2.8" rx="1.4" transform="rotate(-30 5.2 11.8)"/></g></svg>
+  </div>
+  <div class="pf-heart h1">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 21C5.4 16.2 3 12.9 3 9.9A4.3 4.3 0 0 1 12 7.6 4.3 4.3 0 0 1 21 9.9c0 3-2.4 6.3-9 11.1z" fill="#fb7185" stroke="#f43f5e" stroke-width="0.9"/></svg>
+  </div>
+  <div class="pf-heart h2">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 21C5.4 16.2 3 12.9 3 9.9A4.3 4.3 0 0 1 12 7.6 4.3 4.3 0 0 1 21 9.9c0 3-2.4 6.3-9 11.1z" fill="#fda4af" stroke="#fb7185" stroke-width="0.9"/></svg>
+  </div>
+</div>
+
 <div id="toast"></div>
-<!-- 목적지 건물로 쏙 들어가는 강아지 전환 -->
-<div class="dog-dive" id="dog-dive" aria-hidden="true"><img src="assets/dog-idle.png" alt=""></div>
+<!-- 목적지 건물 문으로 들어가는 강아지 전환 (화면 정중앙 고정) -->
+<div class="dog-dive" id="dog-dive" aria-hidden="true">
+  <div class="dd-card">
+    <div class="dd-scene">
+      <div class="dd-wall"></div>
+      <div class="dd-floor"></div>
+      <div class="dd-door">
+        <div class="dd-hole"></div>
+        <div class="dd-leaf"></div>
+      </div>
+      <div class="dd-dog"><img src="assets/dog-idle.png" alt=""></div>
+    </div>
+    <div class="dd-label" id="dd-label">들어가는 중…</div>
+    <div class="dd-sub">실내 지도를 여는 중이에요 🐾</div>
+  </div>
+</div>
 
 <script>
   /* ===== 캠퍼스 보행로 네트워크 (OpenStreetMap 실측 보행로·계단·내부도로, ODbL) ===== */
@@ -1716,6 +1884,20 @@
       if (this.muted) return;
       if (navigator.vibrate) {
         try { navigator.vibrate(ms || 10); } catch (e) {}
+      }
+    },
+
+    /* 강아지 쓰담쓰담 — 부드러운 두근거리는 진동 + 짧은 애교 소리 */
+    pet: function () {
+      var ctx = this.get();
+      if (ctx) {
+        var t = ctx.currentTime + 0.002;
+        this.tone(880, t, 0.1, 0.055, 'sine', 1180);
+        this.tone(1320, t + 0.09, 0.13, 0.04, 'triangle', 1560);
+      }
+      if (this.muted) return;
+      if (navigator.vibrate) {
+        try { navigator.vibrate([18, 35, 22]); } catch (e) {}
       }
     }
   };
@@ -2788,8 +2970,8 @@
     }
   }
 
-  function dogIconHtml(mode) {
-    return '<img class="dog-sprite dog-img-' + mode + '" src="assets/dog-' + mode + '.png" ' +
+  function dogIconHtml(mode, pet) {
+    return '<img class="dog-sprite dog-img-' + mode + (pet ? ' petting' : '') + '" src="assets/dog-' + mode + '.png" ' +
       'alt="내 위치 강아지" draggable="false">';
   }
 
@@ -2800,14 +2982,20 @@
       state.map._dogMarker = L.marker([pos[0], pos[1]], {
         icon: L.divIcon({
           className: 'dog-marker',
-          html: dogIconHtml(mode),
+          html: dogIconHtml(mode, Date.now() < petUntil),
           iconSize: [34, 41],
           iconAnchor: [17, 37]
         }),
-        interactive: false,
+        interactive: true,
         keyboard: false,
         zIndexOffset: 600
       }).addTo(state.map);
+      /* 강아지를 누르면 쓰담쓰담 (지도 클릭은 막는다) */
+      state.map._dogMarker.on('click', function (e) {
+        if (e && e.originalEvent) L.DomEvent.stopPropagation(e.originalEvent);
+        var host = state.map && state.map._dogMarker ? state.map._dogMarker.getElement() : null;
+        petDog(host ? host.querySelector('img') : null);
+      });
       return;
     }
     state.map._dogMarker.setLatLng([pos[0], pos[1]]);
@@ -2816,7 +3004,7 @@
     if (!img) return;
     var want = 'assets/dog-' + mode + '.png';
     if (img.getAttribute('src') !== want) img.setAttribute('src', want);
-    var cls = 'dog-sprite dog-img-' + mode;
+    var cls = 'dog-sprite dog-img-' + mode + (Date.now() < petUntil ? ' petting' : '');
     if (img.className !== cls) img.className = cls;
   }
 
@@ -2827,39 +3015,83 @@
     }
   }
 
-  /* 목적지 건물로 작아지며 쏙 들어가는 짧은 전환 */
-  var diveTimer = null;
-  function dogDive(latlng) {
-    var el = $('dog-dive');
-    if (!el) return;
-    var x = null, y = null;
-    var shell = document.querySelector('.map-shell');
-    var r = shell ? shell.getBoundingClientRect() : null;
-    if (r) {
-      if (latlng && state.mapMode !== 'svg' && state.map && hasLeaflet()) {
-        try {
-          var p = state.map.latLngToContainerPoint(L.latLng(latlng[0], latlng[1]));
-          x = r.left + p.x; y = r.top + p.y;
-        } catch (e) {}
-      }
-      if (x === null) {
-        var dot = document.getElementById('svg-dest-dot');
-        if (dot && dot.getBoundingClientRect) {
-          var b = dot.getBoundingClientRect();
-          if (b.width || b.height) { x = b.left + b.width / 2; y = b.top + b.height / 2; }
-        }
-      }
-      if (x === null) { x = r.left + r.width / 2; y = r.top + r.height / 2; }
-    } else {
-      x = window.innerWidth / 2; y = window.innerHeight / 2;
+  /* ══════════════════════════════════════════════════════════════
+     6-C. 쓰담쓰담 — 강아지를 누르면 볼 발그레 · 손바닥 · 하트
+     ══════════════════════════════════════════════════════════════ */
+  var PET_MS = 1200;
+  var petUntil = 0, petFxTimer = null, petSquishTimer = null, petSquishEl = null;
+
+  /* 지도(Leaflet) · 내장 SVG 지도 · 실내 응원 NPC 어디의 강아지든 이 함수 하나를 지난다 */
+  function petDog(dogEl) {
+    if (!dogEl || !dogEl.getBoundingClientRect) return false;
+    var r = dogEl.getBoundingClientRect();
+    if (!r.width || !r.height) return false;
+    petUntil = Date.now() + PET_MS;
+
+    /* 강아지가 화면 어디에 있든 그 자리에 맞춰 오버레이를 붙인다 */
+    var fx = $('pet-fx');
+    if (fx) {
+      fx.style.left = Math.round(r.left) + 'px';
+      fx.style.top = Math.round(r.top) + 'px';
+      fx.style.width = Math.round(r.width) + 'px';
+      fx.style.height = Math.round(r.height) + 'px';
+      fx.className = 'pet-fx';
+      void fx.offsetWidth;            /* 하트·손바닥 애니메이션을 처음부터 */
+      fx.className = 'pet-fx on';
+      if (petFxTimer) clearTimeout(petFxTimer);
+      petFxTimer = setTimeout(function () { fx.className = 'pet-fx'; }, PET_MS + 80);
     }
-    el.style.left = x + 'px';
-    el.style.top = y + 'px';
+
+    /* 강아지 몸통이 살짝 짜그러졌다 펴지는 쓰담 리듬 */
+    if (petSquishEl && petSquishEl !== dogEl) petSquishEl.classList.remove('petting');
+    petSquishEl = dogEl;
+    dogEl.classList.add('petting');
+    if (petSquishTimer) clearTimeout(petSquishTimer);
+    petSquishTimer = setTimeout(function () {
+      if (dogEl.classList) dogEl.classList.remove('petting');
+    }, PET_MS);
+
+    sfx.pet();
+    return true;
+  }
+  var diveTimer = null, diveSwapTimer = null;
+
+  function buildingLabelOf(code) {
+    var b = BLD[code];
+    return b ? b.code + ' ' + b.name : '건물';
+  }
+
+  function playDoorEnter(code, done) {
+    var el = $('dog-dive');
+    if (!el) { if (done) done(); return; }
+    var img = el.querySelector('.dd-dog img');
+    var lab = $('dd-label');
+    if (lab) lab.textContent = buildingLabelOf(code) + ' 들어가는 중…';
+    if (img) img.setAttribute('src', 'assets/dog-idle.png');
     el.className = 'dog-dive';
     void el.offsetWidth;            /* 애니메이션을 처음부터 다시 재생 */
     el.className = 'dog-dive on';
+    if (diveSwapTimer) clearTimeout(diveSwapTimer);
+    diveSwapTimer = setTimeout(function () {
+      if (img) img.setAttribute('src', 'assets/dog-walk.png');
+    }, 160);
     if (diveTimer) clearTimeout(diveTimer);
-    diveTimer = setTimeout(function () { el.className = 'dog-dive'; }, 720);
+    diveTimer = setTimeout(function () {
+      el.className = 'dog-dive';
+      if (done) done();
+    }, 900);
+  }
+
+  /* 건물 내부지도로 들어가는 모든 길은 이 함수를 거친다.
+     이미 그 건물 실내지도를 보고 있을 때(층만 바꾸는 경우)는 모션 없이 바로 연다. */
+  function enterBuilding(code, room) {
+    if (!BLD[code]) return;
+    var m = $('building-modal');
+    if (m && m.className.indexOf('on') >= 0 && state.bldg === code) {
+      openBuilding(code, room);
+      return;
+    }
+    playDoorEnter(code, function () { openBuilding(code, room); });
   }
 
   /* 실내 2.5D 지도 구석의 응원 강아지 */
@@ -2899,6 +3131,8 @@
     n.addEventListener('click', function (e) {
       e.stopPropagation();
       cycleIsoNpc();
+      /* 말풍선이 바뀌는 동시에 쓰담쓰담 (볼 발그레 · 손바닥 · 하트 · 진동) */
+      petDog(n.querySelector('.iso-npc-dog') || n);
     });
   }
 
@@ -3042,9 +3276,9 @@
       s.push('<g class="dog-layer" pointer-events="none">');
       s.push('<ellipse cx="' + dq[0] + '" cy="' + dq[1] + '" rx="11" ry="3.6" fill="#0f172a" opacity="0.2"/>');
       s.push('<circle cx="' + dq[0] + '" cy="' + dq[1] + '" r="7" fill="none" stroke="#2563eb" stroke-width="1.3" opacity="0.5"/>');
-      s.push('<image class="dog-sprite dog-img-' + dpose + '" href="assets/dog-' + dpose + '.png" ' +
+      s.push('<image class="dog-sprite dog-img-' + dpose + (Date.now() < petUntil ? ' petting' : '') + '" href="assets/dog-' + dpose + '.png" ' +
         'x="' + (Number(dq[0]) - 15) + '" y="' + (Number(dq[1]) - 37) + '" width="30" height="36" ' +
-        'preserveAspectRatio="xMidYMax meet" style="animation-delay:-' + ddelay + 'ms"/>');
+        'preserveAspectRatio="xMidYMax meet" pointer-events="all" style="animation-delay:-' + ddelay + 'ms;cursor:pointer"/>');
       s.push('</g>');
     }
 
@@ -3136,8 +3370,16 @@
       if (!el || el === host || !el.getAttribute) return false;
       var code = el.getAttribute('data-obldg');
       if (!code || !BLD[code]) return false;
-      openBuilding(code, '');
+      enterBuilding(code, '');
       return true;
+    }
+
+    /* 누른 자리가 내장 지도의 내 위치 강아지면 건물을 여는 대신 쓰담쓰담 */
+    function petDogAt(x, y) {
+      var el = document.elementFromPoint(x, y);
+      while (el && el !== host && !(el.classList && el.classList.contains('dog-sprite'))) el = el.parentNode;
+      if (!el || el === host) return false;
+      return petDog(el);
     }
 
     function endDrag(e) {
@@ -3148,7 +3390,9 @@
       try { if (host.releasePointerCapture && e && e.pointerId !== undefined) host.releasePointerCapture(e.pointerId); } catch (err) {}
       /* 끌지 않고 그냥 눌렀으면 건물 상세를 연다.
          포인터 캡처 때문에 click 대상이 지도 상자로 바뀌므로 좌표로 다시 찾는다. */
-      if (offDragMoved <= 6 && e && e.clientX !== undefined) openBuildingAt(e.clientX, e.clientY);
+      if (offDragMoved <= 6 && e && e.clientX !== undefined) {
+        if (!petDogAt(e.clientX, e.clientY)) openBuildingAt(e.clientX, e.clientY);
+      }
     }
     host.addEventListener('pointerup', endDrag);
     host.addEventListener('pointercancel', endDrag);
@@ -3156,7 +3400,9 @@
     /* 포인터 이벤트가 없는 환경을 위한 대비 */
     host.addEventListener('click', function (e) {
       if (offDragMoved > 6) { offDragMoved = 0; return; }
-      if (e.clientX !== undefined) openBuildingAt(e.clientX, e.clientY);
+      if (e.clientX !== undefined) {
+        if (!petDogAt(e.clientX, e.clientY)) openBuildingAt(e.clientX, e.clientY);
+      }
     });
 
     /* 마우스 휠로도 확대·축소 */
@@ -3239,8 +3485,6 @@
   function completeArrival() {
     if (!state.nav) { toast('진행 중인 길안내가 없습니다'); return; }
     var nav = state.nav;
-    /* 도착: 강아지가 목적지 건물로 작아지며 쏙 들어가는 짧은 전환 */
-    if (BLD[nav.destCode]) dogDive(BLD[nav.destCode].entrance);
     var realMin = Math.max(1, Math.round((Date.now() - (nav.startedAt || Date.now())) / 60000));
     var status;
     if (nav.changed) status = '경로 변경';
@@ -3284,6 +3528,9 @@
       if (!sp.inRange) msg += '(시간이 비정상이라 조금만 반영)';
     }
     toast(msg);
+
+    /* 도착하면 목적지 건물 문으로 들어가는 모션과 함께 실내지도를 바로 열어 준다 */
+    if (ISO_CODES[nav.destCode]) enterBuilding(nav.destCode, nav.room);
   }
 
   function submitFeedback(good) {
@@ -4915,16 +5162,15 @@
     });
     $('btn-dest-indoor').addEventListener('click', function () {
       if (!state.nav) { toast('먼저 길안내를 시작해 주세요'); return; }
-      /* 건물로 들어가기 전에 강아지가 쏙 들어가는 전환을 먼저 보여 준다 */
+      /* 스크롤 위치와 상관없이 화면 정중앙에서 문 진입 모션을 먼저 보여 준다 */
       var destCode = state.nav.destCode, destRoom = state.nav.room;
-      dogDive(BLD[destCode] ? BLD[destCode].entrance : null);
-      setTimeout(function () {
+      playDoorEnter(destCode, function () {
         openBuilding(destCode, destRoom);
         setTimeout(function () {
           var w = $('iso-wrap');
           if (w && w.scrollIntoView) { try { w.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }
-        }, 150);
-      }, 430);
+        }, 180);
+      });
     });
     $('btn-gps').addEventListener('click', function () {
       if (state.gps.watchId !== null) { stopGps(); toast('GPS를 껐습니다'); }
@@ -4976,7 +5222,7 @@
       var el = e.target;
       while (el && el !== document && !(el.getAttribute && el.getAttribute('data-bldg'))) el = el.parentNode;
       if (el && el !== document && el.getAttribute && el.getAttribute('data-bldg')) {
-        openBuilding(el.getAttribute('data-bldg'));
+        enterBuilding(el.getAttribute('data-bldg'));
       }
     });
 
