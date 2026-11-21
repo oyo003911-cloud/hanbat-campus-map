@@ -5227,6 +5227,12 @@
     return { bldg: state.bldg, floor: state.floor, rot: state.isoRot, len: $('iso-svg').innerHTML.length };
   };
   window.__hbParseTime = parseTimeInput;
+  /* 강아지 걷기 판단 점검용 (GPS 대신 좌표를 직접 넣어 본다) */
+  window.__hbDogFix = function (lat, lng, force) {
+    dogOnFix([Number(lat), Number(lng)], !!force);
+    dogRefresh();
+    return { mode: dog.mode, anchor: dog.anchor ? dog.anchor.slice() : null, walkLeftMs: Math.max(0, dog.walkUntil - Date.now()) };
+  };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
