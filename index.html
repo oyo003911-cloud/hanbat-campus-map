@@ -716,6 +716,83 @@
     }
     #toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    /* ── 헤더 효과음 토글 ── */
+    .hdr-tools { display: flex; align-items: center; gap: 6px; flex: none; }
+    .btn-sound {
+      flex: none; width: 32px; height: 32px; border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff; font-size: 15px; line-height: 1; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0;
+    }
+    .btn-sound:active { transform: scale(0.94); }
+    .btn-sound.off { background: rgba(0, 0, 0, 0.16); border-color: rgba(255, 255, 255, 0.18); opacity: 0.72; }
+
+    /* ── 지도 위 강아지 (내 위치) ── */
+    .dog-marker { background: none !important; border: none !important; }
+    .dog-marker img, .iso-npc-dog, .dog-dive img {
+      filter: drop-shadow(0 2px 3px rgba(15, 23, 42, 0.34)) drop-shadow(0 0 1px rgba(255, 255, 255, 0.95));
+    }
+    .dog-marker img { display: block; width: 34px; height: 41px; }
+    .dog-sprite { transform-origin: center bottom; }
+    #offline-map image.dog-sprite { transform-box: fill-box; transform-origin: center bottom; }
+    @keyframes dogIdleBob {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-1.4px) scale(1.02); }
+    }
+    @keyframes dogWalkBob {
+      0%, 100% { transform: translateY(0) rotate(-2.2deg); }
+      25% { transform: translateY(-3.2px) rotate(0deg); }
+      50% { transform: translateY(0) rotate(2.2deg); }
+      75% { transform: translateY(-3.2px) rotate(0deg); }
+    }
+    .dog-img-idle { animation: dogIdleBob 2.6s ease-in-out infinite; }
+    .dog-img-walk { animation: dogWalkBob 0.52s ease-in-out infinite; }
+
+    /* ── 목적지 건물로 쏙 들어가는 전환 ── */
+    .dog-dive {
+      position: fixed; left: 0; top: 0; width: 72px; height: 87px;
+      margin-left: -36px; margin-top: -80px;
+      pointer-events: none; z-index: 2600; display: none;
+    }
+    .dog-dive.on { display: block; }
+    .dog-dive img { width: 100%; height: 100%; object-fit: contain; }
+    .dog-dive.on img { animation: dogDive 0.62s cubic-bezier(0.45, 0, 0.7, 1) forwards; transform-origin: center bottom; }
+    @keyframes dogDive {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      45% { transform: translateY(-11px) scale(0.92); opacity: 1; }
+      100% { transform: translateY(7px) scale(0.08); opacity: 0; }
+    }
+
+    /* ── 실내 2.5D 지도 구석의 응원 강아지 ── */
+    .iso-npc {
+      position: absolute; left: 4px; bottom: 20px; z-index: 8;
+      display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+      width: 118px; animation: npcPop 0.45s ease-out;
+    }
+    @keyframes npcPop { from { opacity: 0; transform: translateY(6px) scale(0.9); } to { opacity: 1; transform: none; } }
+    .iso-npc.hide { display: none; }
+    .iso-bubble {
+      position: relative; margin-left: 10px;
+      background: #fff; border: 1.2px solid #bfdbfe; border-radius: 9px;
+      padding: 4px 7px; font-size: 9.5px; font-weight: 800; line-height: 1.35;
+      color: #0c4a6e; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
+      word-break: keep-all;
+    }
+    .iso-bubble::after {
+      content: ''; position: absolute; left: 12px; bottom: -5px;
+      width: 8px; height: 8px; background: #fff; border-right: 1.2px solid #bfdbfe;
+      border-bottom: 1.2px solid #bfdbfe; transform: rotate(45deg);
+    }
+    .iso-npc-dog { width: 32px; height: 39px; margin-left: 4px; cursor: pointer; animation: dogIdleBob 2.6s ease-in-out infinite; }
+    .iso-npc-x {
+      position: absolute; right: -2px; top: -7px; width: 17px; height: 17px;
+      border-radius: 999px; border: 1px solid #cbd5e1; background: #fff; color: #64748b;
+      font-size: 10px; font-weight: 900; line-height: 1; padding: 0; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
     .legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; font-size: 9px; color: var(--muted); }
     .legend i { display: inline-block; width: 10px; height: 6px; border-radius: 2px; margin-right: 3px; vertical-align: middle; }
     .foot-note { font-size: 9px; color: #9aa4b2; line-height: 1.5; text-align: center; padding: 4px 2px 0; }
@@ -730,7 +807,10 @@
       <strong>🧭 난 내갈길을 간다</strong>
       <span id="brand-sub">한밭대 캠퍼스 인도 길안내</span>
     </div>
-    <button class="btn-install" id="btn-install">📲 홈 화면 추가</button>
+    <div class="hdr-tools">
+      <button class="btn-sound" id="btn-sound" title="효과음 켜짐 · 눌러서 끄기" aria-label="효과음 켜기/끄기" aria-pressed="true">🔊</button>
+      <button class="btn-install" id="btn-install">📲 홈 화면 추가</button>
+    </div>
   </header>
 
   <!-- 테스트 툴바 -->
@@ -917,7 +997,7 @@
         <span><i style="background:#e11d48"></i>보행 경로</span>
         <span><i style="background:#cbd5e1"></i>인도·보행로</span>
         <span><i style="background:#94a3b8"></i>건물</span>
-        <span><i style="background:#2563eb"></i>내 위치</span>
+        <span><i style="background:#2563eb"></i>내 위치(강아지)</span>
         <span><i style="background:#0f172a"></i>목적지</span>
       </div>
     </section>
@@ -1044,6 +1124,11 @@
       <div class="iso-wrap" id="iso-wrap">
         <svg id="iso-svg" viewBox="0 0 360 300" preserveAspectRatio="xMidYMid meet"></svg>
         <div class="iso-hint" id="iso-hint">도면을 손가락으로 좌우로 드래그하면 회전합니다 · 표지판이 따라 돕니다</div>
+        <div class="iso-npc" id="iso-npc">
+          <button class="iso-npc-x" id="iso-npc-x" aria-label="응원 강아지 닫기" title="닫기">✕</button>
+          <div class="iso-bubble" id="iso-bubble">학교 잘 다녀와~ 🐾</div>
+          <img class="iso-npc-dog" id="iso-npc-dog" src="assets/dog-idle.png" alt="응원하는 강아지" data-sprite="idle">
+        </div>
       </div>
       <div class="iso-tools">
         <button id="btn-compass">🧭 폰 방향 센서</button>
@@ -1112,6 +1197,8 @@
 </div>
 
 <div id="toast"></div>
+<!-- 목적지 건물로 쏙 들어가는 강아지 전환 -->
+<div class="dog-dive" id="dog-dive" aria-hidden="true"><img src="assets/dog-idle.png" alt=""></div>
 
 <script>
   /* ===== 캠퍼스 보행로 네트워크 (OpenStreetMap 실측 보행로·계단·내부도로, ODbL) ===== */
@@ -1497,7 +1584,8 @@
     mode: 'hanbat_map_map_mode',
     start: 'hanbat_map_start_sel',
     speed: 'hanbat_map_speed',  // 기기별 내 평균 걸음속도(m/분)
-    defaultOrigin: 'hanbat_map_default_origin'   // 기기별 기본 출발지(정류장·생활관)
+    defaultOrigin: 'hanbat_map_default_origin',   // 기기별 기본 출발지(정류장·생활관)
+    sound: 'hanbat_map_sound_muted'              // 효과음 끔/켜짐
   };
 
   var DEFAULT_TIMETABLE = {
@@ -1553,6 +1641,127 @@
     return String(s === undefined || s === null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     0-B. 누르는 맛 — Web Audio 효과음 + 가벼운 햅틱
+     ══════════════════════════════════════════════════════════════ */
+  var AUDIO_CLASS = window.AudioContext || window.webkitAudioContext;
+  var sfx = {
+    ctx: null,
+    master: null,
+    muted: false,
+
+    /* 첫 사용자 터치 안에서 만들고 resume한다 (브라우저 자동재생 정책) */
+    get: function () {
+      if (this.muted || !AUDIO_CLASS) return null;
+      if (!this.ctx) {
+        try {
+          this.ctx = new AUDIO_CLASS();
+          this.master = this.ctx.createGain();
+          this.master.gain.value = 0.5;
+          this.master.connect(this.ctx.destination);
+        } catch (e) { this.ctx = null; return null; }
+      }
+      if (this.ctx.state === 'suspended' && this.ctx.resume) {
+        try { this.ctx.resume(); } catch (e) {}
+      }
+      return this.ctx;
+    },
+
+    /* 맑은 한 음 — 마림바처럼 빠르게 부풀었다가 부드럽게 사라진다 */
+    tone: function (freq, start, dur, vol, type, endFreq) {
+      var ctx = this.ctx;
+      if (!ctx) return;
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(freq, start);
+      if (endFreq && endFreq !== freq) {
+        o.frequency.exponentialRampToValueAtTime(endFreq, start + dur * 0.85);
+      }
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(vol, start + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      o.connect(g);
+      g.connect(this.master);
+      o.start(start);
+      o.stop(start + dur + 0.03);
+    },
+
+    /* 버튼·탭·층 선택·지도 모드 — 물방울 톡 */
+    click: function () {
+      var ctx = this.get();
+      if (!ctx) return;
+      var t = ctx.currentTime + 0.001;
+      this.tone(1180, t, 0.085, 0.10, 'sine', 760);
+      this.tone(2360, t, 0.045, 0.028, 'triangle');
+      this.haptic(9);
+    },
+
+    /* 길안내 시작 · 도착 완료 — 상승 3음 멜로디 */
+    start: function () {
+      var ctx = this.get();
+      if (!ctx) return;
+      var t = ctx.currentTime + 0.002;
+      var notes = [523.25, 659.25, 783.99];   /* 도·미·솔 */
+      for (var i = 0; i < notes.length; i++) {
+        this.tone(notes[i], t + i * 0.085, 0.22 - i * 0.02, 0.075, 'triangle');
+        this.tone(notes[i] * 2, t + i * 0.085, 0.09, 0.022, 'sine');
+      }
+      this.haptic(14);
+    },
+
+    /* 실내 도면 드래그 회전 — 18도마다 아주 작은 틱 */
+    tick: function () {
+      var ctx = this.get();
+      if (!ctx) return;
+      this.tone(1560, ctx.currentTime + 0.001, 0.026, 0.028, 'sine');
+    },
+
+    haptic: function (ms) {
+      if (this.muted) return;
+      if (navigator.vibrate) {
+        try { navigator.vibrate(ms || 10); } catch (e) {}
+      }
+    }
+  };
+
+  function loadSoundPref() {
+    var v = null;
+    try { v = localStorage.getItem(KEY.sound); } catch (e) {}
+    sfx.muted = (v === '1');
+    renderSoundBtn();
+  }
+
+  function renderSoundBtn() {
+    var b = $('btn-sound');
+    if (!b) return;
+    b.textContent = sfx.muted ? '🔇' : '🔊';
+    b.className = 'btn-sound' + (sfx.muted ? ' off' : '');
+    b.setAttribute('aria-pressed', sfx.muted ? 'false' : 'true');
+    b.title = sfx.muted ? '효과음 꺼짐 · 눌러서 켜기' : '효과음 켜짐 · 눌러서 끄기';
+  }
+
+  function toggleSound() {
+    sfx.muted = !sfx.muted;
+    try { localStorage.setItem(KEY.sound, sfx.muted ? '1' : '0'); } catch (e) {}
+    renderSoundBtn();
+    if (sfx.muted) {
+      toast('효과음·진동을 꺼습니다 🔇');
+    } else {
+      sfx.click();
+      toast('효과음·진동을 켰습니다 🔊');
+    }
+  }
+
+  /* 어떤 버튼을 눌렀는지에 따라 소리를 고른다 (직접 부르지 않고 한 곳에서 처리) */
+  function soundForClick(el) {
+    if (!el) return;
+    var id = el.id || '';
+    var big = (id === 'btn-start-nav' || id === 'btn-arrive' || id === 'bd-nav' ||
+               id === 'bd-nav2' || id === 'btn-dest-indoor' || el.hasAttribute('data-class'));
+    if (big) sfx.start();
+    else sfx.click();
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -1864,6 +2073,9 @@
     state.gps.pos = null;
     saveState();
     renderAll();
+    /* 효과음 설정도 처음 상태(켜짐)로 */
+    sfx.muted = false;
+    renderSoundBtn();
     /* 출발지 <select>도 내부 상태와 같게 GPS로 맞춘다 */
     $('select-start').value = state.startSel;
     if (state.map) {
@@ -2509,6 +2721,198 @@
     }
   }
 
+  /* ══════════════════════════════════════════════════════════════
+     6-B. 강아지 캐릭터 — 내 위치 표시 · GPS 드리프트 방지 · 건물 진입
+     ══════════════════════════════════════════════════════════════ */
+  var DOG_MIN_MOVE = 4;      /* 이보다 작은 GPS 흔들림은 같은 자리로 본다(m) */
+  var DOG_WALK_MS = 1600;    /* 걷는 자세를 유지하는 시간 */
+  var dog = {
+    mode: 'idle',            /* 'idle' | 'walk' */
+    anchor: null,            /* 마지막으로 인정한 위치 */
+    anchorAt: 0,
+    walkUntil: 0
+  };
+
+  function dogMode() { return dog.mode === 'walk' ? 'walk' : 'idle'; }
+
+  /* 지도에 세울 강아지의 자리 — GPS가 있으면 그 자리(잡은 자리 그대로), 없으면 출발지 */
+  function dogPos() {
+    if (state.gps.pos) return (dog.anchor || state.gps.pos).slice();
+    if (state.nav && state.nav.coords && state.nav.coords.length) return state.nav.coords[0].slice();
+    var code = fallbackStartCode();
+    if (BLD[code] && BLD[code].entrance) return BLD[code].entrance.slice();
+    return null;
+  }
+
+  /* 새 GPS 좌표가 오면 걷는지 서 있는지 판단한다.
+     제자리에서 5~15m씩 흔들리는 값을 걸음으로 오해하지 않도록
+     4m 이상 움직였고 걸음 정도의 속도일 때만 걷는다. */
+  function dogOnFix(pos, forceWalk) {
+    var t = Date.now();
+    if (!pos) return;
+    if (forceWalk) {
+      dog.anchor = pos.slice();
+      dog.anchorAt = t;
+      dog.walkUntil = t + DOG_WALK_MS;
+      dogSetMode('walk');
+      return;
+    }
+    if (!dog.anchor) {
+      dog.anchor = pos.slice();
+      dog.anchorAt = t;
+      return;
+    }
+    var d = distM(dog.anchor, pos);
+    var dt = (t - dog.anchorAt) / 1000;
+    if (d < DOG_MIN_MOVE) return;                 /* 작은 흔들림은 무시 */
+    var v = d / Math.max(dt, 0.5);                /* m/s */
+    if (dt <= 30 && v >= 0.35 && v <= 3.6) {
+      dog.anchor = pos.slice();
+      dog.anchorAt = t;
+      dog.walkUntil = t + DOG_WALK_MS;
+      dogSetMode('walk');
+    } else if (dt > 30) {
+      /* 오래 서 있다가 생긴 이동은 GPS 드리프트로 보고 걷지 않는다 */
+      dog.anchor = pos.slice();
+      dog.anchorAt = t;
+    }
+  }
+
+  function dogSetMode(m) {
+    if (dog.mode === m) return;
+    dog.mode = m;
+    dogRefresh();
+  }
+
+  function dogRefresh() {
+    if (state.mapMode !== 'svg' && hasLeaflet() && state.map) {
+      var p = dogPos();
+      if (p) drawLeafletDog(p);
+      else removeLeafletDog();
+    } else {
+      renderSvgMap();
+    }
+  }
+
+  function dogIconHtml(mode) {
+    return '<img class="dog-sprite dog-img-' + mode + '" src="assets/dog-' + mode + '.png" ' +
+      'alt="내 위치 강아지" draggable="false">';
+  }
+
+  function drawLeafletDog(pos) {
+    if (!state.map || !hasLeaflet()) return;
+    var mode = dogMode();
+    if (!state.map._dogMarker) {
+      state.map._dogMarker = L.marker([pos[0], pos[1]], {
+        icon: L.divIcon({
+          className: 'dog-marker',
+          html: dogIconHtml(mode),
+          iconSize: [34, 41],
+          iconAnchor: [17, 37]
+        }),
+        interactive: false,
+        keyboard: false,
+        zIndexOffset: 600
+      }).addTo(state.map);
+      return;
+    }
+    state.map._dogMarker.setLatLng([pos[0], pos[1]]);
+    var el = state.map._dogMarker.getElement();
+    var img = el ? el.querySelector('img') : null;
+    if (!img) return;
+    var want = 'assets/dog-' + mode + '.png';
+    if (img.getAttribute('src') !== want) img.setAttribute('src', want);
+    var cls = 'dog-sprite dog-img-' + mode;
+    if (img.className !== cls) img.className = cls;
+  }
+
+  function removeLeafletDog() {
+    if (state.map && state.map._dogMarker) {
+      try { state.map.removeLayer(state.map._dogMarker); } catch (e) {}
+      state.map._dogMarker = null;
+    }
+  }
+
+  /* 목적지 건물로 작아지며 쏙 들어가는 짧은 전환 */
+  var diveTimer = null;
+  function dogDive(latlng) {
+    var el = $('dog-dive');
+    if (!el) return;
+    var x = null, y = null;
+    var shell = document.querySelector('.map-shell');
+    var r = shell ? shell.getBoundingClientRect() : null;
+    if (r) {
+      if (latlng && state.mapMode !== 'svg' && state.map && hasLeaflet()) {
+        try {
+          var p = state.map.latLngToContainerPoint(L.latLng(latlng[0], latlng[1]));
+          x = r.left + p.x; y = r.top + p.y;
+        } catch (e) {}
+      }
+      if (x === null) {
+        var dot = document.getElementById('svg-dest-dot');
+        if (dot && dot.getBoundingClientRect) {
+          var b = dot.getBoundingClientRect();
+          if (b.width || b.height) { x = b.left + b.width / 2; y = b.top + b.height / 2; }
+        }
+      }
+      if (x === null) { x = r.left + r.width / 2; y = r.top + r.height / 2; }
+    } else {
+      x = window.innerWidth / 2; y = window.innerHeight / 2;
+    }
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.className = 'dog-dive';
+    void el.offsetWidth;            /* 애니메이션을 처음부터 다시 재생 */
+    el.className = 'dog-dive on';
+    if (diveTimer) clearTimeout(diveTimer);
+    diveTimer = setTimeout(function () { el.className = 'dog-dive'; }, 720);
+  }
+
+  /* 실내 2.5D 지도 구석의 응원 강아지 */
+  var ISO_LINES = [
+    '학교 잘 다녀와~ 🐾',
+    '오늘도 한 걸음씩! 👟',
+    '내갈길은 내가 간다 🧭',
+    '도착하면 쓰다듬어 줘 🐶',
+    '계단 조심, 침착하게! 🪜',
+    '이 층 맞아? 같이 봐줄게 👓'
+  ];
+  var isoLineIdx = 0;
+
+  function showIsoNpc() {
+    var n = $('iso-npc');
+    if (!n) return;
+    n.className = 'iso-npc';
+    isoLineIdx = 0;
+    var b = $('iso-bubble');
+    if (b) b.textContent = ISO_LINES[0];
+  }
+
+  function cycleIsoNpc() {
+    isoLineIdx = (isoLineIdx + 1) % ISO_LINES.length;
+    var b = $('iso-bubble');
+    if (b) b.textContent = ISO_LINES[isoLineIdx];
+    sfx.click();
+  }
+
+  function bindIsoNpc() {
+    var n = $('iso-npc');
+    if (!n) return;
+    /* 도면 드래그가 같이 먹지 않도록 이벤트를 막고 처리한다 */
+    ['mousedown', 'touchstart', 'pointerdown'].forEach(function (ev) {
+      n.addEventListener(ev, function (e) { e.stopPropagation(); }, { passive: true });
+    });
+    n.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (e.target && e.target.id === 'iso-npc-x') {
+        n.className = 'iso-npc hide';
+        sfx.click();
+        return;
+      }
+      cycleIsoNpc();
+    });
+  }
+
   function drawRoute() {
     if (state.mapMode !== 'svg' && state.map && hasLeaflet()) drawLeafletRoute();
     renderSvgMap();
@@ -2518,12 +2922,15 @@
     if (!state.map || !hasLeaflet()) return;
     if (state.map._routeLayer) { state.map.removeLayer(state.map._routeLayer); state.map._routeLayer = null; }
     if (state.map._userMarker) { state.map.removeLayer(state.map._userMarker); state.map._userMarker = null; }
-    if (!state.nav || !state.nav.coords || !state.nav.coords.length) return;
-    var coords = state.nav.coords.map(function (c) { return [c[0], c[1]]; });
-    state.map._routeLayer = L.polyline(coords, { color: '#e11d48', weight: 5, opacity: 0.9 }).addTo(state.map);
-    var p0 = coords[0];
-    state.map._userMarker = L.circleMarker(p0, { radius: 8, color: '#fff', weight: 3, fillColor: '#2563eb', fillOpacity: 1 }).addTo(state.map);
-    try { state.map.fitBounds(state.map._routeLayer.getBounds(), { padding: [30, 30] }); } catch (e) {}
+    if (state.nav && state.nav.coords && state.nav.coords.length > 1) {
+      var coords = state.nav.coords.map(function (c) { return [c[0], c[1]]; });
+      state.map._routeLayer = L.polyline(coords, { color: '#e11d48', weight: 5, opacity: 0.9 }).addTo(state.map);
+      try { state.map.fitBounds(state.map._routeLayer.getBounds(), { padding: [30, 30] }); } catch (e) {}
+    }
+    /* 내 위치는 파란 점 대신 강아지로 보여 준다 (GPS가 없으면 기본 출발지) */
+    var dp = dogPos();
+    if (dp) drawLeafletDog(dp);
+    else removeLeafletDog();
   }
 
   /* 오프라인 SVG 지도 */
@@ -2633,10 +3040,23 @@
 
       var dst = state.nav.coords[state.nav.coords.length - 1];
       var dp = P(dst[0], dst[1]);
-      s.push('<circle cx="' + dp[0] + '" cy="' + dp[1] + '" r="5.5" fill="#0f172a" stroke="#fff" stroke-width="2"/>');
-      var st = state.nav.coords[0];
-      var sp = P(st[0], st[1]);
-      s.push('<circle cx="' + sp[0] + '" cy="' + sp[1] + '" r="5" fill="#2563eb" stroke="#fff" stroke-width="2"/>');
+      s.push('<circle id="svg-dest-dot" cx="' + dp[0] + '" cy="' + dp[1] + '" r="5.5" fill="#0f172a" stroke="#fff" stroke-width="2"/>');
+    }
+
+    /* 내 위치 강아지 — 경로 시작(내 위치)에 서고, 걸을 때는 통통 튄다 */
+    var dgp = dogPos();
+    if (dgp) {
+      var dq = P(dgp[0], dgp[1]);
+      var dpose = dogMode();
+      var dperiod = dpose === 'walk' ? 520 : 2600;
+      var ddelay = Date.now() % dperiod;
+      s.push('<g class="dog-layer" pointer-events="none">');
+      s.push('<ellipse cx="' + dq[0] + '" cy="' + dq[1] + '" rx="11" ry="3.6" fill="#0f172a" opacity="0.2"/>');
+      s.push('<circle cx="' + dq[0] + '" cy="' + dq[1] + '" r="7" fill="none" stroke="#2563eb" stroke-width="1.3" opacity="0.5"/>');
+      s.push('<image class="dog-sprite dog-img-' + dpose + '" href="assets/dog-' + dpose + '.png" ' +
+        'x="' + (Number(dq[0]) - 14) + '" y="' + (Number(dq[1]) - 34) + '" width="28" height="34" ' +
+        'preserveAspectRatio="xMidYMax meet" style="animation-delay:-' + ddelay + 'ms"/>');
+      s.push('</g>');
     }
 
     s.push('</g>');
@@ -2765,6 +3185,9 @@
     state.gps.watchId = navigator.geolocation.watchPosition(function (pos) {
       state.gps.ready = true;
       state.gps.pos = [pos.coords.latitude, pos.coords.longitude];
+      /* 강아지는 4m 이상 걸음 속도로 움직였을 때만 걷는다 (GPS 드리프트 방지) */
+      dogOnFix(state.gps.pos);
+      dogRefresh();
       $('gps-dot').className = 'gps-dot live';
       var acc = pos.coords.accuracy ? Math.round(pos.coords.accuracy) : null;
       $('gps-text').textContent = 'GPS 추적 중' + (acc ? ' (±' + acc + 'm)' : '');
@@ -2807,6 +3230,8 @@
     var pts = state.nav.coords;
     state.simIdx = (state.simIdx + 1) % pts.length;
     state.gps.pos = pts[state.simIdx].slice();
+    /* 걷기 시뮬레이션에서는 한 걸음 옮겼으니 걷는 자세로 보여 준다 */
+    dogOnFix(state.gps.pos, true);
     $('gps-dot').className = 'gps-dot live';
     $('gps-text').textContent = '걷는 중 (' + (state.simIdx + 1) + '/' + pts.length + ')';
     var r = computeRoute('GPS', state.nav.destCode);
@@ -2825,6 +3250,8 @@
   function completeArrival() {
     if (!state.nav) { toast('진행 중인 길안내가 없습니다'); return; }
     var nav = state.nav;
+    /* 도착: 강아지가 목적지 건물로 작아지며 쏙 들어가는 짧은 전환 */
+    if (BLD[nav.destCode]) dogDive(BLD[nav.destCode].entrance);
     var realMin = Math.max(1, Math.round((Date.now() - (nav.startedAt || Date.now())) / 60000));
     var status;
     if (nav.changed) status = '경로 변경';
@@ -2956,6 +3383,7 @@
     if (hasIso) {
       /* E/V 문이 놓인 면이 처음부터 보이도록 그 건물의 기본 각도로 연다 */
       if (!state.compassOn) state.isoRot = isoHomeRot(code);
+      showIsoNpc();
       renderFloorButtons();
       renderIso();
     } else {
@@ -3967,10 +4395,12 @@
   /* 드래그 회전 */
   function setupIsoDrag() {
     var wrap = $('iso-wrap');
-    var dragging = false, lastX = 0, moved = 0;
+    var dragging = false, lastX = 0, moved = 0, tickLast = 0;
+    var TICK_STEP = 18;   /* 18도마다 아주 작은 틱 소리 */
     function down(e) {
       if (state.compassOn) return;
       dragging = true; moved = 0;
+      tickLast = state.isoRot;
       lastX = (e.touches ? e.touches[0].clientX : e.clientX);
     }
     function move(e) {
@@ -3980,6 +4410,10 @@
       lastX = x;
       moved += Math.abs(dx);
       state.isoRot += dx * 0.6;
+      if (Math.floor(state.isoRot / TICK_STEP) !== Math.floor(tickLast / TICK_STEP)) {
+        tickLast = state.isoRot;
+        sfx.tick();
+      }
       renderIso();
       if (e.cancelable) e.preventDefault();
     }
@@ -4399,6 +4833,23 @@
   }
 
   function bindEvents() {
+    /* 효과음·진동 토글 */
+    $('btn-sound').addEventListener('click', function () { toggleSound(); });
+
+    /* 버튼·탭을 누를 때 나는 소리 — 한 곳에서 처리한다 */
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      var el = t.closest('button, [role="button"], [data-class]');
+      if (!el || el.id === 'btn-sound') return;
+      if (el.closest && el.closest('#iso-npc')) return;   /* 응원 강아지는 직접 처리 */
+      soundForClick(el);
+    }, true);
+    document.addEventListener('change', function (e) {
+      var t = e.target;
+      if (t && t.tagName === 'SELECT') sfx.click();
+    }, true);
+
     /* 탭 */
     Array.prototype.forEach.call(document.querySelectorAll('.nav-tab'), function (t) {
       t.addEventListener('click', function () { switchTab(t.getAttribute('data-tab')); });
@@ -4475,11 +4926,16 @@
     });
     $('btn-dest-indoor').addEventListener('click', function () {
       if (!state.nav) { toast('먼저 길안내를 시작해 주세요'); return; }
-      openBuilding(state.nav.destCode, state.nav.room);
+      /* 건물로 들어가기 전에 강아지가 쏙 들어가는 전환을 먼저 보여 준다 */
+      var destCode = state.nav.destCode, destRoom = state.nav.room;
+      dogDive(BLD[destCode] ? BLD[destCode].entrance : null);
       setTimeout(function () {
-        var w = $('iso-wrap');
-        if (w && w.scrollIntoView) { try { w.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }
-      }, 150);
+        openBuilding(destCode, destRoom);
+        setTimeout(function () {
+          var w = $('iso-wrap');
+          if (w && w.scrollIntoView) { try { w.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }
+        }, 150);
+      }, 430);
     });
     $('btn-gps').addEventListener('click', function () {
       if (state.gps.watchId !== null) { stopGps(); toast('GPS를 껐습니다'); }
@@ -4696,11 +5152,17 @@
      ══════════════════════════════════════════════════════════════ */
   function init() {
     loadState();
+    loadSoundPref();
     setupPwa();
     buildOriginOptions();
     bindEvents();
+    bindIsoNpc();
     setupIsoDrag();
     setupOfflineMap();
+    /* 걷기 시작한 뒤 1.6초가 지나면 서 있는 자세로 돌아간다 */
+    setInterval(function () {
+      if (dog.mode === 'walk' && Date.now() > dog.walkUntil) dogSetMode('idle');
+    }, 350);
     state.startSel = 'GPS';
     $('select-start').value = state.startSel;
     renderAll();
