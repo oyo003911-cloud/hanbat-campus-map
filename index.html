@@ -1358,7 +1358,7 @@
       <div class="dd-dog"><img src="assets/dog-idle.png" alt=""></div>
     </div>
     <div class="dd-label" id="dd-label">들어가는 중…</div>
-    <div class="dd-sub">실내 지도를 여는 중이에요 🐾</div>
+    <div class="dd-sub" id="dd-sub">실내 지도를 여는 중이에요 🐾</div>
   </div>
 </div>
 
@@ -3067,6 +3067,8 @@
     var img = el.querySelector('.dd-dog img');
     var lab = $('dd-label');
     if (lab) lab.textContent = buildingLabelOf(code) + ' 들어가는 중…';
+    var sub = $('dd-sub');
+    if (sub) sub.textContent = ISO_CODES[code] ? '실내 지도를 여는 중이에요 🐾' : '건물 정보를 여는 중이에요 🐾';
     if (img) img.setAttribute('src', 'assets/dog-idle.png');
     el.className = 'dog-dive';
     void el.offsetWidth;            /* 애니메이션을 처음부터 다시 재생 */
