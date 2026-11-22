@@ -1,0 +1,26 @@
+{
+  "name": "난 내갈길을 간다",
+  "short_name": "난 내갈길을 간다",
+  "description": "국립한밭대학교 유성덕명캠퍼스 보행로 기반 시간표 연동 길찾기. 데이터가 없어도 오프라인 지도로 작동합니다.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#003876",
+  "theme_color": "#003876",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -7,9 +7,10 @@
   <meta name="apple-mobile-web-app-title" content="난 내갈길을 간다">
   <meta name="description" content="국립한밭대학교 유성덕명캠퍼스 보행로 기반 시간표 연동 길찾기. 데이터가 없어도 오프라인 지도로 작동합니다.">
   <meta name="theme-color" content="#003876">
-  <link id="manifest-link" rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22%EB%82%9C%20%EB%82%B4%EA%B0%88%EA%B8%B8%EC%9D%84%20%EA%B0%84%EB%8B%A4%22%2C%22short_name%22%3A%22%EB%82%9C%20%EB%82%B4%EA%B0%88%EA%B8%B8%EC%9D%84%20%EA%B0%84%EB%8B%A4%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23003876%22%2C%22theme_color%22%3A%22%23003876%22%7D">
-  <link id="page-icon" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23003876'/%3E%3Ctext x='32' y='45' font-size='34' text-anchor='middle'%3E%F0%9F%A7%AD%3C/text%3E%3C/svg%3E">
-  <link id="apple-icon" rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='36' fill='%23003876'/%3E%3Ctext x='90' y='122' font-size='92' text-anchor='middle'%3E%F0%9F%A7%AD%3C/text%3E%3C/svg%3E">
+  <link id="manifest-link" rel="manifest" href="manifest.json">
+  <link id="page-icon" rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+  <link id="apple-icon" rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 
   <!-- Leaflet 오픈 지도 라이브러리 (온라인일 때만 사용, 없으면 내장 SVG 지도로 자동 전환) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -4874,50 +4875,15 @@
      ══════════════════════════════════════════════════════════════ */
   var deferredPrompt = null;
 
-  function makeIcon(size) {
-    var c = document.createElement('canvas');
-    c.width = size; c.height = size;
-    var g = c.getContext('2d');
-    var grd = g.createLinearGradient(0, 0, size, size);
-    grd.addColorStop(0, '#002855');
-    grd.addColorStop(1, '#0a5bb0');
-    g.fillStyle = grd;
-    g.fillRect(0, 0, size, size);
-    g.fillStyle = '#ffd166';
-    g.font = 'bold ' + Math.round(size * 0.46) + 'px sans-serif';
-    g.textAlign = 'center';
-    g.textBaseline = 'middle';
-    g.fillText('🧭', size / 2, size * 0.42);
-    g.fillStyle = '#ffffff';
-    g.font = 'bold ' + Math.round(size * 0.085) + 'px sans-serif';
-    g.fillText('난 내갈길을 간다', size / 2, size * 0.8);
-    return c.toDataURL('image/png');
-  }
-
   function setupPwa() {
-    try {
-      var icon512 = makeIcon(512);
-      var icon192 = makeIcon(192);
-      $('apple-icon').href = icon192;
-      var manifest = {
-        name: '난 내갈길을 간다',
-        short_name: '난 내갈길을 간다',
-        description: '국립한밭대학교 보행로 기반 시간표 연동 길찾기',
-        start_url: '.',
-        scope: '.',
-        display: 'standalone',
-        orientation: 'portrait',
-        background_color: '#003876',
-        theme_color: '#003876',
-        lang: 'ko',
-        icons: [
-          { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-        ]
-      };
-      var blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-      $('manifest-link').href = URL.createObjectURL(blob);
-    } catch (e) { /* 아이콘 생성이 안 되면 기본 매니페스트 사용 */ }
+    /* 홈 화면 바로가기 아이콘과 매니페스트는 저장소의 정적 파일을 그대로 쓴다.
+       예전에는 🧭 이모지를 캔버스로 그려 data: URL로 넣었는데, 그 칙칙한 나침반 그림이
+       홈 화면 아이콘으로 나왔다. 지금은 assets/icon-192.png, assets/icon-512.png,
+       assets/apple-touch-icon.png 와 manifest.json 을 쓴다. */
+    var man = $('manifest-link');
+    if (man) man.href = 'manifest.json';
+    var apple = $('apple-icon');
+    if (apple) apple.href = 'assets/apple-touch-icon.png';
   }
 
   /* 브라우저별 홈 화면 추가 안내 (번호 카드 + 경로 칩) */
