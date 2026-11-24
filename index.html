@@ -3852,7 +3852,7 @@
     /* 오프라인 지도에서만 확대·이동 버튼과 안내 문구를 보여 준다 */
     var ctrl = $('offline-ctrl'), tip = $('offline-tip');
     if (ctrl) ctrl.className = 'map-ctrl' + (useSvg ? ' on' : '');
-    if (tip) tip.className = 'offline-tip' + (useSvg ? ' on' : '');
+    if (tip) tip.className = 'offline-tip' + (useSvg && !state.nav ? ' on' : '');
 
     $('btn-mode-map').className = 'map-mode-btn' + (state.mapMode === 'osm' ? ' active' : '');
     $('btn-mode-sat').className = 'map-mode-btn' + (state.mapMode === 'sat' ? ' active' : '');
@@ -4134,6 +4134,12 @@
 
   function drawRoute() {
     if (state.mapMode !== 'svg' && state.map && hasLeaflet()) drawLeafletRoute();
+    /* 안내 중에는 지도 위 안내 문구를 걷어 내 목적지·출발 이름표를 가리지 않게 */
+    var tip = $('offline-tip');
+    if (tip) {
+      var useSvg = state.mapMode === 'svg' || !hasLeaflet() || !state.map;
+      tip.className = 'offline-tip' + (useSvg && !state.nav ? ' on' : '');
+    }
     renderSvgMap();
   }
 
