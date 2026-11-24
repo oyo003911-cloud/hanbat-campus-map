@@ -956,6 +956,24 @@
     .home-dog-guide.hide {
       display: none !important;
     }
+    /* 튜토리얼: 강아지 옆에 말풍선을 나란히 (세로로 쌓으면 폰 화면에서 위아래 카드를 덮는다) */
+    .home-dog-guide.row-mode {
+      flex-direction: row;
+      align-items: flex-end;
+    }
+    .home-dog-guide.row-mode .home-dog-bubble {
+      margin-bottom: 0;
+      margin-right: 4px;
+    }
+    .home-dog-guide.row-mode.bubble-after .home-dog-bubble {
+      order: 2;
+      margin-right: 0;
+      margin-left: 4px;
+    }
+    .home-dog-bubble.tail-right::after {
+      left: auto;
+      right: 14px;
+    }
     .home-dog-bubble {
       position: relative;
       background: #ffffff;
@@ -5634,23 +5652,110 @@
     var homeTab = $('tab-home');
     if (!guideEl || !targetEl || !homeTab) return;
 
+    var showingBubble = !!msg;
     if (msg) bubbleEl.textContent = msg;
+    guideEl.classList.remove('row-mode');
+    guideEl.classList.remove('bubble-after');
+    bubbleEl.classList.remove('tail-right');
+
+    // 말풍선이 홈 화면보다 넓으면 안쪽 폭에서 줄바꿈되게 해서 한 글자도 잘리지 않게 한다
+    bubbleEl.style.maxWidth = '';
+    bubbleEl.style.whiteSpace = '';
+    var edge = 6;   // 홈 화면 가장자리에서 띄울 여백
+    var gap = 4;    // 강아지·말풍선·대상 버튼 사이 간격
+    var availW = homeTab.clientWidth - edge * 2;
+    if (bubbleEl.offsetWidth > availW) {
+      bubbleEl.style.whiteSpace = 'normal';
+      bubbleEl.style.maxWidth = availW + 'px';
+    }
 
     var tabRect = homeTab.getBoundingClientRect();
     var tRect = targetEl.getBoundingClientRect();
+    var avatarEl = $('home-dog-avatar');
+    var top, left;
 
-    // homeTab 기준 상대 위치 계산
-    var top = (tRect.top - tabRect.top) - 34; // 모서리 위쪽에 살짝 걸침
-    var left = (tRect.right - tabRect.left) - 24; // 우측 모서리에서 빼꼼
+    if (showingBubble) {
+      // 튜토리얼: 강아지를 대상 버튼 바로 위 모서리에 세우고 말풍선은 강아지 옆에 나란히 둔다
+      guideEl.classList.add('row-mode');
+      var avW = avatarEl ? avatarEl.offsetWidth : 38;
+      var avH = avatarEl ? avatarEl.offsetHeight : 46;
+      var bubW = bubbleEl.offsetWidth;
+      var bubH = bubbleEl.offsetHeight;
+      var rowH = Math.max(avH, bubH);
+      var boxH = rowH;
 
-    // 모바일 360px 화면에서 오른쪽으로 삐져나가지 않도록 보정
-    var maxLeft = tabRect.width - 55;
-    if (left > maxLeft) left = maxLeft;
-    if (left < 4) left = 4;
-    if (top < 0) top = 2;
+      // 강아지 오른쪽 끝을 대상 버튼 오른쪽 끝에 맞춘다 (화면 밖으로 넘치지 않게)
+      var dogRight = (tRect.right - tabRect.left);
+      if (dogRight > tabRect.width - edge) dogRight = tabRect.width - edge;
+      var dogLeft = dogRight - avW;
+
+      // 말풍선은 강아지 왼쪽에 놓고, 왼쪽에 자리가 없으면 오른쪽에 놓는다
+      if (dogLeft - gap - bubW >= edge) {
+        bubbleEl.classList.add('tail-right');
+        left = dogLeft - gap - bubW;
+      } else if (dogLeft + avW + gap + bubW <= tabRect.width - edge) {
+        guideEl.classList.add('bubble-after');
+        left = dogLeft;
+      } else {
+        // 좌우 어디에도 나란히 놓을 자리가 없으면 말풍선을 강아지 위에 쌓는다 (좁은 화면)
+        guideEl.classList.remove('row-mode');
+        var colW = guideEl.offsetWidth;
+        var colH = guideEl.offsetHeight;
+        boxH = colH;
+        left = (tRect.right - tabRect.left) - colW;
+        if (left > tabRect.width - colW - edge) left = tabRect.width - colW - edge;
+        if (left < edge) left = edge;
+      }
+
+      // 강아지·말풍선이 대상 버튼을 덮지 않게 통째로 버튼 위에 놓고, 위가 좁으면 아래로 내린다
+      top = (tRect.top - tabRect.top) - boxH - gap;
+      if (top < 4) {
+        top = (tRect.bottom - tabRect.top) + gap;
+        if (top + boxH > tabRect.height - 4) top = Math.max(4, tabRect.height - boxH - 4);
+      }
+    } else {
+      // 대기 모드: 대상 버튼 오른쪽 위 모서리에 살짝 걸쳐 빼꼼
+      top = (tRect.top - tabRect.top) - 34;
+      left = (tRect.right - tabRect.left) - 24;
+      if (left > tabRect.width - 55) left = tabRect.width - 55;
+      if (left < 4) left = 4;
+      if (top < 2) top = 2;
+    }
 
     guideEl.style.top = Math.round(top) + 'px';
     guideEl.style.left = Math.round(left) + 'px';
+  }
+
+  // 대기 중 응원 말풍선: 강아지 자리는 그대로 두고 말풍선만 옆에 띄운다 (화면 오른쪽에서 잘리지 않게)
+  function showIdleCheerBubble(msg) {
+    var guideEl = $('home-dog-guide');
+    var bubbleEl = $('home-dog-bubble');
+    var homeTab = $('tab-home');
+    if (!guideEl || !bubbleEl || !homeTab) return;
+    bubbleEl.textContent = msg;
+    bubbleEl.style.display = 'block';
+    var tabRect = homeTab.getBoundingClientRect();
+    var dogRect = guideEl.getBoundingClientRect();
+    var edge = 6, gap = 4;
+    var dogLeft = dogRect.left - tabRect.left;
+    var dogW = dogRect.width;
+    var bubW = bubbleEl.offsetWidth;
+    var left = dogLeft - gap - bubW;
+
+    guideEl.classList.add('row-mode');
+    if (left >= edge) {
+      bubbleEl.classList.add('tail-right');
+      guideEl.classList.remove('bubble-after');
+    } else {
+      bubbleEl.classList.remove('tail-right');
+      guideEl.classList.add('bubble-after');
+      left = dogLeft + dogW + gap;
+      if (left + bubW > tabRect.width - edge) {
+        left = Math.max(edge, tabRect.width - edge - (dogW + gap + bubW));
+      }
+    }
+    guideEl.style.left = Math.round(left) + 'px';
+    guideEl.style.top = Math.round(dogRect.top - tabRect.top) + 'px';
   }
 
   function bindHomeDogAvatar() {
@@ -5666,10 +5771,12 @@
       // 대기 모드 중 터치 시 깜짝 응원 말풍선 잠깐 띄우기
       if (guideEl && guideEl.classList.contains('idle-mode') && bubbleEl) {
         var cheers = ['조심해서 다녀와! 🐾', '오늘도 힘내! 🌟', '수업 늦지 않게 가자! 👟', '멍멍! 길 잘 찾아줄게! 🐶'];
-        bubbleEl.textContent = cheers[Math.floor(Math.random() * cheers.length)];
-        bubbleEl.style.display = 'block';
+        showIdleCheerBubble(cheers[Math.floor(Math.random() * cheers.length)]);
         setTimeout(function () {
-          if (guideEl && guideEl.classList.contains('idle-mode')) bubbleEl.style.display = 'none';
+          if (guideEl && guideEl.classList.contains('idle-mode')) {
+            bubbleEl.style.display = 'none';
+            placeHomeDogIdle();   // 강아지를 원래 모서리 자리로 돌려놓는다
+          }
         }, 2200);
       }
     });
