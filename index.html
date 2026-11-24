@@ -3779,6 +3779,10 @@
   /* E/V 문이 열리는 면 — 경상학관(S3)은 계단 쪽(서쪽) 벽면, 나머지는 복도 쪽(남쪽) 벽면 */
   var ISO_EV_FACE = { S3: 'W', S4: 'S', N11: 'S' };
 
+  /* 도면이 없는 층에서 계단·E/V·화장실이 차지하는 폭 [왼쪽 끝, 오른쪽 끝] (E/V 왼쪽 모서리 기준 m).
+     인문사회관(S4)은 계단·E/V·화장실 폭이 넓어 호실이 계단에 겹치지 않게 따로 잡는다. */
+  var ISO_AUTO_CORE = { S4: [-5.0, 11.9] };
+
   /* 내부지도를 처음 열 때·정면 보기로 돌아갈 때의 각도 — E/V 문이 놓인 면이 보이게 (S3는 서쪽 문) */
   var ISO_HOME_ROT = { S3: -90, S4: 0, N11: 0 };
   function isoHomeRot(code) { return ISO_HOME_ROT[code] === undefined ? 0 : ISO_HOME_ROT[code]; }
@@ -3971,16 +3975,26 @@
       if (foot.wing) plan.terr = [[foot.wing[0], foot.wing[1], foot.wing[2], foot.wing[3]]];
       if (foot.circle) plan.circle = { cx: foot.circle.cx, cy: foot.circle.cy, r: foot.circle.r, label: foot.circle.label };
 
-      /* 복도 북쪽은 E/V·화장실 자리를 비워 두고 앞뒤로 호실을 나눈다 */
+      /* 복도 북쪽은 계단·E/V·화장실 자리를 비워 두고 앞뒤로 호실을 나눈다 */
       var coreGap = [foot.ev[0] - 1.2, foot.ev[0] + 11.6];
-      var northSlots = [[0.4, coreGap[0]], [coreGap[1], foot.bar[2] - 0.4]];
+      var autoCore = ISO_AUTO_CORE[code];
+      if (autoCore) coreGap = [foot.ev[0] + autoCore[0], foot.ev[0] + autoCore[1]];
+      var northSlots = [[0.4, coreGap[0]], [coreGap[1], foot.bar[2] - 0.4]].filter(function (sl) {
+        return sl[1] - sl[0] > 2;          /* 폭이 남지 않는 칸은 버린다 */
+      });
+      if (!northSlots.length) northSlots = [[0.4, foot.bar[2] - 0.4]];
       var northCount = Math.max(0, Math.round(rooms.length * 0.45));
       var north = rooms.slice(0, northCount), south = rooms.slice(northCount);
-      var areaNorth = (northSlots[0][1] - northSlots[0][0]) + (northSlots[1][1] - northSlots[1][0]);
-      var nA = Math.min(north.length, Math.max(1, Math.round(north.length * (northSlots[0][1] - northSlots[0][0]) / areaNorth)));
-      placeRow(plan, north.slice(0, nA), northSlots[0], 0.4, 6.8);
-      plan.rooms.push({ no: '', name: 'E/V 홀', t: 'hall', x: coreGap[0], y: 0.4, w: (plan.ev[0] - coreGap[0]), h: 6.8 });
-      placeRow(plan, north.slice(nA), northSlots[1], 0.4, 6.8);
+      var areaNorth = 0;
+      northSlots.forEach(function (sl) { areaNorth += sl[1] - sl[0]; });
+      var placed = 0;
+      northSlots.forEach(function (sl, i) {
+        var n = (i === northSlots.length - 1) ? (north.length - placed)
+              : Math.round(north.length * (sl[1] - sl[0]) / areaNorth);
+        n = Math.max(0, Math.min(n, north.length - placed));
+        placeRow(plan, north.slice(placed, placed + n), sl, 0.4, 6.8);
+        placed += n;
+      });
       placeRow(plan, south, [0.4, foot.bar[2] - 0.4], 9.9, 17.0);
     }
 
