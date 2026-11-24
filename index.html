@@ -1459,10 +1459,21 @@
       box-shadow: 0 8px 24px rgba(17, 24, 39, 0.18);
       border: 1px solid var(--line-2);
     }
+    .coach-scrim {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      background: rgba(17, 24, 39, 0.32);
+    }
+    .coach-scrim.on { display: block; }
     .coach-target {
-      outline: 2.5px solid rgba(34, 114, 235, 0.75);
+      position: relative !important;
+      z-index: 52 !important;
+      outline: 2.5px solid rgba(34, 114, 235, 0.85);
       outline-offset: 2px;
       border-radius: 14px;
+      background: #FFFFFF;
     }
     .home-dog-guide.row-mode { flex-direction: row; align-items: flex-end; }
     .home-dog-guide.row-mode .home-dog-bubble { margin-bottom: 6px; order: 0; }
@@ -2026,6 +2037,7 @@
   </div>
 </div>
 
+<div class="coach-scrim" id="coach-scrim"></div>
 <div id="toast"></div>
 <!-- 목적지 건물 문으로 들어가는 강아지 전환 (화면 정중앙 고정) -->
 <div class="dog-dive" id="dog-dive" aria-hidden="true">
@@ -6535,7 +6547,8 @@
       homeGuideTimer = setTimeout(function () {
         homeGuideStep = 3;
         var firstGo = document.querySelector('#schedule-list .ci-go');
-        var target = firstGo || $('schedule-list');
+        var row = firstGo && firstGo.closest ? firstGo.closest('.class-item') : null;
+        var target = row || firstGo || $('schedule-list');
         positionAtTarget(target, '여길 누르면 지도로 바로 안내해줘! 🐾');
 
         // 4단계 (4.2초 뒤): 튜토리얼 완료 및 대기 모드로 전환
@@ -6581,6 +6594,8 @@
     coachTargetEl = null;
     var g = $('home-dog-guide');
     if (g) g.classList.remove('coach');
+    var sc = $('coach-scrim');
+    if (sc) sc.className = 'coach-scrim';
   }
 
   /* 튜토리얼: 대상 버튼에 파란 테두리를 두르고, 강아지와 말풍선은 화면 아래(탭바 위)에 띄운다.
@@ -6607,6 +6622,8 @@
       guideEl.style.left = '';
       coachTargetEl = targetEl;
       targetEl.classList.add('coach-target');
+      var sc2 = $('coach-scrim');
+      if (sc2) sc2.className = 'coach-scrim on';
       return;
     }
 
