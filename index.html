@@ -289,13 +289,25 @@
     .class-item .ci-room { font-size: 11px; color: #0369a1; font-weight: 700; margin-top: 1px; }
     .ci-go {
       flex: none;
-      background: #2563eb;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
       color: #fff;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: 800;
-      padding: 7px 9px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 900;
+      padding: 10px 14px;
       white-space: nowrap;
+      box-shadow: 0 3px 8px rgba(37, 99, 235, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      letter-spacing: -0.2px;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .class-item:active .ci-go {
+      transform: scale(0.96);
+      box-shadow: 0 1px 4px rgba(37, 99, 235, 0.4);
     }
     .empty-box {
       text-align: center;
@@ -928,6 +940,73 @@
     }
     .iso-npc-dog { width: 32px; height: 39px; margin-left: 4px; cursor: pointer; animation: dogIdleBob 2.6s ease-in-out infinite; }
 
+    /* ── 홈 화면 안내 강아지 (모서리 빼꼼 & 대기) ── */
+    .home-dog-guide {
+      position: absolute;
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      pointer-events: auto;
+      transition: top 0.45s cubic-bezier(0.34, 1.3, 0.64, 1),
+                  left 0.45s cubic-bezier(0.34, 1.3, 0.64, 1),
+                  opacity 0.3s ease;
+      filter: drop-shadow(0 3px 6px rgba(15, 23, 42, 0.22));
+    }
+    .home-dog-guide.hide {
+      display: none !important;
+    }
+    .home-dog-bubble {
+      position: relative;
+      background: #ffffff;
+      border: 1.5px solid #60a5fa;
+      border-radius: 10px;
+      padding: 5px 9px;
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #1e3a8a;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.18);
+      animation: homeBubblePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      margin-bottom: 3px;
+    }
+    .home-dog-bubble::after {
+      content: '';
+      position: absolute;
+      left: 14px;
+      bottom: -5px;
+      width: 7px;
+      height: 7px;
+      background: #ffffff;
+      border-right: 1.5px solid #60a5fa;
+      border-bottom: 1.5px solid #60a5fa;
+      transform: rotate(45deg);
+    }
+    @keyframes homeBubblePop {
+      0% { opacity: 0; transform: scale(0.7) translateY(4px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .home-dog-avatar {
+      width: 38px;
+      height: 46px;
+      cursor: pointer;
+      transform-origin: center bottom;
+      animation: dogIdleBob 2.2s ease-in-out infinite;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .home-dog-avatar:active {
+      transform: scale(0.92);
+    }
+    @keyframes dogTailWag {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-5deg) translateY(-1px); }
+      75% { transform: rotate(5deg) translateY(-1px); }
+    }
+    .home-dog-guide.idle-mode .home-dog-avatar {
+      animation: dogTailWag 1.4s ease-in-out infinite;
+    }
+
     .legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; font-size: 9px; color: var(--muted); }
     .legend i { display: inline-block; width: 10px; height: 6px; border-radius: 2px; margin-right: 3px; vertical-align: middle; }
     .foot-note { font-size: 9px; color: #9aa4b2; line-height: 1.5; text-align: center; padding: 4px 2px 0; }
@@ -979,7 +1058,13 @@
   <main class="content">
 
     <!-- ═══════════ 1. 홈 ═══════════ -->
-    <section id="tab-home" class="tab-content active">
+    <section id="tab-home" class="tab-content active" style="position:relative;">
+
+      <!-- 홈 안내 강아지 (모서리 빼꼼 & 대기) -->
+      <div class="home-dog-guide hide" id="home-dog-guide">
+        <div class="home-dog-bubble" id="home-dog-bubble">안녕! 나를 따라와봐 🐾</div>
+        <img class="home-dog-avatar" id="home-dog-avatar" src="assets/dog-idle.png" alt="안내 강아지" title="안내 강아지">
+      </div>
 
       <!-- 기본 출발지 -->
       <button class="origin-btn" id="btn-default-origin" title="기본 출발지를 바꿉니다">
@@ -1017,34 +1102,6 @@
         </div>
         <p class="hint" style="margin-bottom:8px;">수업을 누르면 그 건물 입구까지 인도 경로로 바로 안내합니다.</p>
         <div class="class-list" id="schedule-list"></div>
-      </div>
-
-      <!-- 직접 입력 -->
-      <div class="card">
-        <div class="card-title"><span>📍 내가 직접 찾기</span></div>
-        <div class="field">
-          <label for="select-start">출발지</label>
-          <select id="select-start">
-            <option value="GPS">📍 내 현재 위치 (GPS)</option>
-            <option value="D7">D7 미래동 (학생생활관)</option>
-            <option value="S2">S2 학생회관</option>
-            <option value="S3">S3 경상학관</option>
-            <option value="S4">S4 인문사회관</option>
-            <option value="N11">N11 창의혁신관</option>
-            <option value="S1">S1 도서관</option>
-            <option value="N1">N1 대학본부</option>
-            <option value="S0">S0 국제교류관</option>
-            <option value="GATE">정문 (버스정류장)</option>
-            <option value="NGATE">북문</option>
-            <option value="SGATE">남문</option>
-          </select>
-          <p class="hint" id="start-hint" style="margin-top:5px;">GPS가 꺼져 있으면 기본 출발지 <b>D7 미래동</b>에서 출발한 것으로 계산합니다.</p>
-        </div>
-        <div class="field">
-          <label for="select-dest">도착 건물</label>
-          <select id="select-dest"></select>
-        </div>
-        <button class="btn-main" id="btn-start-nav">🚀 인도 길안내 시작</button>
       </div>
 
       <p class="foot-note" id="home-foot">보행로·건물 좌표는 OpenStreetMap 실측 데이터(ODbL)와 한밭대 캠퍼스맵을 기준으로 만들었습니다.</p>
@@ -1139,9 +1196,16 @@
 
     <!-- ═══════════ 3. 건물 ═══════════ -->
     <section id="tab-building" class="tab-content">
+
+      <!-- 자주 가는 건물 & 최근 검색/확인한 건물 -->
+      <div class="card" id="bldg-fav-card">
+        <div class="card-title"><span>⭐ 자주 가는 건물</span><span class="sub" id="fav-sub">3회 이상</span></div>
+        <div class="bldg-list" id="fav-list"></div>
+      </div>
+
       <div class="card">
         <div class="card-title">
-          <span>🏛️ 건물 정보</span>
+          <span>🏛️ 전체 건물 정보</span>
           <span class="sub" id="bldg-count">-</span>
         </div>
         <input type="search" id="bldg-search" placeholder="건물 번호·이름 검색 (예: S4, 인문사회관, 403)">
@@ -1182,11 +1246,6 @@
           <div><div class="num" id="stat-speed-samples">0회</div><div class="lbl">반영된 이동</div></div>
         </div>
         <p class="hint" id="speed-hint" style="margin-top:6px;">기본 70m/분으로 계산 중입니다. [도착 완료]를 누르면 실제 걸은 거리와 시간으로 내 속도에 맞춰집니다.</p>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span>⭐ 자주 가는 건물</span><span class="sub">3회 이상</span></div>
-        <div class="bldg-list" id="fav-list"></div>
       </div>
 
       <div class="card">
@@ -1748,6 +1807,8 @@
     start: 'hanbat_map_start_sel',
     speed: 'hanbat_map_speed',  // 기기별 내 평균 걸음속도(m/분)
     defaultOrigin: 'hanbat_map_default_origin',   // 기기별 기본 출발지(정류장·생활관)
+    recentBldg: 'hanbat_map_recent_bldg',         // 사용자가 검색·확인했던 최근 건물 코드 목록
+    guideDone: 'hanbat_map_guide_done',           // 홈 화면 첫 안내 튜토리얼 완료 여부
     sound: 'hanbat_map_sound_muted'              // 효과음 끔/켜짐
   };
 
@@ -1776,6 +1837,7 @@
     timetable: null,
     records: [],
     visits: {},
+    recentBldg: [],       // 최근 검색·선택한 건물
     nav: null,
     mapMode: 'osm',
     startSel: 'GPS',
@@ -2137,6 +2199,7 @@
       var st = localStorage.getItem(KEY.start);
       var spd = localStorage.getItem(KEY.speed);
       var dorg = localStorage.getItem(KEY.defaultOrigin);
+      var rcBldg = localStorage.getItem(KEY.recentBldg);
 
       state.timetable = JSON.parse(JSON.stringify(DEFAULT_TIMETABLE));
       if (tt && schema === SCHEMA) {
@@ -2155,6 +2218,12 @@
         }
       }
       if (vis) { var v = JSON.parse(vis); if (v && typeof v === 'object') state.visits = v; }
+      if (rcBldg) {
+        try {
+          var rb = JSON.parse(rcBldg);
+          if (rb instanceof Array) state.recentBldg = rb.filter(function (c) { return BLD[c]; });
+        } catch (eRb) {}
+      }
       if (nav) {
         var nv = JSON.parse(nav);
         /* 지도용 좌표가 있는 새 형식만 이어서 쓴다 */
@@ -2214,6 +2283,7 @@
       localStorage.setItem(KEY.timetable, JSON.stringify(state.timetable));
       localStorage.setItem(KEY.records, JSON.stringify(state.records));
       localStorage.setItem(KEY.visits, JSON.stringify(state.visits));
+      localStorage.setItem(KEY.recentBldg, JSON.stringify(state.recentBldg || []));
       localStorage.setItem(KEY.mode, state.mapMode);
       localStorage.setItem(KEY.start, state.startSel);
       localStorage.setItem(KEY.defaultOrigin, state.defaultOrigin || 'D7');
@@ -2231,6 +2301,7 @@
     state.day = dayOf(state.today);
     state.startSel = 'GPS';
     state.defaultOrigin = 'D7';
+    state.recentBldg = [];
     state.mapMode = 'osm';
     state.offView = { z: 1, x: 0, y: 0 };
     state.isoRot = 0;
@@ -2253,8 +2324,6 @@
     /* 효과음 설정도 처음 상태(켜짐)로 */
     sfx.muted = false;
     renderSoundBtn();
-    /* 출발지 <select>도 내부 상태와 같게 GPS로 맞춘다 */
-    $('select-start').value = state.startSel;
     if (state.map) {
       try { state.map.remove(); } catch (e) {}
       state.map = null;
@@ -2496,6 +2565,9 @@
     renderRecords();
     renderSpeedCard();
     renderRoutePanel();
+    if (typeof updateHomeDogGuide === 'function') {
+      setTimeout(updateHomeDogGuide, 80);
+    }
   }
 
   function renderDate() {
@@ -2539,29 +2611,31 @@
 
   function fillDestSelect() {
     var sel = $('select-dest');
-    var cur = sel.value;
-    var groups = [
-      { label: '[N동] 북측 교양·공학', cat: 'N' },
-      { label: '[S동] 남측 전공·복지', cat: 'S' },
-      { label: '[D동] 학생생활관', cat: 'D' }
-    ];
-    var html = '';
-    groups.forEach(function (g) {
-      html += '<optgroup label="' + g.label + '">';
+    if (sel) {
+      var cur = sel.value;
+      var groups = [
+        { label: '[N동] 북측 교양·공학', cat: 'N' },
+        { label: '[S동] 남측 전공·복지', cat: 'S' },
+        { label: '[D동] 학생생활관', cat: 'D' }
+      ];
+      var html = '';
+      groups.forEach(function (g) {
+        html += '<optgroup label="' + g.label + '">';
+        BUILDINGS.forEach(function (b) {
+          if (b.cat !== g.cat) return;
+          html += '<option value="' + b.code + '">' + esc(b.code + ' ' + b.name) + '</option>';
+        });
+        html += '</optgroup>';
+      });
+      html += '<optgroup label="[출입구]">';
       BUILDINGS.forEach(function (b) {
-        if (b.cat !== g.cat) return;
-        html += '<option value="' + b.code + '">' + esc(b.code + ' ' + b.name) + '</option>';
+        if (b.cat !== 'G') return;
+        html += '<option value="' + b.code + '">' + esc(b.name) + '</option>';
       });
       html += '</optgroup>';
-    });
-    html += '<optgroup label="[출입구]">';
-    BUILDINGS.forEach(function (b) {
-      if (b.cat !== 'G') return;
-      html += '<option value="' + b.code + '">' + esc(b.name) + '</option>';
-    });
-    html += '</optgroup>';
-    sel.innerHTML = html;
-    if (cur && BLD[cur]) sel.value = cur;
+      sel.innerHTML = html;
+      if (cur && BLD[cur]) sel.value = cur;
+    }
 
     var bsel = $('tt-bldg');
     if (bsel) {
@@ -2576,6 +2650,50 @@
     }
   }
 
+  function renderFavAndRecent() {
+    var fav = $('fav-list');
+    if (!fav) return;
+    var favCodes = Object.keys(state.visits).filter(function (c) { return state.visits[c] >= 3 && BLD[c]; })
+      .sort(function (a, b) { return state.visits[b] - state.visits[a]; });
+    var recentCodes = (state.recentBldg || []).filter(function (c) {
+      return BLD[c] && favCodes.indexOf(c) < 0;
+    });
+
+    var sub = $('fav-sub');
+    if (sub) {
+      if (favCodes.length && recentCodes.length) sub.textContent = '3회 이상 및 최근 확인';
+      else if (favCodes.length) sub.textContent = '3회 이상';
+      else if (recentCodes.length) sub.textContent = '최근 확인한 건물';
+      else sub.textContent = '3회 이상';
+    }
+
+    if (!favCodes.length && !recentCodes.length) {
+      fav.innerHTML = '<div class="empty-box">아직 방문 또는 확인한 건물이 없습니다.<br>건물을 확인하거나 3번 도착하면 여기에 자동으로 쌓입니다.</div>';
+      return;
+    }
+
+    var h = '';
+    /* 1) 자주 가는 건물 (3회 이상) */
+    favCodes.forEach(function (c) {
+      var b = BLD[c];
+      h += '<button class="bldg-item" data-bldg="' + c + '">' +
+        '<span class="bldg-code ' + b.cat + '">' + esc(c) + '</span>' +
+        '<div class="bi-body"><div class="bi-name">' + esc(b.name) + '</div>' +
+        '<div class="bi-desc">⭐ ' + state.visits[c] + '회 방문 · 자주 가는 곳</div></div></button>';
+    });
+
+    /* 2) 최근 검색·확인한 건물 */
+    recentCodes.forEach(function (c) {
+      var b = BLD[c];
+      var cnt = state.visits[c] || 0;
+      h += '<button class="bldg-item" data-bldg="' + c + '">' +
+        '<span class="bldg-code ' + b.cat + '">' + esc(c) + '</span>' +
+        '<div class="bi-body"><div class="bi-name">' + esc(b.name) + '</div>' +
+        '<div class="bi-desc">🕒 최근 확인' + (cnt > 0 ? ' (' + cnt + '회 방문)' : '') + '</div></div></button>';
+    });
+    fav.innerHTML = h;
+  }
+
   function renderRecords() {
     var recs = state.records;
     var todayRecs = recs.filter(function (r) { return r.date === state.today; });
@@ -2587,22 +2705,7 @@
     $('stat-walk').textContent = walk + '분';
     $('stat-ontime').textContent = rate + '%';
 
-    var fav = $('fav-list');
-    var favCodes = Object.keys(state.visits).filter(function (c) { return state.visits[c] >= 3 && BLD[c]; })
-      .sort(function (a, b) { return state.visits[b] - state.visits[a]; });
-    if (!favCodes.length) {
-      fav.innerHTML = '<div class="empty-box">아직 3회 이상 간 건물이 없습니다.<br>같은 건물을 3번 도착하면 여기에 자동으로 쌓입니다.</div>';
-    } else {
-      var h = '';
-      favCodes.forEach(function (c) {
-        var b = BLD[c];
-        h += '<button class="bldg-item" data-bldg="' + c + '">' +
-          '<span class="bldg-code ' + b.cat + '">' + esc(c) + '</span>' +
-          '<div class="bi-body"><div class="bi-name">' + esc(b.name) + '</div>' +
-          '<div class="bi-desc">' + state.visits[c] + '회 방문 · 자주 가는 곳</div></div></button>';
-      });
-      fav.innerHTML = h;
-    }
+    renderFavAndRecent();
 
     var list = $('history-list');
     if (!recs.length) {
@@ -3578,6 +3681,13 @@
   function openBuilding(code, room) {
     var b = BLD[code];
     if (!b) return;
+
+    /* 최근 검색/선택한 건물에 등록 (최대 6개, 중복 제거, 맨 앞 추가) */
+    if (!state.recentBldg) state.recentBldg = [];
+    state.recentBldg = [code].concat(state.recentBldg.filter(function (c) { return c !== code; })).slice(0, 6);
+    saveState();
+    renderFavAndRecent();
+
     state.bldg = code;
     state.floor = b.levels > 0 ? String(b.levels) : '0';
     if (b.levels > 0) {
@@ -4660,35 +4770,88 @@
   /* 드래그 회전 */
   function setupIsoDrag() {
     var wrap = $('iso-wrap');
+    if (!wrap) return;
     var dragging = false, lastX = 0, moved = 0, tickLast = 0;
+    var velocity = 0, lastTime = 0;
+    var rafId = null, inertiaRaf = null;
     var TICK_STEP = 18;   /* 18도마다 아주 작은 틱 소리 */
+
+    function requestRender() {
+      if (rafId) return;
+      rafId = requestAnimationFrame(function () {
+        rafId = null;
+        renderIso();
+      });
+    }
+
     function down(e) {
       if (state.compassOn) return;
-      dragging = true; moved = 0;
+      if (inertiaRaf) { cancelAnimationFrame(inertiaRaf); inertiaRaf = null; }
+      dragging = true;
+      moved = 0;
+      velocity = 0;
       tickLast = state.isoRot;
-      lastX = (e.touches ? e.touches[0].clientX : e.clientX);
+      lastTime = Date.now();
+      var clientX = (e.touches && e.touches.length) ? e.touches[0].clientX : e.clientX;
+      lastX = clientX;
     }
+
     function move(e) {
       if (!dragging) return;
-      var x = (e.touches ? e.touches[0].clientX : e.clientX);
-      var dx = x - lastX;
-      lastX = x;
+      var clientX = (e.touches && e.touches.length) ? e.touches[0].clientX : e.clientX;
+      var dx = clientX - lastX;
+      var now = Date.now();
+      var dt = now - lastTime || 16;
+      lastX = clientX;
+      lastTime = now;
       moved += Math.abs(dx);
-      state.isoRot += dx * 0.6;
+
+      // 모바일 화면 폭을 고려해 손가락 이동에 비례하는 시원한 회전 감도 (1.2)
+      var rotDelta = dx * 1.2;
+      state.isoRot += rotDelta;
+      velocity = (rotDelta / dt) * 16; // 프레임당 속도 추적
+
       if (Math.floor(state.isoRot / TICK_STEP) !== Math.floor(tickLast / TICK_STEP)) {
         tickLast = state.isoRot;
         sfx.tick();
       }
-      renderIso();
+      requestRender();
       if (e.cancelable) e.preventDefault();
     }
-    function up() { dragging = false; }
+
+    function up() {
+      if (!dragging) return;
+      dragging = false;
+
+      // 손가락을 뗐을 때 부드럽게 이어지는 관성 회전 효과 (자연스러운 스무딩)
+      if (Math.abs(velocity) > 0.3) {
+        function stepInertia() {
+          velocity *= 0.92; // 부드럽게 감속
+          if (Math.abs(velocity) < 0.1 || state.compassOn) {
+            inertiaRaf = null;
+            return;
+          }
+          state.isoRot += velocity;
+          if (Math.floor(state.isoRot / TICK_STEP) !== Math.floor(tickLast / TICK_STEP)) {
+            tickLast = state.isoRot;
+            sfx.tick();
+          }
+          renderIso();
+          inertiaRaf = requestAnimationFrame(stepInertia);
+        }
+        inertiaRaf = requestAnimationFrame(stepInertia);
+      }
+    }
+
+    // 데스크톱 마우스 & 모바일 터치 이벤트 바인딩 (window 리스너로 바깥으로 나가도 드래그 유지)
     wrap.addEventListener('mousedown', down);
-    window.addEventListener('mousemove', move);
+    window.addEventListener('mousemove', move, { passive: false });
     window.addEventListener('mouseup', up);
+
     wrap.addEventListener('touchstart', down, { passive: true });
-    wrap.addEventListener('touchmove', move, { passive: false });
-    wrap.addEventListener('touchend', up);
+    window.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('touchend', up);
+    window.addEventListener('touchcancel', up);
   }
 
   /* 폰 방향 센서 */
@@ -4856,6 +5019,11 @@
           state.map.invalidateSize();
         }, 260);
       }
+    }
+    if (id === 'tab-home') {
+      updateHomeDogGuide();
+    } else {
+      hideHomeDogGuide();
     }
   }
 
@@ -5112,19 +5280,6 @@
       if (setDefaultOrigin(el.getAttribute('data-code'))) modalClose('origin-modal');
     });
 
-    /* 출발지 */
-    $('select-start').addEventListener('change', function () {
-      state.startSel = this.value;
-      saveState();
-      renderNextClass();
-      if (state.nav) startNav(state.nav.destCode, state.nav.room);
-    });
-    $('select-dest').addEventListener('change', function () { /* 시작 버튼으로 실행 */ });
-
-    $('btn-start-nav').addEventListener('click', function () {
-      startNav($('select-dest').value, '');
-    });
-
     /* 수업 핫키 */
     $('schedule-list').addEventListener('click', function (e) {
       var el = e.target.closest ? e.target.closest('[data-class]') : null;
@@ -5140,7 +5295,6 @@
       list.forEach(function (c) { if (c.id === id) cls = c; });
       if (!cls) return;
       state.startSel = 'GPS';
-      $('select-start').value = 'GPS';
       startNav(cls.code, cls.room);
     });
 
@@ -5377,6 +5531,151 @@
   }
 
   /* ══════════════════════════════════════════════════════════════
+     13. 홈 화면 안내 강아지 (모서리 빼꼼 & 대기)
+     ══════════════════════════════════════════════════════════════ */
+  var homeGuideTimer = null;
+  var homeGuideStep = 0; // 0: 시작 전, 1: 기본출발지, 2: 시간표관리, 3: 안내버튼, 4: 완료(대기 모드)
+
+  function hideHomeDogGuide() {
+    var el = $('home-dog-guide');
+    if (el) el.classList.add('hide');
+    if (homeGuideTimer) { clearTimeout(homeGuideTimer); homeGuideTimer = null; }
+  }
+
+  function updateHomeDogGuide() {
+    var guideEl = $('home-dog-guide');
+    var bubbleEl = $('home-dog-bubble');
+    var avatarEl = $('home-dog-avatar');
+    if (!guideEl || !bubbleEl || !avatarEl) return;
+
+    // 현재 탭이 홈 탭이 아니면 숨김
+    var homeTab = $('tab-home');
+    if (!homeTab || !homeTab.classList.contains('active')) {
+      guideEl.classList.add('hide');
+      return;
+    }
+
+    var isDone = !!localStorage.getItem(KEY.guideDone);
+    if (!isDone) {
+      // 첫 사용: 3단계 튜토리얼 진행
+      startHomeDogTutorial();
+    } else {
+      // 반복 사용: 안내버튼 모서리에 가만히 대기 (말풍선 없이 꼬리 살랑)
+      placeHomeDogIdle();
+    }
+  }
+
+  function startHomeDogTutorial() {
+    var guideEl = $('home-dog-guide');
+    var bubbleEl = $('home-dog-bubble');
+    var avatarEl = $('home-dog-avatar');
+    if (!guideEl || !bubbleEl || !avatarEl) return;
+
+    if (homeGuideTimer) clearTimeout(homeGuideTimer);
+    guideEl.classList.remove('idle-mode');
+    guideEl.classList.remove('hide');
+    bubbleEl.style.display = 'block';
+
+    homeGuideStep = 1;
+    // 1단계: 기본 출발지 모서리
+    positionAtTarget($('btn-default-origin'), '먼저 기본 출발지를 확인해봐! 🐾');
+
+    // 2단계 (3.5초 뒤): 오늘의 수업/시간표 관리
+    homeGuideTimer = setTimeout(function () {
+      homeGuideStep = 2;
+      positionAtTarget($('title-today-schedule') || $('btn-open-tt'), '오늘 수업 시간표를 확인해봐! 🐾');
+
+      // 3단계 (3.8초 뒤): 첫 번째 안내 버튼
+      homeGuideTimer = setTimeout(function () {
+        homeGuideStep = 3;
+        var firstGo = document.querySelector('#schedule-list .ci-go');
+        var target = firstGo || $('schedule-list');
+        positionAtTarget(target, '여길 누르면 지도로 바로 안내해줘! 🐾');
+
+        // 4단계 (4.2초 뒤): 튜토리얼 완료 및 대기 모드로 전환
+        homeGuideTimer = setTimeout(function () {
+          localStorage.setItem(KEY.guideDone, '1');
+          homeGuideStep = 4;
+          placeHomeDogIdle();
+        }, 4200);
+      }, 3800);
+    }, 3500);
+  }
+
+  function placeHomeDogIdle() {
+    var guideEl = $('home-dog-guide');
+    var bubbleEl = $('home-dog-bubble');
+    if (!guideEl || !bubbleEl) return;
+
+    var firstGo = document.querySelector('#schedule-list .ci-go');
+    if (!firstGo) {
+      // 수업이 없으면 시간표 카드 우측 상단 모서리에 대기
+      var ttBtn = $('btn-open-tt');
+      if (ttBtn) {
+        guideEl.classList.add('idle-mode');
+        guideEl.classList.remove('hide');
+        bubbleEl.style.display = 'none';
+        positionAtTarget(ttBtn, '');
+      } else {
+        guideEl.classList.add('hide');
+      }
+      return;
+    }
+
+    guideEl.classList.add('idle-mode');
+    guideEl.classList.remove('hide');
+    bubbleEl.style.display = 'none';
+    positionAtTarget(firstGo, '');
+  }
+
+  function positionAtTarget(targetEl, msg) {
+    var guideEl = $('home-dog-guide');
+    var bubbleEl = $('home-dog-bubble');
+    var homeTab = $('tab-home');
+    if (!guideEl || !targetEl || !homeTab) return;
+
+    if (msg) bubbleEl.textContent = msg;
+
+    var tabRect = homeTab.getBoundingClientRect();
+    var tRect = targetEl.getBoundingClientRect();
+
+    // homeTab 기준 상대 위치 계산
+    var top = (tRect.top - tabRect.top) - 34; // 모서리 위쪽에 살짝 걸침
+    var left = (tRect.right - tabRect.left) - 24; // 우측 모서리에서 빼꼼
+
+    // 모바일 360px 화면에서 오른쪽으로 삐져나가지 않도록 보정
+    var maxLeft = tabRect.width - 55;
+    if (left > maxLeft) left = maxLeft;
+    if (left < 4) left = 4;
+    if (top < 0) top = 2;
+
+    guideEl.style.top = Math.round(top) + 'px';
+    guideEl.style.left = Math.round(left) + 'px';
+  }
+
+  function bindHomeDogAvatar() {
+    var avatarEl = $('home-dog-avatar');
+    var bubbleEl = $('home-dog-bubble');
+    var guideEl = $('home-dog-guide');
+    if (!avatarEl) return;
+
+    avatarEl.addEventListener('click', function (e) {
+      e.stopPropagation();
+      petDog(avatarEl);
+
+      // 대기 모드 중 터치 시 깜짝 응원 말풍선 잠깐 띄우기
+      if (guideEl && guideEl.classList.contains('idle-mode') && bubbleEl) {
+        var cheers = ['조심해서 다녀와! 🐾', '오늘도 힘내! 🌟', '수업 늦지 않게 가자! 👟', '멍멍! 길 잘 찾아줄게! 🐶'];
+        bubbleEl.textContent = cheers[Math.floor(Math.random() * cheers.length)];
+        bubbleEl.style.display = 'block';
+        setTimeout(function () {
+          if (guideEl && guideEl.classList.contains('idle-mode')) bubbleEl.style.display = 'none';
+        }, 2200);
+      }
+    });
+  }
+
+  /* ══════════════════════════════════════════════════════════════
      14. 초기화
      ══════════════════════════════════════════════════════════════ */
   function init() {
@@ -5386,6 +5685,7 @@
     buildOriginOptions();
     bindEvents();
     bindIsoNpc();
+    bindHomeDogAvatar();
     setupIsoDrag();
     setupOfflineMap();
     /* 걷기 시작한 뒤 1.6초가 지나면 서 있는 자세로 돌아간다 */
@@ -5393,9 +5693,12 @@
       if (dog.mode === 'walk' && Date.now() > dog.walkUntil) dogSetMode('idle');
     }, 350);
     state.startSel = 'GPS';
-    $('select-start').value = state.startSel;
     renderAll();
     applyMapMode();
+    setTimeout(updateHomeDogGuide, 100);
+    window.addEventListener('resize', function () {
+      if ($('tab-home') && $('tab-home').classList.contains('active')) updateHomeDogGuide();
+    });
     if (state.nav) {
       var r = computeRoute(state.startSel, state.nav.destCode);
       if (r) {
