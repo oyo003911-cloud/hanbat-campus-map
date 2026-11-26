@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>난 내갈길을 간다 - 국립한밭대학교 캠퍼스 길찾기</title>
+  <style>
+    :root {
+      --primary: #003876;       /* 국립한밭대 시그니처 딥블루 */
+      --primary-light: #e8f0fe;
+      --accent: #ff6b35;        /* 포인트 오렌지 */
+      --danger: #d90429;        /* 지각 위험 경고 레드 */
+      --success: #2b9348;       /* 도착 성공 초록 */
+      --bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --text: #212529;
+      --text-muted: #6c757d;
+      --border: #dee2e6;
+      --radius: 12px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #e9ecef;
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* 360px 모바일 화면 프레임 (360px~420px 완벽 대응) */
+    #app-container {
+      width: 100%;
+      max-width: 420px;
+      min-width: 360px;
+      background-color: var(--bg);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      box-shadow: 0 0 20px rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    /* 1. 상단 테스트용 툴바 */
+    .test-toolbar {
+      background-color: #1a1e21;
+      color: #fff;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .test-toolbar .date-badge {
+      font-weight: 700;
+      color: #ffd166;
+    }
+
+    .test-toolbar .btn-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .test-btn {
+      background: #495057;
+      color: #fff;
+      border: none;
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .test-btn:active {
+      background: #6c757d;
+      transform: scale(0.96);
+    }
+
+    /* 요일 선택 바 (월 / 화 / 수 / 목 / 금) */
+    .weekday-selector {
+      background-color: #0b2545;
+      padding: 8px 12px;
+      display: flex;
+      gap: 6px;
+      justify-content: space-between;
+    }
+
+    .weekday-btn {
+      flex: 1;
+      height: 38px;
+      background: rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .weekday-btn.active {
+      background: #ffd166;
+      color: #111827;
+      border-color: #ffd166;
+      font-weight: 800;
+      box-shadow: 0 2px 6px rgba(255, 209, 102, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* 메인 앱 헤더 */
+    .app-header {
+      background: linear-gradient(135deg, #002855, #004b99);
+      color: #ffffff;
+      padding: 14px 16px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .app-header h1 {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .app-header p {
+      font-size: 11px;
+      opacity: 0.9;
+      margin-top: 3px;
+    }
+
+    /* 네비게이션 탭 */
+    .nav-tabs {
+      display: flex;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 37px;
+      z-index: 90;
+    }
+
+    .nav-tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .nav-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    /* 본문 영역 */
+    .content-area {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-bottom: 30px;
+    }
+
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    /* 카드 */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* 오늘의 요일별 시간표 핫키 카드 디자인 */
+    .schedule-hotkey-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .schedule-hotkey-item {
+      background: linear-gradient(135deg, #f0f7ff, #ffffff);
+      border: 1.5px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+
+    .schedule-hotkey-item:hover {
+      border-color: #3b82f6;
+      background: #e0f2fe;
+      transform: translateY(-1px);
+    }
+
+    .schedule-hotkey-item:active {
+      transform: scale(0.98);
+    }
+
+    .time-badge {
+      display: inline-block;
+      background: #1d4ed8;
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+    }
+
+    .class-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: #1e293b;
+    }
+
+    .room-info {
+      font-size: 12px;
+      color: #0369a1;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .btn-nav-arrow {
+      background: #2563eb;
+      color: white;
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    /* 폼 요소 */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    select, input {
+      width: 100%;
+      height: 46px;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    select:focus, input:focus {
+      border-color: var(--primary);
+    }
+
+    /* 큰 버튼 */
+    .btn-main {
+      width: 100%;
+      height: 52px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(0, 56, 118, 0.3);
+      transition: transform 0.1s, background-color 0.2s;
+    }
+
+    .btn-main:active {
+      transform: scale(0.98);
+      background-color: #002855;
+    }
+
+    .btn-secondary {
+      width: 100%;
+      height: 44px;
+      background-color: #e9ecef;
+      color: var(--text);
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    .btn-secondary:active {
+      background-color: #dee2e6;
+    }
+
+    /* 핫키 버튼 */
+    .hotkey-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .hotkey-btn {
+      min-height: 46px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid #c2d7fe;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 6px;
+      cursor: pointer;
+      text-align: center;
+      line-height: 1.3;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .hotkey-btn.favorite {
+      background: #fff3cd;
+      border-color: #ffe69c;
+      color: #997404;
+    }
+
+    .hotkey-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* 경고 배너 */
+    .alert-banner {
+      background-color: #fff0f3;
+      border: 1.5px solid var(--danger);
+      color: var(--danger);
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      animation: pulse 1.5s infinite;
+    }
+
+    .alert-banner.active {
+      display: flex;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(217, 4, 41, 0.4); }
+      70% { box-shadow: 0 0 0 8px rgba(217, 4, 41, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(217, 4, 41, 0); }
+    }
+
+    /* SVG 지도 컨테이너 */
+    .map-wrapper {
+      position: relative;
+      background: #e5ebf0;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1.5px solid var(--border);
+      height: 290px;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    svg.campus-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .building-node {
+      cursor: pointer;
+      transition: filter 0.15s, transform 0.15s;
+    }
+
+    .building-node:hover {
+      filter: brightness(1.15) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    .building-node text {
+      font-weight: 800;
+      fill: #ffffff;
+      pointer-events: none;
+      text-anchor: middle;
+      dominant-baseline: central;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+
+    .route-path {
+      stroke: var(--accent);
+      stroke-width: 4.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 7 4;
+      animation: dash 1s linear infinite;
+      fill: none;
+    }
+
+    .route-path.danger {
+      stroke: var(--danger);
+      stroke-width: 5.5;
+    }
+
+    @keyframes dash {
+      to {
+        stroke-dashoffset: -22;
+      }
+    }
+
+    /* 요약 패널 */
+    .route-summary {
+      background: #ffffff;
+      border-radius: var(--radius);
+      padding: 14px;
+      border: 1px solid var(--border);
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 13px;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+
+    .summary-val {
+      font-weight: 700;
+      color: var(--primary);
+      text-align: right;
+    }
+
+    .highlight-min {
+      font-size: 21px;
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    /* 층별 시설 안내 */
+    .floor-accordion {
+      margin-top: 4px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .floor-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .floor-list {
+      list-style: none;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .floor-list li {
+      padding: 2px 0;
+      border-bottom: 1px dotted #e9ecef;
+    }
+
+    .floor-list li:last-child {
+      border-bottom: none;
+    }
+
+    .floor-list li strong {
+      color: #333;
+    }
+
+    /* 피드백 질문 상자 */
+    .feedback-box {
+      background: #e8f4f8;
+      border-radius: var(--radius);
+      padding: 14px;
+      text-align: center;
+      margin-top: 10px;
+      display: none;
+      border: 1.5px solid #bce1ee;
+    }
+
+    .feedback-box.active {
+      display: block;
+    }
+
+    .feedback-box p {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #023e8a;
+    }
+
+    .feedback-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-feedback {
+      flex: 1;
+      height: 42px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-yes {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-no {
+      background: #6c757d;
+      color: white;
+    }
+
+    /* 모니터링 방문 리스트 */
+    .stat-building-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .stat-building-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8f9fa;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .stat-building-item:hover {
+      background: #eef2f6;
+    }
+
+    .stat-building-item strong {
+      color: var(--primary);
+    }
+
+    .stat-badge {
+      background: #e7f5ff;
+      color: #1971c2;
+      padding: 4px 9px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* 기록 로그 */
+    .history-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-item.delay {
+      border-left-color: var(--danger);
+    }
+
+    /* 모달 팝업 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 360px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    }
+
+    .modal-box h3 {
+      font-size: 16px;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .modal-box p {
+      font-size: 13px;
+      color: #495057;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      height: 38px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* 시간표 편집 모달 */
+    .timetable-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app-container">
+
+  <!-- 상단 테스트용 툴바 (AGENTS.md 필수 버튼: 다음 날(요일)로 이동, 처음부터 다시) -->
+  <header class="test-toolbar">
+    <div>
+      <span>오늘: </span>
+      <span class="date-badge" id="current-app-date">2026-11-17 (화)</span>
+    </div>
+    <div class="btn-group">
+      <button class="test-btn" id="btn-next-day" title="다음 요일로 하루 넘깁니다">📅 다음 요일로 이동</button>
+      <button class="test-btn" id="btn-reset-all" title="저장된 데이터를 모두 지우고 초기화">🔄 처음부터 다시</button>
+    </div>
+  </header>
+
+  <!-- 월화수목금 요일 선택 탭 바 (사용자 요구사항 반영) -->
+  <nav class="weekday-selector">
+    <button class="weekday-btn" data-day="월" onclick="setWeekday('월')">월요일</button>
+    <button class="weekday-btn active" data-day="화" onclick="setWeekday('화')">화요일</button>
+    <button class="weekday-btn" data-day="수" onclick="setWeekday('수')">수요일</button>
+    <button class="weekday-btn" data-day="목" onclick="setWeekday('목')">목요일</button>
+    <button class="weekday-btn" data-day="금" onclick="setWeekday('금')">금요일</button>
+  </nav>
+
+  <!-- 앱 헤더 -->
+  <div class="app-header">
+    <h1>🧭 난 내갈길을 간다</h1>
+    <p>국립한밭대학교 캠퍼스 길찾기 · 요일별 시간표 연동</p>
+  </div>
+
+  <!-- 메인 네비게이션 탭 -->
+  <nav class="nav-tabs">
+    <button class="nav-tab active" data-tab="tab-home">1. 홈 (목적지)</button>
+    <button class="nav-tab" data-tab="tab-guide">2. 길 안내 & 지도</button>
+    <button class="nav-tab" data-tab="tab-monitor">3. 탐색 현황</button>
+  </nav>
+
+  <!-- 컨텐츠 영역 -->
+  <main class="content-area">
+
+    <!-- ==================== 1. 홈 탭 (입력값) ==================== -->
+    <section id="tab-home" class="tab-content active">
+
+      <!-- 자주 가는 장소 핫키 (재조율 3: 3회 이상 방문 시 자동 상단 고정) -->
+      <div class="card" id="card-favorites" style="display: none;">
+        <div class="card-title">
+          <span>⭐ 자주 가는 목적지 (자동 등록)</span>
+          <span style="font-size: 11px; color: var(--text-muted);">3회 이상 방문</span>
+        </div>
+        <div class="hotkey-container" id="favorite-hotkeys"></div>
+      </div>
+
+      <!-- 요일별 맞춤 시간표 핫키 (핵심 기능: 오늘 몇 시에 무슨 수업이 있는지 표시 및 버튼 자동 변경) -->
+      <div class="card">
+        <div class="card-title">
+          <span id="title-today-schedule">📚 화요일 수업 핫키</span>
+          <button class="test-btn" style="background:#0284c7; padding:3px 8px;" onclick="openTimetableModal()">✏️ 시간표 관리</button>
+        </div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
+          터치하면 오늘 수업 강의실로 즉시 최단 지름길 안내를 시작합니다.
+        </p>
+        <div class="schedule-hotkey-list" id="schedule-hotkey-list">
+          <!-- JS에서 현재 요일의 수업들로 동적 렌더링 -->
+        </div>
+      </div>
+
+      <!-- 입력값 폼 (칸 1: 입력값) -->
+      <div class="card">
+        <div class="card-title">📍 이동 계획 직접 입력</div>
+
+        <div class="form-group">
+          <label class="form-label" for="select-start">출발지 선택</label>
+          <select id="select-start">
+            <option value="GATE">한밭대학교 정문 (버스정류장)</option>
+            <option value="D7" selected>D7 미래동 (기숙사/생활관)</option>
+            <option value="S2">S2 학생회관 (학생식당 앞)</option>
+            <option value="N1">N1 대학본부</option>
+            <option value="S3">S3 경상학관</option>
+            <option value="N11">N11 창의혁신관</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="select-dest">도착 목적지 (건물 및 호실)</label>
+          <select id="select-dest">
+            <optgroup label="[북측 N동] 교양 강의실 & 본부">
+              <option value="N11" selected>N11 창의혁신관 (301호 기초교양)</option>
+              <option value="N11_402">N11 창의혁신관 (402호 멀티미디어실)</option>
+              <option value="N1">N1 대학본부 (학사지원팀/입학본부)</option>
+              <option value="N4">N4 산업정보관 (IT실습실)</option>
+            </optgroup>
+            <optgroup label="[남측 S동] 전공 강의실 & 학생복지">
+              <option value="S3">S3 경상학관 (204호 경제학과 전공)</option>
+              <option value="S3_105">S3 경상학관 (105호 대강의실)</option>
+              <option value="S3_OFFICE">S3 경상학관 312호 (경영·경제 과사무실)</option>
+              <option value="S2_JOB">S2 학생회관 2층 (대학일자리본부)</option>
+              <option value="S2_COUNSEL">S2 학생회관 3층 (학생상담센터)</option>
+              <option value="S2_HEALTH">S2 학생회관 1층 (보건진료소/식당)</option>
+              <option value="S1_LIB">S1 도서관 (열람실 / 무인증명발급기)</option>
+              <option value="S4">S4 인문사회관 (강의실/교직팀)</option>
+            </optgroup>
+            <optgroup label="[기숙사 D동] 학생생활관">
+              <option value="D7">D7 미래동 (학생생활관/편의점)</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="input-break-time">이동 가능 쉬는 시간 (분)</label>
+          <input type="number" id="input-break-time" value="10" min="3" max="60" placeholder="예: 10">
+          <span style="font-size: 11px; color: var(--text-muted); margin-top: 4px; display: block;">
+            * 쉬는 시간이 10분 이하이고 예상 이동 시간이 8분 이상이면 지각 위험이 경고됩니다.
+          </span>
+        </div>
+
+        <button class="btn-main" id="btn-start-nav">
+          <span>🚀 최단 지름길 안내 시작</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ==================== 2. 길 안내 & 지도 탭 (초안 생성 & 재조율 & 실행 기록) ==================== -->
+    <section id="tab-guide" class="tab-content">
+
+      <!-- 재조율 1: 지각 위험 경고 배너 -->
+      <div id="alert-late-warning" class="alert-banner">
+        <span style="font-size: 20px;">⚠️</span>
+        <div>
+          <div>지각 위험! 빠른 걸음 권장</div>
+          <div style="font-size: 11px; font-weight: normal; margin-top: 2px;">
+            쉬는 시간 대비 이동 시간이 촉박합니다. 최단 지름길을 이용하세요!
+          </div>
+        </div>
+      </div>
+
+      <!-- 정밀 SVG 한밭대 캠퍼스 맵 (초안 생성 시각화) -->
+      <div class="card" style="padding: 10px;">
+        <div class="card-title" style="margin-bottom: 8px;">
+          <span>🗺️ 한밭대 공식 캠퍼스 맵 (정밀 약도)</span>
+          <span style="font-size: 11px; color: var(--primary); font-weight: 800;" id="badge-route-status">길 안내 중</span>
+        </div>
+
+        <div class="map-wrapper">
+          <svg class="campus-svg" id="campus-svg" viewBox="0 0 380 290">
+            <!-- 캠퍼스 부지 배경 -->
+            <rect x="0" y="0" width="380" height="290" fill="#e9eef2" />
+
+            <!-- 북측 녹지 및 남측 산림 배경 -->
+            <path d="M 0 0 L 380 0 L 380 50 Q 200 40 0 60 Z" fill="#d8e8d8" opacity="0.6"/>
+            <path d="M 0 250 Q 180 230 380 270 L 380 290 L 0 290 Z" fill="#d8e8d8" opacity="0.6"/>
+
+            <!-- 대운동장 (남서측) -->
+            <ellipse cx="140" cy="245" rx="42" ry="22" fill="#e6a57e" stroke="#d97736" stroke-width="2"/>
+            <ellipse cx="140" cy="245" rx="30" ry="14" fill="#a3cfbb"/>
+            <text x="140" y="246" font-size="8" fill="#1b4d3e" font-weight="bold" text-anchor="middle">대운동장</text>
+
+            <!-- 혜윰광장 (캠퍼스 중심축: 중앙광장 & 분수대 & 소극장) -->
+            <rect x="155" y="105" width="70" height="42" rx="10" fill="#bbf7d0" stroke="#4ade80" stroke-width="1.5"/>
+            <circle cx="190" cy="122" r="8" fill="#93c5fd" stroke="#3b82f6" stroke-width="1"/>
+            <text x="190" y="123" font-size="8" fill="#1e40af" text-anchor="middle">분수</text>
+            <text x="190" y="138" font-size="9" fill="#15803d" font-weight="bold" text-anchor="middle">혜윰광장</text>
+
+            <!-- 캠퍼스 도로망 -->
+            <path d="M 350 240 L 260 210 L 230 155 L 150 155 L 75 180 L 55 240" stroke="#cbd5e1" stroke-width="14" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M 230 155 L 250 95 L 180 85 L 120 70 L 80 85" stroke="#cbd5e1" stroke-width="12" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M 150 155 L 150 95 L 230 95 L 230 155 Z" stroke="#fed7aa" stroke-width="6" fill="none" stroke-linejoin="round"/>
+            <path d="M 60 220 L 110 155 L 150 95 L 120 65" stroke="#fef08a" stroke-width="4" stroke-dasharray="3 2" fill="none"/>
+
+            <!-- 동적 경로 라인 -->
+            <path id="svg-route-line" class="route-path" d="M 60 230 L 120 65" />
+
+            <!-- 마커 핀 -->
+            <g id="marker-start" transform="translate(0,0)" style="display:none;">
+              <circle cx="0" cy="0" r="7" fill="#16a34a" stroke="#ffffff" stroke-width="2"/>
+              <text x="0" y="-10" font-size="10" font-weight="bold" fill="#16a34a" text-anchor="middle">출발</text>
+            </g>
+            <g id="marker-dest" transform="translate(0,0)" style="display:none;">
+              <circle cx="0" cy="0" r="8" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
+              <text x="0" y="-11" font-size="10" font-weight="bold" fill="#dc2626" text-anchor="middle">도착</text>
+            </g>
+
+            <!-- ==================== 공식 건물 노드들 ==================== -->
+            <g class="building-node" id="node-N11" onclick="showBuildingInfo('N11')" transform="translate(85, 35)">
+              <rect width="75" height="34" rx="6" fill="#ea580c" stroke="#c2410c" stroke-width="2"/>
+              <text x="37" y="14" font-size="10">N11 창의혁신</text>
+              <text x="37" y="25" font-size="8" fill="#ffedd5">기초교양/메이커</text>
+            </g>
+
+            <g class="building-node" id="node-N4" onclick="showBuildingInfo('N4')" transform="translate(180, 50)">
+              <rect width="65" height="30" rx="5" fill="#475569" stroke="#334155" stroke-width="1.5"/>
+              <text x="32" y="12" font-size="9">N4 산업정보</text>
+              <text x="32" y="22" font-size="7.5" fill="#e2e8f0">IT실습/연구실</text>
+            </g>
+
+            <g class="building-node" id="node-N1" onclick="showBuildingInfo('N1')" transform="translate(265, 70)">
+              <rect width="68" height="34" rx="6" fill="#1e3a8a" stroke="#172554" stroke-width="2"/>
+              <text x="34" y="14" font-size="10">N1 대학본부</text>
+              <text x="34" y="25" font-size="8" fill="#dbeafe">학사팀/총장실</text>
+            </g>
+
+            <g class="building-node" id="node-S2" onclick="showBuildingInfo('S2')" transform="translate(170, 165)">
+              <rect width="68" height="36" rx="6" fill="#15803d" stroke="#166534" stroke-width="2"/>
+              <text x="34" y="14" font-size="10">S2 학생회관</text>
+              <text x="34" y="26" font-size="8" fill="#dcfce7">일자리/보건/식당</text>
+            </g>
+
+            <g class="building-node" id="node-S3" onclick="showBuildingInfo('S3')" transform="translate(95, 165)">
+              <rect width="68" height="36" rx="6" fill="#0369a1" stroke="#075985" stroke-width="2"/>
+              <text x="34" y="14" font-size="10">S3 경상학관</text>
+              <text x="34" y="26" font-size="8" fill="#e0f2fe">경제/경영 전공</text>
+            </g>
+
+            <g class="building-node" id="node-S4" onclick="showBuildingInfo('S4')" transform="translate(25, 165)">
+              <rect width="62" height="32" rx="5" fill="#64748b"/>
+              <text x="31" y="13" font-size="9">S4 인문사회</text>
+              <text x="31" y="23" font-size="7.5" fill="#f1f5f9">인문대학/교직</text>
+            </g>
+
+            <g class="building-node" id="node-S1" onclick="showBuildingInfo('S1')" transform="translate(255, 165)">
+              <rect width="66" height="34" rx="6" fill="#4338ca" stroke="#3730a3" stroke-width="2"/>
+              <text x="33" y="14" font-size="10">S1 도서관</text>
+              <text x="33" y="25" font-size="8" fill="#e0e7ff">열람실/무인발급</text>
+            </g>
+
+            <g class="building-node" id="node-D7" onclick="showBuildingInfo('D7')" transform="translate(25, 230)">
+              <rect width="70" height="36" rx="6" fill="#0f766e" stroke="#115e59" stroke-width="2"/>
+              <text x="35" y="14" font-size="10">D7 미래동</text>
+              <text x="35" y="26" font-size="8" fill="#ccfbf1">기숙사/편의점</text>
+            </g>
+
+            <g class="building-node" id="node-GATE" onclick="showBuildingInfo('GATE')" transform="translate(315, 230)">
+              <rect width="55" height="30" rx="5" fill="#334155" stroke="#1e293b" stroke-width="2"/>
+              <text x="27" y="12" font-size="9">정문</text>
+              <text x="27" y="22" font-size="7.5" fill="#cbd5e1">버스정류장</text>
+            </g>
+          </svg>
+        </div>
+
+        <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px; text-align: center;">
+          💡 지도의 건물을 터치하면 건물별 상세 정보 및 층별 안내를 확인할 수 있습니다.
+        </p>
+      </div>
+
+      <!-- 요약 안내 카드 -->
+      <div class="route-summary">
+        <div class="summary-row">
+          <span>출발 위치</span>
+          <span class="summary-val" id="disp-start-node">D7 미래동 (기숙사)</span>
+        </div>
+        <div class="summary-row">
+          <span>도착 목적지</span>
+          <span class="summary-val" id="disp-dest-node">N11 창의혁신관 301호</span>
+        </div>
+        <div class="summary-row">
+          <span>주요 출입구</span>
+          <span class="summary-val" id="disp-entrance-info">남측 1층 주출입구 (경사로)</span>
+        </div>
+        <div class="summary-row">
+          <span>최단 지름길 코스</span>
+          <span class="summary-val" id="disp-route-desc" style="font-size: 12px; color: #475569;">기숙사 샛길 ➔ 혜윰광장 북측 지름길</span>
+        </div>
+        <div class="summary-row">
+          <span>예상 도보 시간</span>
+          <span class="highlight-min"><span id="disp-est-time">7</span>분</span>
+        </div>
+      </div>
+
+      <!-- 건물 층별 내부 안내 -->
+      <div class="floor-accordion" id="building-detail-panel">
+        <div class="floor-title" id="detail-building-name">🏢 [N11 창의혁신관] 층별 시설 안내</div>
+        <ul class="floor-list" id="detail-floor-list">
+          <li><strong>1층</strong> : 대강의실(101~103호), 북카페 및 메이커스페이스</li>
+          <li><strong>2층</strong> : 기초교양교육원 행정실, 세미나실</li>
+          <li><strong>3층</strong> : 기초교양 강의실 (301~315호)</li>
+          <li><strong>4층</strong> : 소프트웨어 컴퓨터실습실 (401~408호)</li>
+        </ul>
+      </div>
+
+      <!-- 재조율 2: 강의실 변경 버튼 -->
+      <button class="btn-secondary" id="btn-change-room">
+        🔄 다른 강의실/건물로 변경 (경로 즉시 재계산)
+      </button>
+
+      <!-- 실행 기록 버튼 -->
+      <button class="btn-main" id="btn-arrival-complete" style="background-color: var(--success);">
+        <span>✅ 목적지 도착 완료!</span>
+      </button>
+
+      <!-- 피드백 질문 상자 -->
+      <div id="feedback-section" class="feedback-box">
+        <p>🎉 도착 완료! 추천 지름길 경로가 적합했나요?</p>
+        <div class="feedback-actions">
+          <button class="btn-feedback btn-yes" onclick="submitFeedback(true)">👍 네, 빨랐어요!</button>
+          <button class="btn-feedback btn-no" onclick="submitFeedback(false)">👎 아니요, 개선 필요</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== 3. 탐색 현황 탭 (모니터링) ==================== -->
+    <section id="tab-monitor" class="tab-content">
+
+      <!-- 오늘 이동 요약 -->
+      <div class="card">
+        <div class="card-title">
+          <span>📊 오늘 이동 요약</span>
+          <span style="font-size: 12px; font-weight: normal;" id="monitor-today-date">2026-11-17 (화)</span>
+        </div>
+        <div style="display: flex; justify-content: space-around; text-align: center; margin: 10px 0;">
+          <div>
+            <div style="font-size: 11px; color: var(--text-muted);">총 이동 횟수</div>
+            <div style="font-size: 20px; font-weight: 800; color: var(--primary);" id="stat-total-trips">0회</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: var(--text-muted);">총 도보 시간</div>
+            <div style="font-size: 20px; font-weight: 800; color: var(--accent);" id="stat-total-time">0분</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: var(--text-muted);">정시 도착률</div>
+            <div style="font-size: 20px; font-weight: 800; color: var(--success);" id="stat-on-time-rate">100%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 건물별 방문 빈도 현황 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🏛️ 건물별 방문 현황</span>
+          <span style="font-size: 11px; color: var(--text-muted);">3회 이상 방문 시 '자주 가는 장소' 등극</span>
+        </div>
+        <div class="stat-building-list" id="building-stat-list"></div>
+      </div>
+
+      <!-- 최근 이동 기록 목록 -->
+      <div class="card">
+        <div class="card-title">
+          <span>📝 최근 이동 기록</span>
+          <span style="font-size: 11px; color: var(--text-muted);">localStorage 저장됨</span>
+        </div>
+        <ul class="history-list" id="history-items">
+          <li style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px;">
+            아직 이동 기록이 없습니다.<br>오늘 수업 핫키를 눌러 길 안내를 시작해보세요!
+          </li>
+        </ul>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- 상세 정보 및 바로 길찾기 모달 팝업 -->
+  <div class="modal-overlay" id="info-modal">
+    <div class="modal-box">
+      <h3 id="modal-title">건물 상세 정보</h3>
+      <p id="modal-desc">상세 설명 내용이 여기에 표시됩니다.</p>
+      <div class="modal-actions">
+        <button style="background: #16a34a; color: white;" onclick="setStartFromModal()">🚩 여기서 출발</button>
+        <button style="background: #003876; color: white;" onclick="setDestFromModal()">🎯 여기로 길찾기</button>
+      </div>
+      <button class="btn-secondary" style="margin-top: 8px;" onclick="closeModal()">닫기</button>
+    </div>
+  </div>
+
+  <!-- 시간표 관리 및 강의실 입력 모달 -->
+  <div class="modal-overlay" id="timetable-modal">
+    <div class="modal-box" style="max-height: 85vh; overflow-y: auto;">
+      <h3 style="display:flex; justify-content:space-between; align-items:center;">
+        <span>📅 내 시간표 관리</span>
+        <span style="font-size:12px; color:#2563eb;" id="tt-modal-day">화요일</span>
+      </h3>
+      <p style="font-size: 12px; color: var(--text-muted);">
+        선택한 요일의 강의 시간과 강의실을 추가하거나 삭제할 수 있습니다.
+      </p>
+
+      <!-- 현재 등록된 수업 목록 -->
+      <div id="timetable-list-container" style="margin-bottom: 12px;"></div>
+
+      <!-- 새 수업 추가 폼 -->
+      <div style="background:#f1f5f9; padding:12px; border-radius:8px; border:1px solid var(--border);">
+        <div style="font-size:12px; font-weight:700; margin-bottom:8px; color:var(--primary);">+ 새 수업 추가</div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <input type="text" id="tt-new-time" placeholder="시간 (예: 10:00 또는 2교시)" style="height:38px; font-size:13px;">
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <input type="text" id="tt-new-title" placeholder="과목명 (예: 기초글쓰기, 경제학)" style="height:38px; font-size:13px;">
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <select id="tt-new-bldg" style="height:38px; font-size:13px;">
+            <option value="N11">N11 창의혁신관</option>
+            <option value="S3">S3 경상학관</option>
+            <option value="S2">S2 학생회관</option>
+            <option value="S1">S1 도서관</option>
+            <option value="N4">N4 산업정보관</option>
+            <option value="N1">N1 대학본부</option>
+            <option value="S4">S4 인문사회관</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <input type="text" id="tt-new-room" placeholder="강의실 호실 (예: 301호)" style="height:38px; font-size:13px;">
+        </div>
+        <button class="btn-main" style="height:40px; font-size:13px; background:#0284c7;" onclick="addNewClassToTimetable()">
+          수업 추가하기
+        </button>
+      </div>
+
+      <button class="btn-secondary" style="margin-top: 10px;" onclick="closeTimetableModal()">완료 및 닫기</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ==========================================================================
+     난 내갈길을 간다 - 자바스크립트 로직 (요일별 시간표 & 맞춤 핫키 연동)
+     ========================================================================== */
+
+  const STORAGE_PREFIX = "hanbat_map_";
+  const KEY_APP_DATE = STORAGE_PREFIX + "app_date";
+  const KEY_CURRENT_DAY = STORAGE_PREFIX + "current_day";
+  const KEY_TIMETABLE = STORAGE_PREFIX + "timetable";
+  const KEY_RECORDS = STORAGE_PREFIX + "records";
+  const KEY_VISIT_COUNTS = STORAGE_PREFIX + "visit_counts";
+  const KEY_CURRENT_NAV = STORAGE_PREFIX + "current_nav";
+
+  const WEEKDAYS = ["월", "화", "수", "목", "금"];
+
+  // 기본 요일별 시간표 프리셋 (신입생 전공/교양 기준)
+  const DEFAULT_TIMETABLE = {
+    "월": [
+      { id: 1, time: "10:00", title: "기초글쓰기", bCode: "N11", room: "301호", destName: "N11 창의혁신관 (301호 기초교양)" },
+      { id: 2, time: "14:00", title: "경제학개론", bCode: "S3", room: "204호", destName: "S3 경상학관 (204호 경제전공)" }
+    ],
+    "화": [
+      { id: 3, time: "11:00", title: "대학영어 1", bCode: "N11", room: "402호", destName: "N11 창의혁신관 (402호 멀티미디어실)" },
+      { id: 4, time: "15:00", title: "경영학원론", bCode: "S3", room: "105호", destName: "S3 경상학관 (105호 대강의실)" }
+    ],
+    "수": [
+      { id: 5, time: "13:00", title: "창의적문제해결", bCode: "N11", room: "301호", destName: "N11 창의혁신관 (301호 기초교양)" },
+      { id: 6, time: "16:00", title: "전공진로탐색", bCode: "S2", room: "2층 일자리본부", destName: "S2 학생회관 2층 (대학일자리본부)" }
+    ],
+    "목": [
+      { id: 7, time: "10:00", title: "회계원리", bCode: "S3", room: "204호", destName: "S3 경상학관 (204호 경제전공)" },
+      { id: 8, time: "14:00", title: "소프트웨어실습", bCode: "N4", room: "201호 실습실", destName: "N4 산업정보관 (IT실습실)" }
+    ],
+    "금": [
+      { id: 9, time: "11:00", title: "학생멘토링상담", bCode: "S2", room: "3층 상담센터", destName: "S2 학생회관 3층 (학생상담센터)" },
+      { id: 10, time: "14:00", title: "자율학습/열람", bCode: "S1", room: "자유열람실", destName: "S1 도서관 (열람실 / 무인증명발급기)" }
+    ]
+  };
+
+  // 한밭대 공식 건물 데이터베이스
+  const BUILDINGS = {
+    "N11": {
+      code: "N11",
+      name: "창의혁신관",
+      fullName: "N11 창의혁신관 (기초교양/메이커스페이스)",
+      type: "북측 교양강의동",
+      cx: 122, cy: 52,
+      entrance: "남측 1층 주출입구 (경사로)",
+      floors: [
+        "1층: 대강의실(101~103호), 북카페, 메이커스페이스",
+        "2층: 기초교양교육원 행정실, 세미나실",
+        "3층: 교양 강의실 (301~315호)",
+        "4층: 소프트웨어 컴퓨터실습실 (401~408호)"
+      ],
+      desc: "신입생 교양 필수 과목 수업이 진행되는 주요 건물입니다. 혜윰광장 북측 지름길을 통하면 가장 빠릅니다."
+    },
+    "S3": {
+      code: "S3",
+      name: "경상학관",
+      fullName: "S3 경상학관 (경상대학)",
+      type: "남측 전공강의동",
+      cx: 129, cy: 183,
+      entrance: "서측 1층 주출입구 및 동측 학생회관 연결통로",
+      floors: [
+        "1층: 대강의실(101~105호), 학생회 휴게실",
+        "2층: 경제학과·경영회계학과 전공강의실(201~212호)",
+        "3층: 학과사무실(312호) 및 교수연구실",
+        "4층: 대학원 연구실 및 학술 세미나실"
+      ],
+      desc: "경상대학 전공 수업과 학과사무실이 모여 있는 건물입니다. 학생회관 바로 옆에 위치합니다."
+    },
+    "D7": {
+      code: "D7",
+      name: "미래동",
+      fullName: "D7 미래동 (학생생활관 기숙사)",
+      type: "생활관/기숙사",
+      cx: 60, cy: 248,
+      entrance: "1층 경비실 및 정면 보안 게이트",
+      floors: [
+        "지하1층: 세탁실, 체력단련실(헬스장), 24시 편의점",
+        "1층: 생활관 관리사무실, 택배보관실, 정독실",
+        "2~10층: 기숙사 생활 호실"
+      ],
+      desc: "한밭대 학생생활관(기숙사) 단지의 핵심 건물입니다."
+    },
+    "S2": {
+      code: "S2",
+      name: "학생회관",
+      fullName: "S2 학생회관 (학생식당/복지기관)",
+      type: "학생복지시설",
+      cx: 204, cy: 183,
+      entrance: "정면 중앙 출입구 및 측면 로비",
+      floors: [
+        "1층: 보건진료소, 학생식당, 우리은행 ATM, 매점",
+        "2층: 대학일자리본부, 총학생회실, 동아리연합회",
+        "3층: 학생상담센터, 양성평등상담소",
+        "4층: 인권센터, 장애학생지원센터, 소강당"
+      ],
+      desc: "대학일자리본부, 학생상담센터, 보건진료소 등 필수 복지 행정기관이 모두 집결되어 있습니다."
+    },
+    "S1": {
+      code: "S1",
+      name: "도서관",
+      fullName: "S1 도서관 (학술정보관)",
+      type: "학술/행정",
+      cx: 288, cy: 182,
+      entrance: "1층 메인 게이트 (모바일 학생증 태그)",
+      floors: [
+        "1층: 로비, 무인 재학/성적증명서 자동발급기, 디지털라운지",
+        "2~3층: 인문/자연과학 자료실, 스터디룸",
+        "4층: 24시간 열람실, 노트북 전용 존"
+      ],
+      desc: "학업과 자습을 위한 중앙도서관이며, 1층에 각종 증명서 무인발급기가 있습니다."
+    },
+    "N1": {
+      code: "N1",
+      name: "대학본부",
+      fullName: "N1 대학본부",
+      type: "대학행정",
+      cx: 299, cy: 87,
+      entrance: "1층 중앙 회전문 현관",
+      floors: ["1층: 교무처, 학사지원팀, 총무과", "2층: 총장실, 대회의실, 기획처"],
+      desc: "학사 행정을 총괄하는 본부 건물입니다."
+    },
+    "N4": {
+      code: "N4",
+      name: "산업정보관",
+      fullName: "N4 산업정보관",
+      type: "북측 공학강의동",
+      cx: 212, cy: 65,
+      entrance: "남측 1층 출입구",
+      floors: ["1~4층: 산업경영공학과 전공강의실 및 IT 실습실"],
+      desc: "산업정보 및 컴퓨터 공학 실습실이 위치한 공학동입니다."
+    },
+    "S4": {
+      code: "S4",
+      name: "인문사회관",
+      fullName: "S4 인문사회관",
+      type: "남측 전공강의동",
+      cx: 56, cy: 181,
+      entrance: "동측 1층 현관",
+      floors: ["1~4층: 인문사회대학 강의실 및 교직지원팀"],
+      desc: "인문사회대학 학과 강의가 진행되는 강의동입니다."
+    },
+    "GATE": {
+      code: "GATE",
+      name: "정문",
+      fullName: "한밭대학교 정문 (버스정류장)",
+      type: "교통시설",
+      cx: 342, cy: 245,
+      entrance: "정문 버스 승강장",
+      floors: ["지상: 대전 시내버스 정류장 및 교내 셔틀버스 승차장"],
+      desc: "등하교 시내버스와 셔틀버스를 이용하는 관문입니다."
+    }
+  };
+
+  const WAYPOINTS = {
+    "CENTER": { x: 190, y: 122 },
+    "NORTH_PATH": { x: 130, y: 80 },
+    "SOUTH_PATH": { x: 130, y: 155 },
+    "DORM_PATH": { x: 65, y: 210 },
+    "GATE_PATH": { x: 280, y: 210 }
+  };
+
+  const ROUTE_DETAILS = {
+    "D7-N11": { time: 7, desc: "기숙사 서측 샛길 ➔ 혜윰광장 북측 지름길" },
+    "D7-S3":  { time: 4, desc: "기숙사 앞길 ➔ 대운동장 옆 솔밭길" },
+    "D7-S2":  { time: 5, desc: "기숙사 도로 ➔ 학생회관 1층 식당 쪽 출입구" },
+    "D7-S1":  { time: 8, desc: "학생회관 남측로 ➔ 도서관 앞 잔디길" },
+    "GATE-N11": { time: 8, desc: "정문 진입로 ➔ 대학본부 뒤편 북측 보행로" },
+    "GATE-S3":  { time: 6, desc: "정문 대로변 ➔ 도서관 앞길 ➔ 경상학관" },
+    "GATE-S2":  { time: 5, desc: "정문 대로변 ➔ 학생회관 정문 현관" },
+    "GATE-S1":  { time: 3, desc: "정문 진입로 우측 도서관 광장 직선 보도" },
+    "S2-N11":   { time: 5, desc: "혜윰광장 분수대 가로지르는 최단 지름길" },
+    "S2-S3":    { time: 2, desc: "학생회관 1층 바로 옆 경상학관 연결통로" },
+    "S3-N11":   { time: 5, desc: "경상학관 북측 계단 ➔ 혜윰광장 서편 산책로" },
+    "N1-N11":   { time: 4, desc: "대학본부 서측 연결 보행로" }
+  };
+
+  // 앱 전역 상태
+  let state = {
+    appDate: "2026-11-17",
+    currentDay: "화",
+    timetable: JSON.parse(JSON.stringify(DEFAULT_TIMETABLE)),
+    records: [],
+    visitCounts: {},
+    currentNav: null,
+    selectedModalCode: null
+  };
+
+  /* ==========================================================================
+     초기화 및 스토리지
+     ========================================================================== */
+  function initApp() {
+    loadStateFromStorage();
+    setupEventListeners();
+    renderAppDate();
+    renderWeekdayButtons();
+    renderTodayScheduleHotkeys();
+    renderFavorites();
+    renderBuildingStats();
+    renderHistory();
+
+    if (state.currentNav) {
+      applyNavigation(state.currentNav, false);
+      switchTab("tab-guide");
+    } else {
+      switchTab("tab-home");
+    }
+  }
+
+  function loadStateFromStorage() {
+    try {
+      const savedDate = localStorage.getItem(KEY_APP_DATE);
+      if (savedDate) state.appDate = savedDate;
+
+      const savedDay = localStorage.getItem(KEY_CURRENT_DAY);
+      if (savedDay && WEEKDAYS.includes(savedDay)) state.currentDay = savedDay;
+
+      const savedTT = localStorage.getItem(KEY_TIMETABLE);
+      if (savedTT) state.timetable = JSON.parse(savedTT);
+
+      const savedRecords = localStorage.getItem(KEY_RECORDS);
+      if (savedRecords) state.records = JSON.parse(savedRecords);
+
+      const savedVisits = localStorage.getItem(KEY_VISIT_COUNTS);
+      if (savedVisits) state.visitCounts = JSON.parse(savedVisits);
+
+      const savedNav = localStorage.getItem(KEY_CURRENT_NAV);
+      if (savedNav) state.currentNav = JSON.parse(savedNav);
+    } catch (e) {
+      console.warn("스토리지 로딩 에러:", e);
+    }
+  }
+
+  function saveStateToStorage() {
+    try {
+      localStorage.setItem(KEY_APP_DATE, state.appDate);
+      localStorage.setItem(KEY_CURRENT_DAY, state.currentDay);
+      localStorage.setItem(KEY_TIMETABLE, JSON.stringify(state.timetable));
+      localStorage.setItem(KEY_RECORDS, JSON.stringify(state.records));
+      localStorage.setItem(KEY_VISIT_COUNTS, JSON.stringify(state.visitCounts));
+      if (state.currentNav) {
+        localStorage.setItem(KEY_CURRENT_NAV, JSON.stringify(state.currentNav));
+      } else {
+        localStorage.removeItem(KEY_CURRENT_NAV);
+      }
+    } catch (e) {
+      console.warn("스토리지 저장 에러:", e);
+    }
+  }
+
+  function setupEventListeners() {
+    document.querySelectorAll(".nav-tab").forEach(tab => {
+      tab.addEventListener("click", () => switchTab(tab.getAttribute("data-tab")));
+    });
+
+    // 다음 날(요일)로 이동
+    document.getElementById("btn-next-day").addEventListener("click", advanceNextDay);
+
+    // 처음부터 다시
+    document.getElementById("btn-reset-all").addEventListener("click", () => {
+      if (confirm("저장된 모든 길찾기 기록과 시간표를 초기화하시겠습니까?")) {
+        resetAllData();
+      }
+    });
+
+    document.getElementById("btn-start-nav").addEventListener("click", startNavigation);
+    document.getElementById("btn-arrival-complete").addEventListener("click", completeArrival);
+    document.getElementById("btn-change-room").addEventListener("click", recalibrateDestination);
+  }
+
+  /* ==========================================================================
+     요일 전환 및 날짜 업데이트 (월화수목금 연동)
+     ========================================================================== */
+  window.setWeekday = function(day) {
+    if (!WEEKDAYS.includes(day)) return;
+    state.currentDay = day;
+    saveStateToStorage();
+    renderAppDate();
+    renderWeekdayButtons();
+    renderTodayScheduleHotkeys();
+  };
+
+  function advanceNextDay() {
+    // 요일 순환 이동: 월 -> 화 -> 수 -> 목 -> 금 -> 월
+    const curIdx = WEEKDAYS.indexOf(state.currentDay);
+    const nextIdx = (curIdx + 1) % WEEKDAYS.length;
+    state.currentDay = WEEKDAYS[nextIdx];
+
+    // 날짜 1일 증가
+    const cur = new Date(state.appDate);
+    cur.setDate(cur.getDate() + 1);
+    const yyyy = cur.getFullYear();
+    const mm = String(cur.getMonth() + 1).padStart(2, "0");
+    const dd = String(cur.getDate()).padStart(2, "0");
+    state.appDate = `${yyyy}-${mm}-${dd}`;
+
+    saveStateToStorage();
+    renderAppDate();
+    renderWeekdayButtons();
+    renderTodayScheduleHotkeys();
+    renderHistory();
+  }
+
+  function resetAllData() {
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith(STORAGE_PREFIX)) {
+        localStorage.removeItem(key);
+      }
+    });
+    state = {
+      appDate: "2026-11-17",
+      currentDay: "화",
+      timetable: JSON.parse(JSON.stringify(DEFAULT_TIMETABLE)),
+      records: [],
+      visitCounts: {},
+      currentNav: null,
+      selectedModalCode: null
+    };
+    saveStateToStorage();
+    renderAppDate();
+    renderWeekdayButtons();
+    renderTodayScheduleHotkeys();
+    renderFavorites();
+    renderBuildingStats();
+    renderHistory();
+    switchTab("tab-home");
+    alert("모든 데이터가 초기화되었습니다.");
+  }
+
+  function renderAppDate() {
+    const text = `${state.appDate} (${state.currentDay})`;
+    document.getElementById("current-app-date").innerText = text;
+    document.getElementById("monitor-today-date").innerText = text;
+  }
+
+  function renderWeekdayButtons() {
+    document.querySelectorAll(".weekday-btn").forEach(btn => {
+      const day = btn.getAttribute("data-day");
+      btn.classList.toggle("active", day === state.currentDay);
+    });
+  }
+
+  function switchTab(tabId) {
+    document.querySelectorAll(".nav-tab").forEach(t => {
+      t.classList.toggle("active", t.getAttribute("data-tab") === tabId);
+    });
+    document.querySelectorAll(".tab-content").forEach(c => {
+      c.classList.toggle("active", c.id === tabId);
+    });
+  }
+
+  /* ==========================================================================
+     오늘 요일의 수업 핫키 렌더링 (오늘 몇 시에 무슨 수업이 있는지 표시 및 버튼 전환)
+     ========================================================================== */
+  function renderTodayScheduleHotkeys() {
+    const list = document.getElementById("schedule-hotkey-list");
+    document.getElementById("title-today-schedule").innerText = `📚 ${state.currentDay}요일 수업 핫키`;
+    list.innerHTML = "";
+
+    const classes = state.timetable[state.currentDay] || [];
+
+    if (classes.length === 0) {
+      list.innerHTML = `
+        <div style="text-align:center; padding:16px; background:#f8f9fa; border-radius:8px; border:1px dashed var(--border); font-size:12px; color:var(--text-muted);">
+          ${state.currentDay}요일에는 등록된 수업이 없습니다.<br>
+          상단의 <strong>[✏️ 시간표 관리]</strong>를 눌러 수업을 등록해보세요!
+        </div>
+      `;
+      return;
+    }
+
+    classes.forEach(c => {
+      const item = document.createElement("div");
+      item.className = "schedule-hotkey-item";
+      item.onclick = () => {
+        // 해당 수업으로 즉시 길찾기 시작
+        startNavWithClass(c);
+      };
+
+      const bldg = BUILDINGS[c.bCode] || { name: c.bCode };
+
+      item.innerHTML = `
+        <div>
+          <span class="time-badge">⏰ ${c.time}</span>
+          <div class="class-name">${c.title}</div>
+          <div class="room-info">📍 [${c.bCode} ${bldg.name}] ${c.room}</div>
+        </div>
+        <div>
+          <span class="btn-nav-arrow">길찾기 ➔</span>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+  }
+
+  function startNavWithClass(c) {
+    const startNode = document.getElementById("select-start").value;
+    const breakTime = Math.max(1, parseInt(document.getElementById("input-break-time").value) || 10);
+    const destLabel = `${c.bCode} ${BUILDINGS[c.bCode]?.name || ''} (${c.title} ${c.room})`;
+
+    const navPlan = calculateRoute(startNode, c.bCode, breakTime, destLabel);
+    state.currentNav = navPlan;
+    saveStateToStorage();
+
+    applyNavigation(navPlan, true);
+    switchTab("tab-guide");
+  }
+
+  /* ==========================================================================
+     시간표 관리 모달 (사용자가 요일별 강의실 입력/수정/삭제)
+     ========================================================================== */
+  window.openTimetableModal = function() {
+    document.getElementById("tt-modal-day").innerText = `${state.currentDay}요일 시간표`;
+    renderTimetableModalList();
+    document.getElementById("timetable-modal").classList.add("active");
+  };
+
+  window.closeTimetableModal = function() {
+    document.getElementById("timetable-modal").classList.remove("active");
+    renderTodayScheduleHotkeys();
+  };
+
+  function renderTimetableModalList() {
+    const container = document.getElementById("timetable-list-container");
+    container.innerHTML = "";
+    const classes = state.timetable[state.currentDay] || [];
+
+    if (classes.length === 0) {
+      container.innerHTML = `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:10px;">등록된 수업이 없습니다.</div>`;
+      return;
+    }
+
+    classes.forEach((c, idx) => {
+      const row = document.createElement("div");
+      row.className = "timetable-item-row";
+      row.innerHTML = `
+        <div>
+          <strong>${c.time}</strong> ${c.title}
+          <div style="color:#0284c7; font-size:11px;">${c.bCode} - ${c.room}</div>
+        </div>
+        <button style="background:#ef4444; color:white; border:none; border-radius:4px; padding:3px 7px; font-size:11px; cursor:pointer;" onclick="deleteClassFromTimetable(${c.id})">삭제</button>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  window.addNewClassToTimetable = function() {
+    const timeVal = document.getElementById("tt-new-time").value.trim();
+    const titleVal = document.getElementById("tt-new-title").value.trim();
+    const bCodeVal = document.getElementById("tt-new-bldg").value;
+    const roomVal = document.getElementById("tt-new-room").value.trim();
+
+    if (!timeVal || !titleVal || !roomVal) {
+      alert("시간, 과목명, 호실을 모두 입력해주세요!");
+      return;
+    }
+
+    const newClass = {
+      id: Date.now(),
+      time: timeVal,
+      title: titleVal,
+      bCode: bCodeVal,
+      room: roomVal,
+      destName: `${bCodeVal} ${BUILDINGS[bCodeVal]?.name || ''} (${titleVal} ${roomVal})`
+    };
+
+    if (!state.timetable[state.currentDay]) {
+      state.timetable[state.currentDay] = [];
+    }
+    state.timetable[state.currentDay].push(newClass);
+    saveStateToStorage();
+
+    // 입력 필드 초기화
+    document.getElementById("tt-new-time").value = "";
+    document.getElementById("tt-new-title").value = "";
+    document.getElementById("tt-new-room").value = "";
+
+    renderTimetableModalList();
+    renderTodayScheduleHotkeys();
+    alert(`[${state.currentDay}요일]에 ${titleVal} 수업이 등록되었습니다!`);
+  };
+
+  window.deleteClassFromTimetable = function(id) {
+    if (!confirm("해당 수업을 시간표에서 삭제할까요?")) return;
+    state.timetable[state.currentDay] = state.timetable[state.currentDay].filter(c => c.id !== id);
+    saveStateToStorage();
+    renderTimetableModalList();
+    renderTodayScheduleHotkeys();
+  };
+
+  /* ==========================================================================
+     길 안내 계산 및 렌더링
+     ========================================================================== */
+  function startNavigation() {
+    const startNode = document.getElementById("select-start").value;
+    const destVal = document.getElementById("select-dest").value;
+    const breakTime = Math.max(1, parseInt(document.getElementById("input-break-time").value) || 10);
+
+    const destNode = destVal.split("_")[0];
+    const destSelectElem = document.getElementById("select-dest");
+    const destLabel = destSelectElem.options[destSelectElem.selectedIndex].text;
+
+    const navPlan = calculateRoute(startNode, destNode, breakTime, destLabel);
+    state.currentNav = navPlan;
+    saveStateToStorage();
+
+    applyNavigation(navPlan, true);
+    switchTab("tab-guide");
+  }
+
+  function calculateRoute(start, dest, breakTime, destLabel) {
+    const pair1 = `${start}-${dest}`;
+    const pair2 = `${dest}-${start}`;
+    let detail = ROUTE_DETAILS[pair1] || ROUTE_DETAILS[pair2];
+
+    const bStart = BUILDINGS[start] || { name: start, fullName: start, cx: 190, cy: 120, entrance: "정면 현관" };
+    const bDest = BUILDINGS[dest] || { name: dest, fullName: dest, cx: 190, cy: 120, entrance: "1층 주출입구" };
+
+    if (!detail) {
+      if (start === dest) {
+        detail = { time: 1, desc: "같은 건물/인접 구역입니다." };
+      } else {
+        const dx = bDest.cx - bStart.cx;
+        const dy = bDest.cy - bStart.cy;
+        const distPx = Math.sqrt(dx * dx + dy * dy);
+        const estMinutes = Math.max(2, Math.round(distPx / 35));
+        detail = {
+          time: estMinutes,
+          desc: "혜윰광장 중심 보행자 전용 도로를 통한 최단 지름길"
+        };
+      }
+    }
+
+    return {
+      startCode: start,
+      startName: bStart.fullName || bStart.name,
+      destCode: dest,
+      destName: destLabel || bDest.fullName,
+      entrance: bDest.entrance,
+      routeDesc: detail.desc,
+      estTime: detail.time,
+      breakTime: breakTime,
+      isDanger: (breakTime <= 10 && detail.time >= 8)
+    };
+  }
+
+  function applyNavigation(nav, isNew) {
+    document.getElementById("disp-start-node").innerText = nav.startName;
+    document.getElementById("disp-dest-node").innerText = nav.destName;
+    document.getElementById("disp-entrance-info").innerText = nav.entrance;
+    document.getElementById("disp-route-desc").innerText = nav.routeDesc;
+    document.getElementById("disp-est-time").innerText = nav.estTime;
+
+    const alertElem = document.getElementById("alert-late-warning");
+    const routeLine = document.getElementById("svg-route-line");
+
+    if (nav.isDanger) {
+      alertElem.classList.add("active");
+      routeLine.classList.add("danger");
+      document.getElementById("badge-route-status").innerText = "⚠️ 지각 위험 동선";
+      document.getElementById("badge-route-status").style.color = "var(--danger)";
+    } else {
+      alertElem.classList.remove("active");
+      routeLine.classList.remove("danger");
+      document.getElementById("badge-route-status").innerText = "안전 도보 동선";
+      document.getElementById("badge-route-status").style.color = "var(--primary)";
+    }
+
+    drawCampusRoute(nav.startCode, nav.destCode);
+    updateBuildingPanel(nav.destCode);
+    document.getElementById("feedback-section").classList.remove("active");
+  }
+
+  function drawCampusRoute(startCode, destCode) {
+    const s = BUILDINGS[startCode] || { cx: 190, cy: 120 };
+    const d = BUILDINGS[destCode] || { cx: 190, cy: 120 };
+
+    const routeLine = document.getElementById("svg-route-line");
+    const mStart = document.getElementById("marker-start");
+    const mDest = document.getElementById("marker-dest");
+
+    mStart.setAttribute("transform", `translate(${s.cx}, ${s.cy})`);
+    mStart.style.display = "block";
+    mDest.setAttribute("transform", `translate(${d.cx}, ${d.cy})`);
+    mDest.style.display = "block";
+
+    if (startCode === destCode) {
+      routeLine.setAttribute("d", `M ${s.cx} ${s.cy} L ${s.cx + 1} ${s.cy + 1}`);
+      return;
+    }
+
+    let pathD = `M ${s.cx} ${s.cy}`;
+    if ((startCode === "D7" && (destCode === "N11" || destCode === "N1" || destCode === "N4")) ||
+        (destCode === "D7" && (startCode === "N11" || startCode === "N1" || startCode === "N4"))) {
+      const mid = WAYPOINTS.SOUTH_PATH;
+      const mid2 = WAYPOINTS.NORTH_PATH;
+      pathD = `M ${s.cx} ${s.cy} L ${mid.x} ${mid.y} L ${mid2.x} ${mid2.y} L ${d.cx} ${d.cy}`;
+    } else if (startCode === "GATE" || destCode === "GATE") {
+      const wp = WAYPOINTS.GATE_PATH;
+      pathD = `M ${s.cx} ${s.cy} Q ${wp.x} ${wp.y} ${d.cx} ${d.cy}`;
+    } else {
+      const cx = (s.cx + d.cx) / 2;
+      const cy = (s.cy + d.cy) / 2 - 10;
+      pathD = `M ${s.cx} ${s.cy} Q ${cx} ${cy} ${d.cx} ${d.cy}`;
+    }
+
+    routeLine.setAttribute("d", pathD);
+  }
+
+  function updateBuildingPanel(bCode) {
+    const b = BUILDINGS[bCode];
+    if (!b) return;
+
+    document.getElementById("detail-building-name").innerText = `🏢 [${b.code} ${b.name}] 층별 시설 안내`;
+    const listElem = document.getElementById("detail-floor-list");
+    listElem.innerHTML = "";
+    (b.floors || []).forEach(f => {
+      const li = document.createElement("li");
+      li.innerHTML = f.replace(/^(.*?):/, "<strong>$1</strong>:");
+      listElem.appendChild(li);
+    });
+  }
+
+  /* ==========================================================================
+     도착 및 실행 기록
+     ========================================================================== */
+  function completeArrival() {
+    if (!state.currentNav) {
+      alert("진행 중인 길 안내가 없습니다.");
+      return;
+    }
+
+    const nav = state.currentNav;
+    const destCode = nav.destCode;
+
+    state.visitCounts[destCode] = (state.visitCounts[destCode] || 0) + 1;
+    const statusText = nav.isDanger ? "지연(경고)" : "정시 도착";
+
+    const newRecord = {
+      id: Date.now(),
+      date: `${state.appDate} (${state.currentDay})`,
+      start: nav.startName,
+      dest: nav.destName,
+      destCode: destCode,
+      estTime: nav.estTime,
+      status: statusText,
+      feedback: "미선택"
+    };
+
+    state.records.unshift(newRecord);
+    saveStateToStorage();
+
+    renderFavorites();
+    renderBuildingStats();
+    renderHistory();
+
+    document.getElementById("feedback-section").classList.add("active");
+    alert(`🎉 [${nav.destName}]에 도착 완료되었습니다! 이동 기록이 저장되었습니다.`);
+  }
+
+  window.submitFeedback = function(isGood) {
+    if (state.records.length > 0) {
+      state.records[0].feedback = isGood ? "적합 (최적 지름길)" : "개선 필요";
+      saveStateToStorage();
+      renderHistory();
+    }
+    document.getElementById("feedback-section").classList.remove("active");
+    alert("소중한 피드백이 반영되었습니다! 다음 번 추천 최단경로에 참고합니다.");
+    switchTab("tab-monitor");
+  };
+
+  function recalibrateDestination() {
+    const newDestCode = prompt("변경할 새 목적지 건물 코드를 입력하세요:\n(N11: 창의혁신관 / S3: 경상학관 / S2: 학생회관 / S1: 도서관 / D7: 기숙사)", "S3");
+    if (!newDestCode || !BUILDINGS[newDestCode]) {
+      if (newDestCode) alert("올바른 건물 코드를 입력해주세요. (예: N11, S3, S2, S1, D7, N1)");
+      return;
+    }
+
+    const cur = state.currentNav;
+    const newPlan = calculateRoute(cur.startCode, newDestCode, cur.breakTime, BUILDINGS[newDestCode].fullName);
+    state.currentNav = newPlan;
+    saveStateToStorage();
+
+    applyNavigation(newPlan, false);
+    alert(`동선이 [${BUILDINGS[newDestCode].name}] 건물 입구로 즉시 재계산되었습니다!`);
+  }
+
+  /* ==========================================================================
+     모니터링 렌더링
+     ========================================================================== */
+  function renderFavorites() {
+    const favCodes = Object.keys(state.visitCounts).filter(code => state.visitCounts[code] >= 3);
+    const cardFav = document.getElementById("card-favorites");
+    const container = document.getElementById("favorite-hotkeys");
+
+    if (favCodes.length === 0) {
+      cardFav.style.display = "none";
+      return;
+    }
+
+    cardFav.style.display = "block";
+    container.innerHTML = "";
+    favCodes.forEach(code => {
+      const b = BUILDINGS[code];
+      if (!b) return;
+      const count = state.visitCounts[code];
+      const btn = document.createElement("button");
+      btn.className = "hotkey-btn favorite";
+      btn.innerHTML = `<strong>⭐ ${b.code} ${b.name}</strong><span>누적 ${count}회 방문</span>`;
+      btn.onclick = () => {
+        const startNode = document.getElementById("select-start").value;
+        const navPlan = calculateRoute(startNode, code, 10, b.fullName);
+        state.currentNav = navPlan;
+        saveStateToStorage();
+        applyNavigation(navPlan, true);
+        switchTab("tab-guide");
+      };
+      container.appendChild(btn);
+    });
+  }
+
+  function renderBuildingStats() {
+    const targetBuildings = ["N11", "S3", "S2", "S1", "D7", "N1"];
+    const list = document.getElementById("building-stat-list");
+    if (!list) return;
+    list.innerHTML = "";
+
+    targetBuildings.forEach(code => {
+      const b = BUILDINGS[code];
+      const visits = state.visitCounts[code] || 0;
+      const isFav = visits >= 3;
+
+      const item = document.createElement("div");
+      item.className = "stat-building-item";
+      item.onclick = () => showBuildingInfo(code);
+      item.innerHTML = `
+        <div>
+          <strong>${b.code} ${b.name}</strong>
+          <span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">(${b.type})</span>
+          ${isFav ? '<span style="color: #f59f00; font-size: 11px; font-weight: bold; margin-left: 4px;">★ 자주 가는 곳</span>' : ''}
+        </div>
+        <div>
+          <span class="stat-badge">${visits}회 방문</span>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+  }
+
+  function renderHistory() {
+    const todayRecords = state.records.filter(r => r.date.startsWith(state.appDate));
+    const totalTrips = todayRecords.length;
+    const totalTime = todayRecords.reduce((acc, cur) => acc + (cur.estTime || 0), 0);
+    const onTimeTrips = todayRecords.filter(r => !r.status.includes("지연")).length;
+    const onTimeRate = totalTrips === 0 ? 100 : Math.round((onTimeTrips / totalTrips) * 100);
+
+    document.getElementById("stat-total-trips").innerText = `${totalTrips}회`;
+    document.getElementById("stat-total-time").innerText = `${totalTime}분`;
+    document.getElementById("stat-on-time-rate").innerText = `${onTimeRate}%`;
+
+    const list = document.getElementById("history-items");
+    if (state.records.length === 0) {
+      list.innerHTML = `
+        <li style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px;">
+          아직 이동 기록이 없습니다.<br>오늘 수업 핫키를 눌러 길 안내를 시작해보세요!
+        </li>`;
+      return;
+    }
+
+    list.innerHTML = "";
+    state.records.slice(0, 10).forEach(r => {
+      const li = document.createElement("li");
+      li.className = `history-item ${r.status.includes("지연") ? "delay" : ""}`;
+      li.innerHTML = `
+        <div>
+          <div style="font-weight: 700;">${r.dest}</div>
+          <div style="font-size: 11px; color: var(--text-muted);">${r.date} · 출발: ${r.start}</div>
+          <div style="font-size: 10px; color: #023e8a; margin-top: 2px;">피드백: ${r.feedback}</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-weight: 800; color: var(--accent);">${r.estTime}분 소요</div>
+          <div style="font-size: 11px; color: ${r.status.includes('지연') ? 'var(--danger)' : 'var(--success)'}; font-weight: 600;">
+            ${r.status}
+          </div>
+        </div>
+      `;
+      list.appendChild(li);
+    });
+  }
+
+  /* ==========================================================================
+     상세 정보 모달
+     ========================================================================== */
+  window.showBuildingInfo = function(code) {
+    const b = BUILDINGS[code];
+    if (!b) return;
+
+    state.selectedModalCode = code;
+    document.getElementById("modal-title").innerText = `🏛️ ${b.fullName || b.name}`;
+    document.getElementById("modal-desc").innerHTML = `
+      <strong>구분:</strong> ${b.type}<br>
+      <strong>주요 출입구:</strong> ${b.entrance}<br>
+      <strong>소개:</strong> ${b.desc}<br><br>
+      <strong>층별 안내:</strong><br>
+      ${(b.floors || []).join("<br>")}
+    `;
+    document.getElementById("info-modal").classList.add("active");
+  };
+
+  window.setStartFromModal = function() {
+    const code = state.selectedModalCode;
+    if (code) {
+      document.getElementById("select-start").value = code;
+      closeModal();
+      switchTab("tab-home");
+      alert(`[${BUILDINGS[code].name}]이(가) 출발지로 설정되었습니다.`);
+    }
+  };
+
+  window.setDestFromModal = function() {
+    const code = state.selectedModalCode;
+    if (code) {
+      closeModal();
+      const startNode = document.getElementById("select-start").value;
+      const b = BUILDINGS[code];
+      const navPlan = calculateRoute(startNode, code, 10, b.fullName);
+      state.currentNav = navPlan;
+      saveStateToStorage();
+      applyNavigation(navPlan, true);
+      switchTab("tab-guide");
+    }
+  };
+
+  window.closeModal = function() {
+    document.getElementById("info-modal").classList.remove("active");
+  };
+
+  // 실행
+  window.addEventListener("DOMContentLoaded", initApp);
+</script>
+
+</body>
+</html>
