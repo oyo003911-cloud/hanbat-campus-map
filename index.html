@@ -380,6 +380,8 @@
       color: var(--text-2);
       font-variant-numeric: tabular-nums;
     }
+    /* 종료 시간까지 넣은 수업은 시작 아래에 작게 ~18:30을 붙인다 */
+    .time-chip .tc-end { display: block; font-size: 11px; font-weight: 500; color: var(--muted); line-height: 1.3; letter-spacing: -0.2px; }
     .class-item .ci-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
     .class-item .ci-name {
       font-size: 16px;
@@ -410,6 +412,8 @@
     .class-item.done .ci-name { color: var(--text-2); }
     .class-item.done .time-chip { color: var(--text-2); }
     .class-item.now .time-chip { color: var(--blue); font-weight: 700; }
+    .class-item.now .time-chip .tc-end { color: var(--blue); }
+    .class-item.done .time-chip .tc-end { color: var(--muted); }
     .empty-box {
       padding: 18px 4px;
       text-align: center;
@@ -1106,6 +1110,116 @@
     }
     .mini-form .mf-title { font-size: 13px; font-weight: 700; color: var(--text); }
     .mini-form input, .mini-form select { height: 44px; font-size: 14px; background: #FFFFFF; }
+    /* 시간 선택 — 삼성 시계 앱식 3열 드럼(휠) 다이얼: 오전·오후 / 시 / 분 */
+    .tt-time-picks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .tt-pick {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1px;
+      padding: 9px 12px 10px;
+      border: 1.5px solid var(--line-2);
+      border-radius: var(--r-sm);
+      background: #FFFFFF;
+      text-align: left;
+    }
+    .tt-pick .tp-label { font-size: 11.5px; font-weight: 700; color: var(--muted); }
+    .tt-pick .tp-value {
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text-2);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.25;
+    }
+    .tt-pick .tp-sub { font-size: 11px; font-weight: 600; color: var(--muted); line-height: 1.3; }
+    .tt-pick.on { border-color: var(--blue-solid); background: var(--blue-weak); }
+    .tt-pick.on .tp-label, .tt-pick.on .tp-value, .tt-pick.on .tp-sub { color: var(--blue); }
+    .tt-pick.bad { border-color: #E7A3A9; background: var(--red-weak); }
+    .tt-pick.bad .tp-label, .tt-pick.on.bad .tp-label { color: var(--red); }
+    .tt-pick.bad .tp-value, .tt-pick.bad .tp-sub { color: var(--red); }
+
+    .tt-dial {
+      position: relative;
+      display: grid;
+      grid-template-columns: 78px 60px 12px 60px;
+      justify-content: center;
+      align-items: center;
+      height: 138px;
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-mid);
+      background: #FFFFFF;
+      overflow: hidden;
+    }
+    .tt-dial::before {
+      content: "";
+      position: absolute;
+      left: 10px; right: 10px;
+      top: 50%; height: 44px;
+      margin-top: -22px;
+      border-radius: 12px;
+      background: #F5F7FA;
+      pointer-events: none;
+    }
+    .tt-dial-col {
+      position: relative;
+      z-index: 1;
+      height: 138px;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      scroll-snap-type: y mandatory;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      outline: none;
+    }
+    .tt-dial-col::-webkit-scrollbar { display: none; }
+    .tt-dial-col:focus-visible { box-shadow: inset 0 0 0 2px var(--blue-weak); border-radius: 10px; }
+    .tt-dial-pad { height: 47px; pointer-events: none; }
+    .tt-dial-item {
+      height: 44px;
+      line-height: 44px;
+      text-align: center;
+      font-size: 17px;
+      font-weight: 600;
+      color: #C2C9D2;
+      scroll-snap-align: center;
+      scroll-snap-stop: always;
+      transition: color 0.12s ease;
+      cursor: pointer;
+      font-variant-numeric: tabular-nums;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .tt-dial-item.near { color: #A7B0BA; }
+    .tt-dial-item.on { color: var(--text); font-size: 26px; font-weight: 800; letter-spacing: -0.8px; }
+    .tt-dial-col.ampm .tt-dial-item { font-size: 15.5px; font-weight: 700; }
+    .tt-dial-col.ampm .tt-dial-item.on { font-size: 21px; letter-spacing: -0.4px; }
+    .tt-dial-colon {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--text);
+      margin-top: -4px;
+      pointer-events: none;
+    }
+    .tt-dial-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .tt-dial-note { font-size: 11.5px; font-weight: 600; color: var(--text-3); line-height: 1.4; }
+    .tt-dial-note.bad { color: var(--red); }
+    .tt-auto {
+      flex: none;
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid var(--line-2);
+      border-radius: 9px;
+      background: #FFFFFF;
+      color: var(--blue);
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+    .tt-auto:disabled { color: var(--muted); border-color: var(--line); background: var(--bg); }
     .tt-row {
       display: flex;
       align-items: center;
@@ -2234,13 +2348,33 @@
       <h3>시간표 관리 · <span id="tt-day-label">-</span></h3>
       <button class="modal-close" id="tt-close" aria-label="닫기">✕</button>
     </div>
-    <p class="hint">시간은 “10시”, “오전 10시”, “오후 2시 30분”, “14:30” 모두 자동으로 <b>HH:MM</b>으로 바뀝니다.</p>
+    <p class="hint">아래 <b>오전·오후 / 시 / 분</b> 휠을 넘기거나 숫자를 눌러 시간을 고릅니다. 시작·종료 모두 바꿀 수 있어요.</p>
     <div style="display:flex;flex-direction:column;gap:8px;" id="tt-list"></div>
 
     <div class="mini-form">
       <div class="mf-title">+ 새 수업 추가</div>
-      <input type="text" id="tt-time" placeholder="시작 시간 (예: 오후 2시 30분)">
-      <input type="text" id="tt-end" placeholder="종료 시간 (선택 · 비우면 90분 수업)">
+      <div class="tt-time-picks">
+        <button type="button" class="tt-pick on" id="tt-pick-start" data-field="start" aria-label="시작 시간 고르기">
+          <span class="tp-label">시작 시간</span>
+          <span class="tp-value" id="tt-start-val">09:00</span>
+          <span class="tp-sub" id="tt-start-sub">오전 9시</span>
+        </button>
+        <button type="button" class="tt-pick" id="tt-pick-end" data-field="end" aria-label="종료 시간 고르기">
+          <span class="tp-label">종료 시간</span>
+          <span class="tp-value" id="tt-end-val">10:30</span>
+          <span class="tp-sub" id="tt-end-sub">자동 (+90분)</span>
+        </button>
+      </div>
+      <div class="tt-dial" id="tt-dial" role="group" aria-label="시간 선택 휠">
+        <div class="tt-dial-col ampm" id="dial-ampm" role="listbox" aria-label="오전 오후" tabindex="0"></div>
+        <div class="tt-dial-col" id="dial-hour" role="listbox" aria-label="시" tabindex="0"></div>
+        <div class="tt-dial-colon" aria-hidden="true">:</div>
+        <div class="tt-dial-col" id="dial-min" role="listbox" aria-label="분" tabindex="0"></div>
+      </div>
+      <div class="tt-dial-foot">
+        <span class="tt-dial-note" id="tt-dial-note" aria-live="polite">시작 시간 선택 중</span>
+        <button type="button" class="tt-auto" id="tt-auto-end">↺ 종료 자동(+90분)</button>
+      </div>
       <input type="text" id="tt-title" placeholder="과목명 (예: 대학영어)">
       <select id="tt-bldg"></select>
       <input type="text" id="tt-room" placeholder="호실 (예: 410호)">
@@ -3667,7 +3801,7 @@
           ? '<span class="ci-go now"><i class="ci-live"></i>수업 중</span>'
           : '<span class="ci-go soon">예정<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></span>');
       html += '<button class="class-item' + (done ? ' done' : '') + (live ? ' now' : '') + '" data-class="' + c.id + '">' +
-        '<span class="time-chip">' + esc(c.time) + '</span>' +
+        '<span class="time-chip">' + esc(c.time) + (c.end ? '<span class="tc-end">~' + esc(c.end) + '</span>' : '') + '</span>' +
         '<span class="ci-main">' +
           '<span class="ci-name">' + esc(c.title) + '</span>' +
           '<span class="ci-room">' + esc(c.code) + ' ' + esc(b ? b.name : '') + ' · ' + esc(c.room) + '</span>' +
@@ -6526,12 +6660,248 @@
   function modalClose(id) { $(id).className = 'modal'; }
 
   /* ══════════════════════════════════════════════════════════════
+     10-B. 시간표 시간 휠 다이얼 (오전·오후 / 시 / 분)
+     삼성 시계 앱처럼 세 열을 위아래로 넘겨 시간을 고른다.
+     안쪽 값은 24시간제 "HH:MM"으로 바꿔 저장하므로 기존 시간표·홈 표기와 같게 동작한다.
+     ══════════════════════════════════════════════════════════════ */
+  var DIAL_ITEM_H = 44;          /* .tt-dial-item 높이와 같아야 한다 */
+  var TT_DIAL = {
+    field: 'start',              /* 지금 다이얼로 고치는 중인 칸 */
+    start: { ampm: 0, hour: 9, min: 0 },
+    end: { ampm: 0, hour: 10, min: 30 },
+    endAuto: true,               /* 시작 +90분을 자동으로 따라가는 중인지 */
+    timer: null,
+    loading: false
+  };
+
+  function dialColEl(name) {
+    return $(name === 'ampm' ? 'dial-ampm' : (name === 'hour' ? 'dial-hour' : 'dial-min'));
+  }
+
+  function dialBuildCol(el, items, cls) {
+    if (!el) return;
+    var h = '<div class="tt-dial-pad" aria-hidden="true"></div>';
+    items.forEach(function (label, i) {
+      h += '<div class="tt-dial-item" role="option" aria-selected="false" data-idx="' + i + '">' + esc(label) + '</div>';
+    });
+    h += '<div class="tt-dial-pad" aria-hidden="true"></div>';
+    el.className = 'tt-dial-col' + (cls ? ' ' + cls : '');
+    el.innerHTML = h;
+  }
+
+  function dialPaint(el) {
+    if (!el) return;
+    var items = el.querySelectorAll('.tt-dial-item');
+    if (!items.length) return;
+    var idx = Math.round(el.scrollTop / DIAL_ITEM_H);
+    for (var i = 0; i < items.length; i++) {
+      var on = i === idx;
+      var near = Math.abs(i - idx) === 1;
+      items[i].className = 'tt-dial-item' + (on ? ' on' : (near ? ' near' : ''));
+      items[i].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+  }
+
+  function dialSetIndex(el, idx, smooth) {
+    if (!el) return;
+    var max = el.querySelectorAll('.tt-dial-item').length - 1;
+    idx = Math.max(0, Math.min(max, idx));
+    var top = idx * DIAL_ITEM_H;
+    if (smooth && el.scrollTo) {
+      try { el.scrollTo({ top: top, behavior: 'smooth' }); } catch (e) { el.scrollTop = top; }
+    } else {
+      el.scrollTop = top;
+    }
+    dialPaint(el);
+  }
+
+  function dialReadIndex(el) {
+    if (!el) return 0;
+    var max = el.querySelectorAll('.tt-dial-item').length - 1;
+    return Math.max(0, Math.min(max, Math.round(el.scrollTop / DIAL_ITEM_H)));
+  }
+
+  /* 지금 다이얼 세 열이 가리키는 값 */
+  function dialRead() {
+    return {
+      ampm: dialReadIndex(dialColEl('ampm')),
+      hour: dialReadIndex(dialColEl('hour')) + 1,
+      min: dialReadIndex(dialColEl('min'))
+    };
+  }
+
+  /* {ampm, hour, min} → "HH:MM" (오전 12시=00, 오후 12시=12, 오후 1~11시=13~23) */
+  function ttDialHHMM(v) {
+    var h = Number(v.hour) % 12;
+    var h24 = (Number(v.ampm) === 0) ? h : h + 12;
+    return pad2(h24) + ':' + pad2(Number(v.min) || 0);
+  }
+
+  function ttDialKorean(v) {
+    return (Number(v.ampm) === 0 ? '오전' : '오후') + ' ' + v.hour + '시' + (v.min ? ' ' + v.min + '분' : '');
+  }
+
+  /* 12시간제 값에 분을 더한다 (자정을 넘어가면 23:59에서 멈춘다) */
+  function ttDialAdd(v, mins) {
+    var total = hhmmToMin(ttDialHHMM(v)) + mins;
+    if (total > 23 * 60 + 59) total = 23 * 60 + 59;
+    if (total < 0) total = 0;
+    var h24 = Math.floor(total / 60);
+    var m = total % 60;
+    return { ampm: h24 >= 12 ? 1 : 0, hour: (h24 % 12) || 12, min: m };
+  }
+
+  function dialLoad(field) {
+    var v = (field === 'end') ? TT_DIAL.end : TT_DIAL.start;
+    TT_DIAL.loading = true;
+    dialSetIndex(dialColEl('ampm'), v.ampm, false);
+    dialSetIndex(dialColEl('hour'), v.hour - 1, false);
+    dialSetIndex(dialColEl('min'), v.min, false);
+    setTimeout(function () { TT_DIAL.loading = false; }, 80);
+  }
+
+  function dialRenderPicks() {
+    var s = TT_DIAL.start, e = TT_DIAL.end;
+    var sT = ttDialHHMM(s), eT = ttDialHHMM(e);
+    var ordered = hhmmToMin(eT) > hhmmToMin(sT);
+    if ($('tt-start-val')) $('tt-start-val').textContent = sT;
+    if ($('tt-start-sub')) $('tt-start-sub').textContent = ttDialKorean(s);
+    if ($('tt-end-val')) $('tt-end-val').textContent = eT;
+    if ($('tt-end-sub')) $('tt-end-sub').textContent = TT_DIAL.endAuto ? '자동 (+90분)' : (ordered ? '직접 설정' : '시작보다 빠름');
+    if ($('tt-pick-start')) $('tt-pick-start').className = 'tt-pick' + (TT_DIAL.field === 'start' ? ' on' : ''); 
+    if ($('tt-pick-end')) $('tt-pick-end').className = 'tt-pick' + (TT_DIAL.field === 'end' ? ' on' : '') + (ordered ? '' : ' bad');
+    if ($('tt-auto-end')) $('tt-auto-end').disabled = TT_DIAL.endAuto;
+    var note = $('tt-dial-note');
+    if (note) {
+      note.className = 'tt-dial-note' + (ordered ? '' : ' bad');
+      note.textContent = ordered
+        ? (TT_DIAL.field === 'start' ? '시작 시간 선택 중' : '종료 시간 선택 중')
+        : '종료가 시작보다 빠릅니다';
+    }
+  }
+
+  function dialQueueCommit(soon) {
+    if (TT_DIAL.timer) clearTimeout(TT_DIAL.timer);
+    TT_DIAL.timer = setTimeout(function () {
+      TT_DIAL.timer = null;
+      dialCommit();
+    }, soon ? 40 : 130);
+  }
+
+  /* 휠이 멈춘 뒤의 값을 지금 고치는 칸에 반영한다 */
+  function dialCommit() {
+    if (TT_DIAL.loading) return;
+    var v = dialRead();
+    var cur = (TT_DIAL.field === 'end') ? TT_DIAL.end : TT_DIAL.start;
+    if (v.ampm === cur.ampm && v.hour === cur.hour && v.min === cur.min) return;
+    if (TT_DIAL.field === 'end') {
+      TT_DIAL.end = v;
+      TT_DIAL.endAuto = false;
+    } else {
+      TT_DIAL.start = v;
+      if (TT_DIAL.endAuto) TT_DIAL.end = ttDialAdd(v, 90);
+    }
+    dialRenderPicks();
+  }
+
+  function ttDialSetField(field) {
+    TT_DIAL.field = field;
+    dialLoad(field);
+    dialRenderPicks();
+  }
+
+  function ttDialReset() {
+    TT_DIAL.field = 'start';
+    TT_DIAL.start = { ampm: 0, hour: 9, min: 0 };
+    TT_DIAL.end = ttDialAdd(TT_DIAL.start, 90);
+    TT_DIAL.endAuto = true;
+    dialRenderPicks();
+  }
+
+  function setupTimetableDial() {
+    var ampEl = dialColEl('ampm'), hourEl = dialColEl('hour'), minEl = dialColEl('min');
+    if (!ampEl || !hourEl || !minEl) return;
+    var hours = [], mins = [];
+    for (var i = 1; i <= 12; i++) hours.push(String(i));
+    for (var j = 0; j < 60; j++) mins.push(pad2(j));
+    dialBuildCol(ampEl, ['오전', '오후'], 'ampm');
+    dialBuildCol(hourEl, hours, '');
+    dialBuildCol(minEl, mins, '');
+
+    [[ampEl, 'ampm'], [hourEl, 'hour'], [minEl, 'min']].forEach(function (pair) {
+      var el = pair[0], name = pair[1];
+
+      el.addEventListener('scroll', function () {
+        if (el._raf) return;
+        el._raf = requestAnimationFrame(function () { el._raf = 0; dialPaint(el); });
+        dialQueueCommit(false);
+      }, { passive: true });
+      if ('onscrollend' in el) {
+        el.addEventListener('scrollend', function () { dialCommit(); }, { passive: true });
+      }
+
+      /* 위·아래 숫자를 직접 누르면 그 줄로 스무스하게 이동 */
+      el.addEventListener('click', function (e) {
+        var it = e.target && e.target.closest ? e.target.closest('.tt-dial-item') : null;
+        if (!it) return;
+        dialSetIndex(el, Number(it.getAttribute('data-idx')), true);
+        dialQueueCommit(true);
+      });
+
+      /* 마우스 휠은 한 줄씩 끊어서 움직인다 */
+      el.addEventListener('wheel', function (e) {
+        if (!e.deltaY) return;
+        e.preventDefault();
+        var now = Date.now();
+        if (el._wheelAt && now - el._wheelAt < 90) return;
+        el._wheelAt = now;
+        dialSetIndex(el, dialReadIndex(el) + (e.deltaY > 0 ? 1 : -1), false);
+        dialQueueCommit(true);
+      }, { passive: false });
+
+      /* 키보드: ↑ ↓ 로 한 줄씩, Home/End로 처음·끝 */
+      el.addEventListener('keydown', function (e) {
+        var k = e.key;
+        if (k !== 'ArrowUp' && k !== 'ArrowDown' && k !== 'Home' && k !== 'End') return;
+        e.preventDefault();
+        var max = el.querySelectorAll('.tt-dial-item').length - 1;
+        var idx = dialReadIndex(el);
+        if (k === 'ArrowUp') idx -= 1;
+        else if (k === 'ArrowDown') idx += 1;
+        else if (k === 'Home') idx = 0;
+        else idx = max;
+        dialSetIndex(el, idx, true);
+        dialQueueCommit(true);
+      });
+    });
+
+    if ($('tt-pick-start')) $('tt-pick-start').addEventListener('click', function () { ttDialSetField('start'); });
+    if ($('tt-pick-end')) $('tt-pick-end').addEventListener('click', function () { ttDialSetField('end'); });
+    if ($('tt-auto-end')) $('tt-auto-end').addEventListener('click', function () {
+      TT_DIAL.endAuto = true;
+      TT_DIAL.end = ttDialAdd(TT_DIAL.start, 90);
+      if (TT_DIAL.field === 'end') dialLoad('end');
+      dialRenderPicks();
+      toast('종료 시간을 시작 +90분으로 맞췄습니다');
+    });
+
+    ttDialReset();
+  }
+
+  /* ══════════════════════════════════════════════════════════════
      11. 시간표 모달
      ══════════════════════════════════════════════════════════════ */
   function openTimetable() {
     $('tt-day-label').textContent = state.day + '요일';
     renderTtList();
+    ttDialReset();
     modalOpen('timetable-modal');
+    /* 시트가 화면에 붙은 뒤에 휠 위치를 잡는다.
+       숨은(display:none) 상태에서는 scrollTop이 0으로 눌려 선택 줄이 어긋난다. */
+    requestAnimationFrame(function () {
+      dialLoad(TT_DIAL.field);
+      dialRenderPicks();
+    });
   }
 
   function renderTtList() {
@@ -6921,30 +7291,28 @@
     $('tt-close').addEventListener('click', function () { modalClose('timetable-modal'); renderSchedule(); renderNextClass(); });
     $('tt-done').addEventListener('click', function () { modalClose('timetable-modal'); renderSchedule(); renderNextClass(); });
     $('tt-add').addEventListener('click', function () {
-      var rawT = $('tt-time').value;
-      var rawE = $('tt-end') ? $('tt-end').value : '';
-      var t = parseTimeInput(rawT);
-      var e = rawE && rawE.trim() ? parseTimeInput(rawE) : null;
+      var t = ttDialHHMM(TT_DIAL.start);
+      var e = ttDialHHMM(TT_DIAL.end);
       var title = $('tt-title').value.trim();
       var code = $('tt-bldg').value;
       var room = $('tt-room').value.trim();
-      if (!t) { toast('시간을 이해하지 못했어요. 예: “오후 2시 30분”, “10시”, “14:00”'); return; }
-      if (e && hhmmToMin(e) <= hhmmToMin(t)) { toast('종료 시간은 시작 시간보다 뒤여야 해요'); return; }
+      if (hhmmToMin(e) <= hhmmToMin(t)) { toast('종료 시간은 시작 시간보다 뒤여야 해요'); return; }
       if (!title) { toast('과목명을 입력해 주세요'); return; }
       if (!room) { toast('호실을 입력해 주세요 (예: 410호)'); return; }
       if (!state.timetable[state.day]) state.timetable[state.day] = [];
-      var item = { id: Date.now(), time: t, title: title, code: code, room: room };
-      if (e) item.end = e;
+      var item = { id: Date.now(), time: t, title: title, code: code, room: room, end: e };
       state.timetable[state.day].push(item);
       saveState();
-      $('tt-time').value = '';
-      if ($('tt-end')) $('tt-end').value = '';
       $('tt-title').value = '';
       $('tt-room').value = '';
+      /* 다음 수업을 바로 넣기 쉽개 시간은 그대로 두고 시작 칸으로 돌아간다 */
+      TT_DIAL.field = 'start';
+      dialLoad('start');
+      dialRenderPicks();
       renderTtList();
       renderSchedule();
       renderNextClass();
-      toast(title + ' ' + t + (e ? '~' + e : '') + ' · ' + code + ' ' + room + ' 로 저장했습니다');
+      toast(title + ' ' + t + '~' + e + ' · ' + code + ' ' + room + ' 로 저장했습니다');
     });
     $('tt-list').addEventListener('click', function (e) {
       var t = e.target;
@@ -7279,6 +7647,7 @@
     setupPwa();
     buildOriginOptions();
     bindEvents();
+    setupTimetableDial();
     bindIsoNpc();
     bindHomeDogAvatar();
     bindTutorial();
